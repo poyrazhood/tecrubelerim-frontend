@@ -400,6 +400,26 @@ export default function BusinessPage() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-1">
                 <h1 className="text-xl font-bold text-white leading-tight">{business.name}</h1>
+                {business.badges?.map((badge: any) => {
+                  const BADGE_META: Record<string, { label: string; color: string; icon: string }> = {
+                    VERIFIED:              { label: 'Dogrulanmis',      color: 'emerald', icon: '✓' },
+                    NEIGHBORHOOD_FAVORITE: { label: 'Mahalle Favorisi', color: 'amber',   icon: '⭐' },
+                    FEATURED:              { label: 'One Cikan',        color: 'indigo',  icon: '🔥' },
+                    PREMIUM:               { label: 'Premium',          color: 'purple',  icon: '💎' },
+                    TOP_RATED:             { label: 'En Yuksek Puanli', color: 'yellow',  icon: '🏅' },
+                    HIGHLY_REVIEWED:       { label: 'Cok Yorumlanan',   color: 'blue',    icon: '💬' },
+                    NEW_BUSINESS:          { label: 'Yeni Isletme',     color: 'cyan',    icon: '🆕' },
+                    TRUSTED:               { label: 'Guvenilir',        color: 'teal',    icon: '🤝' },
+                  }
+                  const meta = BADGE_META[badge.type]
+                  if (!meta) return null
+                  return (
+                    <div key={badge.type} className={`flex items-center gap-1 px-2 py-0.5 rounded-full bg-${meta.color}-500/15 border border-${meta.color}-500/25`}>
+                      <span className="text-[10px]">{meta.icon}</span>
+                      <span className={`text-[10px] text-${meta.color}-400 font-semibold`}>{meta.label}</span>
+                    </div>
+                  )
+                })}
                 {business.isVerified && (
                   <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/25">
                     <CheckCircle size={11} className="text-emerald-400" /><span className="text-[10px] text-emerald-400 font-semibold">Dogrulandi</span>
