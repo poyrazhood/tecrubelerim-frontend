@@ -145,8 +145,9 @@ export function AppLayout({
               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 uppercase tracking-wider">Beta</span>
             </div>
             <div className="flex items-center gap-2">
-              <button className="w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all">
+              <button className="relative w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all">
                 <Bell size={15} />
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-indigo-500 border-2 border-surface notif-dot" />
               </button>
               <Link href="/profil">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white cursor-pointer">AY</div>

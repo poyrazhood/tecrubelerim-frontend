@@ -114,3 +114,143 @@ input:focus, textarea:focus {
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }
+
+/* ── Staggered children animation ────────────────────── */
+.stagger-children > * {
+  animation: fade-up 0.45s cubic-bezier(0.16,1,0.3,1) both;
+}
+.stagger-children > *:nth-child(1)  { animation-delay: 0ms }
+.stagger-children > *:nth-child(2)  { animation-delay: 60ms }
+.stagger-children > *:nth-child(3)  { animation-delay: 120ms }
+.stagger-children > *:nth-child(4)  { animation-delay: 180ms }
+.stagger-children > *:nth-child(5)  { animation-delay: 240ms }
+.stagger-children > *:nth-child(6)  { animation-delay: 300ms }
+.stagger-children > *:nth-child(7)  { animation-delay: 360ms }
+.stagger-children > *:nth-child(8)  { animation-delay: 420ms }
+
+/* ── Page enter animation ─────────────────────────────── */
+.page-enter {
+  animation: fade-up 0.5s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* ── Button press effect ──────────────────────────────── */
+.btn-press {
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.btn-press:active {
+  transform: scale(0.95);
+}
+
+/* ── Interactive card ─────────────────────────────────── */
+.card-interactive {
+  transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), 
+              box-shadow 0.2s ease,
+              border-color 0.2s ease;
+  cursor: pointer;
+}
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+}
+.card-interactive:active {
+  transform: translateY(0px) scale(0.99);
+}
+
+/* ── Like button pop ──────────────────────────────────── */
+.like-pop {
+  animation: pop 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+
+/* ── Ripple effect ────────────────────────────────────── */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+.ripple::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.ripple:active::after {
+  opacity: 1;
+}
+
+/* ── Skeleton loading ─────────────────────────────────── */
+.skeleton-line {
+  background: linear-gradient(90deg, #1F1F24 25%, #2A2A30 50%, #1F1F24 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s linear infinite;
+  border-radius: 6px;
+}
+
+/* ── Trust ring entrance ──────────────────────────────── */
+.trust-ring-animate {
+  animation: fade-in-scale 0.6s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* ── Bottom sheet ─────────────────────────────────────── */
+.bottom-sheet-enter {
+  animation: slide-up 0.4s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* ── Notification dot pulse ───────────────────────────── */
+.notif-dot {
+  position: relative;
+}
+.notif-dot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: inherit;
+  animation: ping-once 1.5s ease-out infinite;
+}
+
+/* ── Tab underline slide ──────────────────────────────── */
+.tab-active-indicator {
+  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), width 0.3s ease;
+}
+
+/* ── Input focus glow ─────────────────────────────────── */
+.input-glow:focus {
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.15), 0 0 0 1px rgba(99,102,241,0.4);
+  border-color: rgba(99,102,241,0.5);
+}
+
+/* ── Score number counter ─────────────────────────────── */
+.score-number {
+  font-variant-numeric: tabular-nums;
+  animation: number-tick 0.4s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* ── Floating action button ───────────────────────────── */
+.fab {
+  animation: bounce-in 0.5s cubic-bezier(0.16,1,0.3,1) both;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.fab:hover {
+  transform: scale(1.08) translateY(-1px);
+  box-shadow: 0 16px 40px rgba(99,102,241,0.4);
+}
+.fab:active {
+  transform: scale(0.95);
+}
+
+/* ── Scroll reveal (JS-powered) ───────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16,1,0.3,1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Header scroll shrink ─────────────────────────────── */
+.header-shrink {
+  transition: padding 0.3s ease, backdrop-filter 0.3s ease;
+}

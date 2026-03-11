@@ -21,7 +21,7 @@ const FEATURE_ICONS: Record<string, { icon: typeof Wifi; label: string }> = {
 export function BusinessCard({ business, showSemanticMatch }: BusinessCardProps) {
   return (
     <Link href={`/isletme/${business.slug}`}>
-      <article className="feed-card group relative rounded-2xl overflow-hidden border border-white/[0.06] bg-surface-1 mb-3 cursor-pointer">
+      <article className="card-interactive group relative rounded-2xl overflow-hidden border border-white/[0.06] bg-surface-1 mb-3">
         {/* Image */}
         <div className="relative h-44 overflow-hidden">
           <img

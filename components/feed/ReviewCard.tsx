@@ -63,6 +63,20 @@ function ShieldBadge({ status, reason }: { status: Review['shieldStatus']; reaso
 export function ReviewCard({ review }: ReviewCardProps) {
   const [liked, setLiked] = useState(false)
   const [thanked, setThanked] = useState(false)
+  const [likeAnim, setLikeAnim] = useState(false)
+  const [thankAnim, setThankAnim] = useState(false)
+
+  const handleLike = () => {
+    setLiked(!liked)
+    setLikeAnim(true)
+    setTimeout(() => setLikeAnim(false), 400)
+  }
+
+  const handleThank = () => {
+    setThanked(!thanked)
+    setThankAnim(true)
+    setTimeout(() => setThankAnim(false), 400)
+  }
 
   const isDanger = review.shieldStatus === 'danger'
   const isWarning = review.shieldStatus === 'warning'
@@ -70,7 +84,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
   return (
     <article
       className={cn(
-        'feed-card rounded-2xl border p-4 mb-3 transition-all',
+        'feed-card card-interactive rounded-2xl border p-4 mb-3',
         isDanger ? 'opacity-50 grayscale' : '',
         isWarning ? 'opacity-75' : '',
         'bg-surface-1 border-white/[0.06]'
@@ -172,28 +186,35 @@ export function ReviewCard({ review }: ReviewCardProps) {
           {/* Actions */}
           <div className="flex items-center gap-1 pt-2 border-t border-white/[0.05]">
             <button
-              onClick={() => setLiked(!liked)}
+              onClick={handleLike}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all',
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all btn-press',
                 liked
                   ? 'bg-indigo-500/15 text-indigo-400'
                   : 'text-white/40 hover:bg-white/5 hover:text-white/70'
               )}
             >
-              <ThumbsUp size={13} />
-              <span>{formatCount(review.helpfulCount + (liked ? 1 : 0))}</span>
+              <ThumbsUp size={13} className={likeAnim ? 'animate-wiggle' : ''} />
+              <span className={likeAnim ? 'animate-number-tick' : ''}>
+                {formatCount(review.helpfulCount + (liked ? 1 : 0))}
+              </span>
             </button>
 
             <button
-              onClick={() => setThanked(!thanked)}
+              onClick={handleThank}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all',
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all btn-press relative',
                 thanked
                   ? 'bg-pink-500/15 text-pink-400'
                   : 'text-white/40 hover:bg-white/5 hover:text-white/70'
               )}
             >
-              <Heart size={13} className={thanked ? 'fill-pink-400' : ''} />
+              <Heart size={13} className={cn(thanked ? 'fill-pink-400' : '', thankAnim ? 'animate-pop' : '')} />
+              {thankAnim && (
+                <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <span className="w-4 h-4 rounded-full bg-pink-400/30 animate-ping-once" />
+                </span>
+              )}
               <span>Teşekkür</span>
             </button>
 
