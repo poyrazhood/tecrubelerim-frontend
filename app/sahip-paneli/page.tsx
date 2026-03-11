@@ -1,12 +1,117 @@
 ﻿'use client'
 import { useState, useEffect } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Building2, ChevronRight, Check, Loader2, AlertTriangle, Phone, Globe, Mail, MapPin, Edit3, Camera, X, Save, Clock } from 'lucide-react'
+import {
+  Building2, ChevronRight, Check, Loader2, MapPin, Phone, Globe,
+  Mail, Edit3, Camera, X, Save, Clock, Star, TrendingUp,
+  MessageSquare, Eye, BarChart2, AlertCircle, ChevronDown
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 
 const API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/api\/?$/, '')
-const getToken = () => typeof window !== 'undefined' ? (localStorage.getItem('token') || sessionStorage.getItem('token')) : null
+const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+
+function normalizeRating(raw: number) {
+  if (!raw || raw <= 0) return 0
+  if (raw <= 5) return raw
+  if (raw <= 50) return raw / 10
+  if (raw <= 500) return raw / 100
+  return raw / 1000
+}
+
+function ReviewsTab({ business }: { business: any }) {
+  const [reviews, setReviews] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [replyingTo, setReplyingTo] = useState<string | null>(null)
+  const [replyText, setReplyText] = useState('')
+  const [replySaving, setReplySaving] = useState(false)
+
+  useEffect(() => {
+    fetch(`${API}/api/businesses/${business.id}/reviews?limit=50`)
+      .then(r => r.json())
+      .then(d => { setReviews(d.data || []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [business.id])
+
+  const saveReply = async (reviewId: string) => {
+    setReplySaving(true)
+    const token = getToken()
+    const res = await fetch(`${API}/api/reviews/${reviewId}/owner-reply`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer `+token },
+
+      body: JSON.stringify({ ownerReply: replyText })
+    })
+    if (res.ok) {
+      setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, ownerReply: replyText } : r))
+      setReplyingTo(null)
+      setReplyText('')
+    }
+    setReplySaving(false)
+  }
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-white/30" /></div>
+  if (reviews.length === 0) return (
+    <div className="text-center py-12">
+      <MessageSquare size={32} className="mx-auto mb-3 text-white/20" />
+      <div className="text-white/40 text-sm">Henüz yorum yok</div>
+    </div>
+  )
+
+  return (
+    <div className="space-y-4">
+      {reviews.map(r => (
+        <div key={r.id} className="bg-surface-2 border border-white/[0.07] rounded-2xl p-4">
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-xs font-black text-indigo-300">
+                {r.user?.username?.[0]?.toUpperCase()}
+              </div>
+              <div>
+                <div className="text-xs font-bold text-white">@{r.user?.username}</div>
+                <div className="text-[10px] text-white/30">{new Date(r.createdAt).toLocaleDateString('tr-TR')}</div>
+              </div>
+            </div>
+            <div className="flex gap-0.5">
+              {[1,2,3,4,5].map(s => <Star key={s} size={11} className={s <= r.rating ? 'text-amber-400 fill-amber-400' : 'text-white/15'} />)}
+            </div>
+          </div>
+          <p className="text-sm text-white/70 leading-relaxed mb-3">{r.content}</p>
+
+          {r.ownerReply && replyingTo !== r.id && (
+            <div className="bg-indigo-500/[0.07] border border-indigo-500/20 rounded-xl p-3 mb-2">
+              <div className="text-[10px] font-bold text-indigo-400 mb-1">İşletme Yanıtı</div>
+              <p className="text-xs text-white/60 leading-relaxed">{r.ownerReply}</p>
+            </div>
+          )}
+
+          {replyingTo === r.id ? (
+            <div>
+              <textarea value={replyText} onChange={e => setReplyText(e.target.value)} rows={3}
+                placeholder="Müşterinize yanıt yazın..."
+                className="w-full bg-surface-1 border border-indigo-500/30 rounded-xl px-3 py-2 text-sm text-white outline-none resize-none focus:border-indigo-500/60 placeholder-white/20 mb-2" />
+              <div className="flex gap-2">
+                <button onClick={() => saveReply(r.id)} disabled={replySaving || !replyText.trim()}
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-indigo-500 text-white text-xs font-bold disabled:opacity-50">
+                  {replySaving ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />} Yanıtla
+                </button>
+                <button onClick={() => { setReplyingTo(null); setReplyText('') }}
+                  className="px-4 py-1.5 rounded-lg bg-white/[0.05] text-white/40 text-xs">İptal</button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => { setReplyingTo(r.id); setReplyText(r.ownerReply || '') }}
+              className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+              <MessageSquare size={11} />
+              {r.ownerReply ? 'Yanıtı Düzenle' : 'Yanıtla'}
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
 
 export default function SahipPaneliPage() {
   const [myBusinesses, setMyBusinesses] = useState<any[]>([])
@@ -22,12 +127,13 @@ export default function SahipPaneliPage() {
   const [claiming, setClaiming] = useState<string | null>(null)
   const [claimMsg, setClaimMsg] = useState<string | null>(null)
   const [photoUploading, setPhotoUploading] = useState(false)
+  const [activeTab, setActiveTab] = useState<'overview'|'edit'|'reviews'>('overview')
 
   useEffect(() => {
     const token = getToken()
-    if (!token) return
+    if (!token) { setLoading(false); return }
     fetch(`${API}/api/users/me/businesses`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : [])
+      .then(r => r.ok ? r.json() : { businesses: [] })
       .then(d => { setMyBusinesses(Array.isArray(d) ? d : d.businesses || []); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
@@ -35,22 +141,21 @@ export default function SahipPaneliPage() {
   const searchClaim = async () => {
     if (!claimQuery.trim()) return
     setClaimSearching(true)
+    setClaimMsg(null)
     const r = await fetch(`${API}/api/businesses?search=${encodeURIComponent(claimQuery)}&limit=10`)
     const d = await r.json()
-    const results = Array.isArray(d) ? d : Array.isArray(d.businesses) ? d.businesses : Array.isArray(d.data) ? d.data : []
+    const results = Array.isArray(d) ? d : Array.isArray(d.data) ? d.data : Array.isArray(d.businesses) ? d.businesses : []
     setClaimResults(results)
-    if (results.length === 0) setClaimMsg("Sonuç bulunamadı.")
+    if (results.length === 0) setClaimMsg('Sonuç bulunamadı.')
     setClaimSearching(false)
   }
 
   const handleClaim = async (b: any) => {
     const token = getToken()
-    if (!token) { setClaimMsg("Sahiplik talebi için giriş yapmanız gerekiyor."); return }
-    setClaiming(b.id)
-    setClaimMsg(null)
+    if (!token) { setClaimMsg('Sahiplik talebi için giriş yapmanız gerekiyor.'); return }
+    setClaiming(b.id); setClaimMsg(null)
     const res = await fetch(`${API}/api/businesses/${b.id}/claim`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` }
+      method: 'POST', headers: { Authorization: `Bearer ${token}` }
     })
     const d = await res.json()
     setClaimMsg(res.ok ? '✓ Talebiniz alındı, inceleme sonrası bildirim alacaksınız.' : d.error || 'Hata oluştu.')
@@ -71,11 +176,8 @@ export default function SahipPaneliPage() {
     if (res.ok) {
       setSelected(d.business)
       setMyBusinesses(prev => prev.map(x => x.id === d.business.id ? d.business : x))
-      setSaveMsg('Kaydedildi!')
-      setEditing(false)
-    } else {
-      setSaveMsg(d.error || 'Kaydetme başarısız.')
-    }
+      setSaveMsg('✓ Kaydedildi!'); setEditing(false)
+    } else { setSaveMsg(d.error || 'Kaydetme başarısız.') }
     setSaving(false)
     setTimeout(() => setSaveMsg(null), 3000)
   }
@@ -84,196 +186,312 @@ export default function SahipPaneliPage() {
     const f = e.target.files?.[0]
     if (!f || !selected) return
     setPhotoUploading(true)
-    const fd = new FormData()
-    fd.append('file', f)
+    const fd = new FormData(); fd.append('file', f)
     const token = getToken()
     const res = await fetch(`${API}/api/upload/business`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: fd
+      method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd
     })
     if (res.ok) {
       const d = await res.json()
-      const updated = { ...selected, coverPhoto: d.url }
-      setSelected(updated)
-      setMyBusinesses(prev => prev.map(x => x.id === selected.id ? updated : x))
+      setSelected((prev: any) => ({ ...prev, coverPhoto: d.url }))
     }
     setPhotoUploading(false)
   }
 
+  const getCover = (b: any) => b.coverPhoto || b.photos?.[0]?.url || (b.attributes?.photos?.[0]) || null
+
+  // ── Seçili işletme yönetim ekranı ──
+  if (selected) {
+    const cover = getCover(selected)
+    const rating = normalizeRating(selected.averageRating ?? 0)
+    return (
+      <AppLayout>
+        <div className="max-w-lg mx-auto pb-8">
+          {/* Header */}
+          <div className="relative h-44 overflow-hidden">
+            {cover ? (
+              <img src={cover} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-indigo-900/40 to-purple-900/30 flex items-center justify-center">
+                <Building2 size={48} className="text-white/10" />
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+            <button onClick={() => { setSelected(null); setActiveTab('overview') }}
+              className="absolute top-4 left-4 w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm border border-white/15 flex items-center justify-center text-white">
+              <X size={16} />
+            </button>
+            <label className="absolute top-4 right-4 cursor-pointer">
+              <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/40 backdrop-blur-sm border border-white/15 text-xs text-white font-medium">
+                {photoUploading ? <Loader2 size={11} className="animate-spin" /> : <Camera size={11} />} Fotoğraf
+              </div>
+            </label>
+            <div className="absolute bottom-4 left-4 right-4">
+              <h1 className="text-xl font-black text-white">{selected.name}</h1>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                <span className="flex items-center gap-1 text-xs text-white/50"><MapPin size={10} />{selected.district || selected.city}</span>
+                <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full border',
+                  selected.claimStatus === 'CLAIMED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                  selected.claimStatus === 'PENDING' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                  'bg-white/[0.07] text-white/40 border-white/10'
+                )}>
+                  {selected.claimStatus === 'CLAIMED' ? '✓ Doğrulandı' : selected.claimStatus === 'PENDING' ? '⏳ İnceleniyor' : 'Doğrulanmamış'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex border-b border-white/[0.07] px-4 mt-2">
+            {([['overview','Genel Bakış'],['edit','Bilgileri Düzenle'],['reviews','Yorumlar']] as const).map(([key, label]) => (
+              <button key={key} onClick={() => setActiveTab(key)}
+                className={cn('py-3 px-4 text-xs font-bold border-b-2 transition-colors',
+                  activeTab === key ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-white/40 hover:text-white/60'
+                )}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="px-4 mt-4">
+            {/* Overview Tab */}
+            {activeTab === 'overview' && (
+              <div className="space-y-4">
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { icon: Star, label: 'Puan', value: rating > 0 ? rating.toFixed(1) : '—', color: 'text-amber-400' },
+                    { icon: MessageSquare, label: 'Yorum', value: selected.totalReviews ?? 0, color: 'text-indigo-400' },
+                    { icon: Eye, label: 'Görüntülenme', value: selected.totalViews ?? 0, color: 'text-purple-400' },
+                  ].map(({ icon: Icon, label, value, color }) => (
+                    <div key={label} className="bg-surface-1 border border-white/[0.07] rounded-2xl p-3 text-center">
+                      <Icon size={18} className={cn('mx-auto mb-1', color)} />
+                      <div className="text-lg font-black text-white">{value}</div>
+                      <div className="text-[10px] text-white/35">{label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Rating bar */}
+                {rating > 0 && (
+                  <div className="bg-surface-1 border border-white/[0.07] rounded-2xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-bold text-white">Puan Dağılımı</span>
+                      <div className="flex items-center gap-1">
+                        {[1,2,3,4,5].map(s => <Star key={s} size={12} className={s <= Math.round(rating) ? 'text-amber-400 fill-amber-400' : 'text-white/15'} />)}
+                      </div>
+                    </div>
+                    <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                      <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all" style={{ width: `${(rating / 5) * 100}%` }} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Quick links */}
+                <div className="space-y-2">
+                  <button onClick={() => setActiveTab('edit')}
+                    className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-surface-1 border border-white/[0.07] hover:border-indigo-500/30 transition-all">
+                    <div className="w-9 h-9 rounded-xl bg-indigo-500/15 flex items-center justify-center"><Edit3 size={15} className="text-indigo-400" /></div>
+                    <div className="flex-1 text-left"><div className="text-sm font-bold text-white">İşletme Bilgilerini Düzenle</div><div className="text-xs text-white/35">Adres, telefon, açıklama</div></div>
+                    <ChevronRight size={14} className="text-white/20" />
+                  </button>
+                  <Link href={`/isletme/${selected.slug}`}
+                    className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-surface-1 border border-white/[0.07] hover:border-indigo-500/30 transition-all">
+                    <div className="w-9 h-9 rounded-xl bg-purple-500/15 flex items-center justify-center"><Eye size={15} className="text-purple-400" /></div>
+                    <div className="flex-1 text-left"><div className="text-sm font-bold text-white">İşletme Sayfasını Görüntüle</div><div className="text-xs text-white/35">Müşterilerin gördüğü sayfa</div></div>
+                    <ChevronRight size={14} className="text-white/20" />
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {/* Edit Tab */}
+            {activeTab === 'edit' && (
+              <div>
+                {saveMsg && <div className={cn('text-xs mb-3 font-medium p-2.5 rounded-xl', saveMsg.startsWith('✓') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400')}>{saveMsg}</div>}
+                {!editing ? (
+                  <div className="space-y-3">
+                    {[
+                      { key: 'name', label: 'İşletme Adı' },
+                      { key: 'phoneNumber', label: 'Telefon' },
+                      { key: 'email', label: 'E-posta' },
+                      { key: 'website', label: 'Website' },
+                      { key: 'address', label: 'Adres' },
+                      { key: 'city', label: 'Şehir' },
+                      { key: 'district', label: 'İlçe' },
+                      { key: 'description', label: 'Açıklama' },
+                    ].map(({ key, label }) => (
+                      <div key={key} className="bg-surface-1 border border-white/[0.07] rounded-2xl px-4 py-3">
+                        <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1">{label}</div>
+                        <div className="text-sm text-white/70">{(selected as any)[key] || <span className="text-white/20 italic">Belirtilmemiş</span>}</div>
+                      </div>
+                    ))}
+                    <button onClick={() => { setEditing(true); setForm({ name: selected.name, address: selected.address, city: selected.city, district: selected.district, description: selected.description, phoneNumber: selected.phoneNumber, email: selected.email, website: selected.website }) }}
+                      className="w-full py-3 rounded-2xl bg-indigo-500 text-white text-sm font-bold hover:bg-indigo-600 transition-colors flex items-center justify-center gap-2">
+                      <Edit3 size={14} /> Düzenle
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {[
+                      { key: 'name', label: 'İşletme Adı', type: 'input' },
+                      { key: 'phoneNumber', label: 'Telefon', type: 'input' },
+                      { key: 'email', label: 'E-posta', type: 'input' },
+                      { key: 'website', label: 'Website', type: 'input' },
+                      { key: 'address', label: 'Adres', type: 'input' },
+                      { key: 'city', label: 'Şehir', type: 'input' },
+                      { key: 'district', label: 'İlçe', type: 'input' },
+                    ].map(({ key, label }) => (
+                      <div key={key}>
+                        <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1">{label}</div>
+                        <input value={form[key] || ''} onChange={e => setForm({ ...form, [key]: e.target.value })}
+                          className="w-full bg-surface-2 border border-indigo-500/30 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-indigo-500/60" />
+                      </div>
+                    ))}
+                    <div>
+                      <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1">Açıklama</div>
+                      <textarea value={form.description || ''} onChange={e => setForm({ ...form, description: e.target.value })} rows={4}
+                        className="w-full bg-surface-2 border border-indigo-500/30 rounded-xl px-3 py-2.5 text-sm text-white outline-none resize-none focus:border-indigo-500/60" />
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={handleSave} disabled={saving}
+                        className="flex-1 py-3 rounded-2xl bg-indigo-500 text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2">
+                        {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Kaydet
+                      </button>
+                      <button onClick={() => setEditing(false)} className="px-5 py-3 rounded-2xl bg-white/[0.05] text-white/50 text-sm font-medium">İptal</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Reviews Tab */}
+            {activeTab === 'reviews' && (
+              <ReviewsTab business={selected} />
+            )}
+          </div>
+        </div>
+      </AppLayout>
+    )
+  }
+
+  // ── Ana liste / sahiplen ekranı ──
   return (
     <AppLayout>
       <div className="max-w-lg mx-auto px-4 py-6">
         <h1 className="text-2xl font-black text-white mb-1">Sahip Paneli</h1>
         <p className="text-sm text-white/40 mb-6">İşletmenizi yönetin veya sahiplik talep edin</p>
 
-        {selected ? (
-          <div>
-            <button onClick={() => { setSelected(null); setEditing(false) }} className="flex items-center gap-1.5 text-sm text-white/40 hover:text-white mb-5 transition-colors">
-              <X size={14} /> Geri
-            </button>
-
-            {/* Cover + photo upload */}
-            <div className="relative rounded-2xl overflow-hidden bg-surface-2 border border-white/[0.07] mb-4 h-36">
-              {selected.coverPhoto ? (
-                <img src={selected.coverPhoto} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <Building2 size={36} className="text-white/10" />
-                </div>
-              )}
-              <label className="absolute bottom-3 right-3 cursor-pointer">
-                <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/50 backdrop-blur-sm border border-white/20 text-xs text-white font-medium hover:bg-black/70 transition-colors">
-                  {photoUploading ? <Loader2 size={11} className="animate-spin" /> : <Camera size={11} />}
-                  Fotoğraf Değiştir
-                </div>
-              </label>
-            </div>
-
-            {/* Status badge */}
-            <div className="flex items-center gap-2 mb-4">
-              <span className={cn(
-                'text-xs font-bold px-2.5 py-1 rounded-full border',
-                selected.claimStatus === 'CLAIMED' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' :
-                selected.claimStatus === 'PENDING' ? 'bg-amber-500/15 text-amber-400 border-amber-500/30' :
-                'bg-white/[0.05] text-white/40 border-white/10'
-              )}>
-                {selected.claimStatus === 'CLAIMED' ? '✓ Doğrulandı' : selected.claimStatus === 'PENDING' ? '⏳ İnceleniyor' : 'Doğrulanmamış'}
-              </span>
-              {selected.isVerified && <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">✓ Verified</span>}
-            </div>
-
-            {/* Form */}
-            <div className="bg-surface-1 border border-white/[0.07] rounded-2xl p-4 mb-4">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-bold text-white">İşletme Bilgileri</span>
-                {!editing ? (
-                  <button onClick={() => { setEditing(true); setForm({ name: selected.name, address: selected.address, city: selected.city, district: selected.district, description: selected.description, phoneNumber: selected.phoneNumber, email: selected.email, website: selected.website }) }}
-                    className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
-                    <Edit3 size={12} /> Düzenle
-                  </button>
-                ) : (
-                  <div className="flex gap-2">
-                    <button onClick={handleSave} disabled={saving} className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-500 text-white text-xs font-bold disabled:opacity-50">
-                      {saving ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />} Kaydet
-                    </button>
-                    <button onClick={() => setEditing(false)} className="px-3 py-1 rounded-lg bg-white/[0.05] text-white/40 text-xs">İptal</button>
+        {loading ? (
+          <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-white/30" /></div>
+        ) : myBusinesses.length > 0 ? (
+          <div className="mb-8">
+            <div className="text-xs font-bold text-white/40 uppercase tracking-wider mb-3">İşletmelerim</div>
+            {myBusinesses.map(b => {
+              const cover = getCover(b)
+              const rating = normalizeRating(b.averageRating ?? 0)
+              return (
+                <button key={b.id} onClick={() => setSelected(b)}
+                  className="w-full flex items-center gap-3 p-3 rounded-2xl border border-white/[0.07] bg-surface-1 hover:bg-surface-2 hover:border-indigo-500/30 transition-all text-left mb-2">
+                  <div className="w-14 h-14 rounded-xl flex-shrink-0 overflow-hidden border border-white/[0.06]">
+                    {cover ? <img src={cover} alt="" className="w-full h-full object-cover" /> :
+                      <div className="w-full h-full bg-indigo-500/20 flex items-center justify-center"><Building2 size={20} className="text-indigo-400" /></div>}
                   </div>
-                )}
-              </div>
-              {saveMsg && <div className={cn('text-xs mb-3 font-medium', saveMsg.startsWith('K') ? 'text-emerald-400' : 'text-red-400')}>{saveMsg}</div>}
-              <div className="space-y-3">
-                {[
-                  { key: 'name', label: 'İşletme Adı', icon: Building2 },
-                  { key: 'phoneNumber', label: 'Telefon', icon: Phone },
-                  { key: 'email', label: 'E-posta', icon: Mail },
-                  { key: 'website', label: 'Website', icon: Globe },
-                  { key: 'address', label: 'Adres', icon: MapPin },
-                  { key: 'city', label: 'Şehir', icon: MapPin },
-                  { key: 'district', label: 'İlçe', icon: MapPin },
-                ].map(({ key, label, icon: Icon }) => (
-                  <div key={key}>
-                    <div className="flex items-center gap-1.5 text-[10px] text-white/30 uppercase tracking-wider mb-1">
-                      <Icon size={9} /> {label}
-                    </div>
-                    {editing ? (
-                      <input value={form[key] || ''} onChange={e => setForm({ ...form, [key]: e.target.value })}
-                        className="w-full bg-surface-2 border border-indigo-500/30 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500/60" />
-                    ) : (
-                      <div className="text-sm text-white/70">{(selected as any)[key] || <span className="text-white/20 italic">Belirtilmemiş</span>}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-sm text-white truncate">{b.name}</div>
+                    <div className="flex items-center gap-1 text-xs text-white/40 mt-0.5"><MapPin size={9} />{b.district || b.city}</div>
+                    {rating > 0 && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <Star size={10} className="text-amber-400 fill-amber-400" />
+                        <span className="text-xs text-white/50">{rating.toFixed(1)}</span>
+                        <span className="text-xs text-white/25">({b.totalReviews})</span>
+                      </div>
                     )}
                   </div>
-                ))}
-                <div>
-                  <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1">Açıklama</div>
-                  {editing ? (
-                    <textarea value={form.description || ''} onChange={e => setForm({ ...form, description: e.target.value })} rows={3}
-                      className="w-full bg-surface-2 border border-indigo-500/30 rounded-xl px-3 py-2 text-sm text-white outline-none resize-none focus:border-indigo-500/60" />
-                  ) : (
-                    <div className="text-sm text-white/70 leading-relaxed">{selected.description || <span className="text-white/20 italic">Açıklama yok</span>}</div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <Link href={`/isletme/${selected.slug}`} className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-white/[0.05] border border-white/[0.08] text-sm text-white/60 hover:text-white hover:bg-white/[0.08] transition-all">
-              İşletme Sayfasına Git <ChevronRight size={14} />
-            </Link>
-          </div>
-        ) : (
-          <div>
-            {/* My businesses */}
-            {loading ? (
-              <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-white/30" /></div>
-            ) : myBusinesses.length > 0 ? (
-              <div className="mb-8">
-                <div className="text-xs font-bold text-white/40 uppercase tracking-wider mb-3">İşletmelerim</div>
-                {myBusinesses.map(b => (
-                  <button key={b.id} onClick={() => setSelected(b)}
-                    className="w-full flex items-center gap-3 p-3 rounded-2xl border border-white/[0.07] bg-surface-1 hover:bg-surface-2 hover:border-indigo-500/30 transition-all text-left mb-2">
-                    <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                      {b.coverPhoto ? <img src={b.coverPhoto} alt="" className="w-full h-full object-cover" /> : <Building2 size={20} className="text-indigo-400" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-bold text-sm text-white truncate">{b.name}</div>
-                      <div className="text-xs text-white/40">{b.district || b.city}</div>
-                    </div>
+                  <div className="flex flex-col items-end gap-1.5">
                     <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full',
                       b.claimStatus === 'CLAIMED' ? 'bg-emerald-500/15 text-emerald-400' :
                       b.claimStatus === 'PENDING' ? 'bg-amber-500/15 text-amber-400' : 'bg-white/[0.05] text-white/30'
                     )}>
                       {b.claimStatus === 'CLAIMED' ? 'Doğrulandı' : b.claimStatus === 'PENDING' ? 'Bekliyor' : 'Taslak'}
                     </span>
-                    <ChevronRight size={14} className="text-white/20 flex-shrink-0" />
-                  </button>
-                ))}
-              </div>
-            ) : null}
-
-            {/* Claim section */}
-            <div className="bg-surface-1 border border-white/[0.07] rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Building2 size={16} className="text-indigo-400" />
-                <span className="text-sm font-bold text-white">İşletmenizi Sahiplenin</span>
-              </div>
-              <p className="text-xs text-white/40 mb-4">Listede işletmenizi arayın ve sahiplik talep edin.</p>
-              <div className="flex gap-2 mb-3">
-                <input value={claimQuery} onChange={e => setClaimQuery(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && searchClaim()}
-                  placeholder="İşletme adı..."
-                  className="flex-1 bg-surface-2 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-white/20 outline-none focus:border-indigo-500/40" />
-                <button onClick={searchClaim} disabled={claimSearching}
-                  className="px-4 py-2 rounded-xl bg-indigo-500 text-white text-sm font-bold hover:bg-indigo-600 transition-colors disabled:opacity-50">
-                  {claimSearching ? <Loader2 size={14} className="animate-spin" /> : 'Ara'}
-                </button>
-              </div>
-              {claimMsg && (
-                <div className={cn('text-xs font-medium mb-3 p-2.5 rounded-xl', claimMsg.startsWith('✓') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400')}>
-                  {claimMsg}
-                </div>
-              )}
-              {claimResults.map(b => (
-                <div key={b.id} className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.06] bg-surface-2 mb-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-white truncate">{b.name}</div>
-                    <div className="text-xs text-white/40">{b.district || b.city}</div>
+                    <ChevronRight size={14} className="text-white/20" />
                   </div>
-                  {b.claimStatus === 'CLAIMED' ? (
-                    <span className="text-xs text-white/30 italic">Sahiplenilmiş</span>
-                  ) : b.claimStatus === 'PENDING' ? (
-                    <span className="flex items-center gap-1 text-xs text-amber-400"><Clock size={11} /> Bekliyor</span>
-                  ) : (
-                    <button onClick={() => handleClaim(b)} disabled={claiming === b.id}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500 text-white text-xs font-bold hover:bg-indigo-600 transition-colors disabled:opacity-50">
-                      {claiming === b.id ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />} Talep Et
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
+                </button>
+              )
+            })}
           </div>
-        )}
+        ) : null}
+
+        {/* Claim section */}
+        <div className="bg-surface-1 border border-white/[0.07] rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <Building2 size={16} className="text-indigo-400" />
+            <span className="text-sm font-bold text-white">İşletmenizi Sahiplenin</span>
+          </div>
+          <p className="text-xs text-white/40 mb-4">Listede işletmenizi arayın ve sahiplik talep edin.</p>
+          <div className="flex gap-2 mb-3">
+            <input value={claimQuery} onChange={e => setClaimQuery(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && searchClaim()}
+              placeholder="İşletme adı..."
+              className="flex-1 bg-surface-2 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-white/20 outline-none focus:border-indigo-500/40" />
+            <button onClick={searchClaim} disabled={claimSearching}
+              className="px-4 py-2 rounded-xl bg-indigo-500 text-white text-sm font-bold hover:bg-indigo-600 transition-colors disabled:opacity-50">
+              {claimSearching ? <Loader2 size={14} className="animate-spin" /> : 'Ara'}
+            </button>
+          </div>
+          {claimMsg && (
+            <div className={cn('text-xs font-medium mb-3 p-2.5 rounded-xl', claimMsg.startsWith('✓') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400')}>
+              {claimMsg}
+            </div>
+          )}
+          <div className="space-y-2">
+            {claimResults.map(b => {
+              const cover = getCover(b)
+              const rating = normalizeRating(b.averageRating ?? 0)
+              return (
+                <div key={b.id} className="flex items-center gap-3 p-3 rounded-2xl border border-white/[0.08] bg-surface-2 hover:border-indigo-500/20 transition-all">
+                  <div className="w-12 h-12 rounded-xl flex-shrink-0 overflow-hidden border border-white/[0.06]">
+                    {cover ? <img src={cover} alt="" className="w-full h-full object-cover" /> :
+                      <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg,rgba(99,102,241,.2),rgba(168,85,247,.15))' }}>
+                        <Building2 size={18} className="text-indigo-400/70" />
+                      </div>}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold text-white truncate">{b.name}</div>
+                    <div className="flex items-center gap-1 text-xs text-white/35 mt-0.5">
+                      <MapPin size={9} /><span>{b.district ? `${b.district}, ${b.city}` : b.city}</span>
+                      {b.category && <><span className="text-white/15">·</span><span>{b.category.name}</span></>}
+                    </div>
+                    {rating > 0 && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <div className="flex gap-0.5">
+                          {[1,2,3,4,5].map(s => <div key={s} className={cn('w-1.5 h-1.5 rounded-full', s <= Math.round(rating) ? 'bg-amber-400' : 'bg-white/10')} />)}
+                        </div>
+                        <span className="text-[10px] text-white/30">{b.totalReviews} yorum</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-shrink-0">
+                    {b.claimStatus === 'CLAIMED' ? (
+                      <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white/[0.05] text-white/25 border border-white/[0.06]">Sahiplenilmiş</span>
+                    ) : b.claimStatus === 'PENDING' ? (
+                      <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                        <Clock size={9} /> Bekliyor
+                      </span>
+                    ) : (
+                      <button onClick={() => handleClaim(b)} disabled={claiming === b.id}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-500 text-white text-xs font-bold hover:bg-indigo-600 active:scale-95 transition-all disabled:opacity-50 shadow-lg shadow-indigo-500/20">
+                        {claiming === b.id ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />} Talep Et
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </div>
     </AppLayout>
   )

@@ -8,7 +8,7 @@ import {
   MapPin, Phone, Globe, ChevronLeft, Star, ThumbsUp, Share2,
   Flag, ExternalLink, Bookmark, BookmarkCheck, Navigation,
   Clock, ChevronRight, X, ZoomIn, Camera, Info,
-  MessageSquare, CheckCircle, AlertCircle, ChevronDown
+  MessageSquare, CheckCircle, AlertCircle, ChevronDown, Building2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
@@ -438,6 +438,18 @@ export default function BusinessPage() {
                 </button>
               )}
             </div>
+          )}
+          {business.claimStatus !== 'CLAIMED' && (
+            <a href="/sahip-paneli" className="flex items-center gap-2 w-full mb-4 px-4 py-3 rounded-2xl border border-dashed border-indigo-500/30 bg-indigo-500/[0.05] hover:bg-indigo-500/[0.10] hover:border-indigo-500/50 transition-all group">
+              <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                <Building2 size={15} className="text-indigo-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-bold text-indigo-400">Bu işletmenin sahibi misiniz?</div>
+                <div className="text-[10px] text-white/30 mt-0.5">Sahiplik talep edin, bilgilerinizi güncelleyin</div>
+              </div>
+              <ChevronRight size={14} className="text-indigo-400/50 group-hover:text-indigo-400 transition-colors flex-shrink-0" />
+            </a>
           )}
 
           <div className="grid grid-cols-4 gap-2 mb-5">

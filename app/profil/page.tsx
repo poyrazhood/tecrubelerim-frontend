@@ -491,7 +491,6 @@ export default function ProfilPage() {
               <SettingsItem icon={Shield}   label="Gizlilik"          sub="Profil gorunurlugu, veri"          href="/profil/gizlilik" />
               <SettingsItem icon={Bookmark} label="Kaydedilen Yerler" sub="Kaydettiginiz isletmeler"          href="/profil/kaydedilenler" />
               <SettingsItem icon={Building2} label="Sahip Paneli" sub="Isletmenizi yonetin veya sahiplenin" href="/sahip-paneli" />
-              <SettingsItem icon={Building2} label="Sahip Paneli"      sub="Isletmenizi yonetin veya sahiplenin"  href="/sahip-paneli" />
               <SettingsItem icon={Award}    label="Muhtar Basvurusu"  sub="Mahallenizin guvenilir yorumcusu olun" />
               <div className="pt-2">
                 <SettingsItem icon={LogOut} label="Cikis Yap" danger onClick={handleLogout} />
