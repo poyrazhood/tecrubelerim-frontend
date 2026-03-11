@@ -2,6 +2,7 @@
 
 import { Search, Sparkles, X } from 'lucide-react'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
 const SUGGESTIONS = [
@@ -19,12 +20,14 @@ interface SearchBarProps {
 export function SearchBar({ onSearch }: SearchBarProps) {
   const [query, setQuery] = useState('')
   const [focused, setFocused] = useState(false)
+  const router = useRouter()
 
   const handleClear = () => setQuery('')
   const handleSearch = (q: string) => {
     setQuery(q)
     onSearch?.(q)
     setFocused(false)
+    router.push(`/arama?q=${encodeURIComponent(q)}`)
   }
 
   return (
