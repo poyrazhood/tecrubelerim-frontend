@@ -1,19 +1,19 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Home, Search, PlusCircle, Bell, User, Award, LogOut } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { Home, Search, PlusCircle, Bell, User, Award, LogOut, MapPin, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { MOCK_MUHTARLAR, MOCK_BUSINESSES } from '@/lib/mock-data'
-import { MapPin, Sparkles } from 'lucide-react'
+import { useAuth } from '@/lib/AuthContext'
 
 const NAV_ITEMS = [
-  { href: '/', icon: Home, label: 'Ana Sayfa' },
-  { href: '/kesfet', icon: Search, label: 'Keşfet' },
-  { href: '/yorum-yaz', icon: PlusCircle, label: 'Yorum Yaz' },
-  { href: '/bildirimler', icon: Bell, label: 'Bildirimler' },
-  { href: '/profil', icon: User, label: 'Profil' },
-  { href: '/muhtarlar', icon: Award, label: 'Muhtarlar' },
+  { href: '/',           icon: Home,       label: 'Ana Sayfa' },
+  { href: '/kesfet',     icon: Search,     label: 'Keşfet' },
+  { href: '/yorum-yaz',  icon: PlusCircle, label: 'Yorum Yaz' },
+  { href: '/bildirimler',icon: Bell,       label: 'Bildirimler' },
+  { href: '/profil',     icon: User,       label: 'Profil' },
+  { href: '/muhtarlar',  icon: Award,      label: 'Muhtarlar' },
 ]
 
 const RANK_COLORS: Record<number, string> = {
@@ -22,10 +22,36 @@ const RANK_COLORS: Record<number, string> = {
   3: 'from-amber-700 to-amber-800 text-white',
 }
 
+// ─── Kullanıcı Avatar Yardımcısı ─────────────────────────────────────────────
+
+function UserAvatar({ name, username, avatarUrl, size = 'sm' }: {
+  name?: string; username?: string; avatarUrl?: string | null; size?: 'sm' | 'md'
+}) {
+  const initials = ((name || username || 'U')
+    .split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2))
+  const dim = size === 'md' ? 'w-9 h-9 text-xs' : 'w-8 h-8 text-[10px]'
+
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name || username}
+        className={cn(dim, 'rounded-full object-cover border border-white/10 flex-shrink-0')}
+      />
+    )
+  }
+  return (
+    <div className={cn(dim, 'rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white flex-shrink-0')}>
+      {initials}
+    </div>
+  )
+}
+
+// ─── Sağ Panel ────────────────────────────────────────────────────────────────
+
 function RightPanel() {
   return (
     <>
-      {/* Muhtarlar widget */}
       <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -70,7 +96,6 @@ function RightPanel() {
         </div>
       </div>
 
-      {/* AI Önerisi widget */}
       <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
         <div className="flex items-center gap-2 mb-4">
           <Sparkles size={14} className="text-indigo-400" />
@@ -100,7 +125,6 @@ function RightPanel() {
         </Link>
       </div>
 
-      {/* Footer */}
       <div className="px-1">
         <p className="text-[10px] text-white/20 leading-relaxed">
           Tecrübelerim Beta · Gizlilik · Kullanım Koşulları · Yardım
@@ -111,24 +135,33 @@ function RightPanel() {
   )
 }
 
-export function AppLayout({
-  children,
-  hideBottomNav,
-}: {
+// ─── Ana Layout ───────────────────────────────────────────────────────────────
+
+export function AppLayout({ children, hideBottomNav }: {
   children: React.ReactNode
   hideBottomNav?: boolean
 }) {
-  const pathname = usePathname()
+  const pathname  = usePathname()
+  const router    = useRouter()
+  const { user, logout } = useAuth()
+
+  const handleLogout = () => {
+    logout()
+    router.push('/giris')
+  }
 
   const pageTitle: Record<string, string> = {
-    '/': 'Ana Sayfa',
-    '/kesfet': 'Keşfet',
-    '/muhtarlar': 'Mahalle Muhtarları',
-    '/profil': 'Profil',
-    '/yorum-yaz': 'Yorum Yaz',
+    '/':            'Ana Sayfa',
+    '/kesfet':      'Keşfet',
+    '/muhtarlar':   'Mahalle Muhtarları',
+    '/profil':      'Profil',
+    '/yorum-yaz':   'Yorum Yaz',
     '/bildirimler': 'Bildirimler',
   }
   const title = pageTitle[pathname] ?? 'Tecrübelerim'
+
+  const displayName = user?.fullName || user?.username || '...'
+  const username    = user ? `@${user.username}` : ''
 
   return (
     <div className="min-h-screen bg-surface">
@@ -136,6 +169,8 @@ export function AppLayout({
       {/* ══════ MOBILE ( < lg ) ══════ */}
       <div className="lg:hidden flex justify-center">
         <div className="w-full max-w-[480px] min-h-screen relative border-x border-white/[0.04] flex flex-col">
+
+          {/* Mobile header */}
           <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-white/[0.06] px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
@@ -145,12 +180,18 @@ export function AppLayout({
               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 uppercase tracking-wider">Beta</span>
             </div>
             <div className="flex items-center gap-2">
-              <button className="relative w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all">
-                <Bell size={15} />
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-indigo-500 border-2 border-surface notif-dot" />
-              </button>
+              <Link href="/bildirimler">
+                <button className="relative w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all">
+                  <Bell size={15} />
+                </button>
+              </Link>
               <Link href="/profil">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white cursor-pointer">AY</div>
+                <UserAvatar
+                  name={user?.fullName}
+                  username={user?.username}
+                  avatarUrl={user?.avatarUrl}
+                  size="sm"
+                />
               </Link>
             </div>
           </header>
@@ -163,7 +204,10 @@ export function AppLayout({
                 {NAV_ITEMS.slice(0, 5).map(({ href, icon: Icon, label }) => {
                   const active = pathname === href
                   return (
-                    <Link key={href} href={href} className={cn('flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all', active ? 'text-indigo-400' : 'text-white/30 hover:text-white/60')}>
+                    <Link key={href} href={href} className={cn(
+                      'flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all',
+                      active ? 'text-indigo-400' : 'text-white/30 hover:text-white/60'
+                    )}>
                       {href === '/yorum-yaz' ? (
                         <div className="w-10 h-10 -mt-5 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
                           <Icon size={20} className="text-white" />
@@ -186,7 +230,7 @@ export function AppLayout({
       {/* ══════ DESKTOP ( >= lg ) ══════ */}
       <div className="hidden lg:grid min-h-screen" style={{ gridTemplateColumns: '260px 1fr 320px', maxWidth: 1240, margin: '0 auto' }}>
 
-        {/* Left sidebar */}
+        {/* Sol sidebar */}
         <aside className="sticky top-0 h-screen flex flex-col px-3 py-6 border-r border-white/[0.06] overflow-y-auto">
           <Link href="/" className="flex items-center gap-2.5 mb-8 px-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
@@ -221,34 +265,43 @@ export function AppLayout({
           {/* User card */}
           <div className="mt-4 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center gap-3">
             <Link href="/profil">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0 cursor-pointer">AY</div>
+              <UserAvatar
+                name={user?.fullName}
+                username={user?.username}
+                avatarUrl={user?.avatarUrl}
+                size="md"
+              />
             </Link>
             <div className="flex-1 min-w-0">
-              <div className="font-semibold text-sm text-white truncate">Ayşe Yılmaz</div>
-              <div className="text-xs text-white/40 truncate">@ayseyilmaz</div>
+              <div className="font-semibold text-sm text-white truncate">{displayName}</div>
+              <div className="text-xs text-white/40 truncate">{username}</div>
             </div>
-            <button className="text-white/30 hover:text-white/60 transition-colors p-1">
+            <button
+              onClick={handleLogout}
+              className="text-white/30 hover:text-red-400 transition-colors p-1"
+              title="Çıkış Yap"
+            >
               <LogOut size={14} />
             </button>
           </div>
         </aside>
 
-        {/* Center — main content */}
+        {/* Orta — ana içerik */}
         <main className="flex flex-col border-r border-white/[0.06] min-w-0">
           <div className="sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-white/[0.06] px-6 py-4 flex items-center justify-between">
             <h1 className="font-black text-lg text-white">{title}</h1>
-            <div className="flex items-center gap-2">
+            <Link href="/bildirimler">
               <button className="w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all">
                 <Bell size={15} />
               </button>
-            </div>
+            </Link>
           </div>
           <div className={hideBottomNav ? '' : 'pb-8'}>
             {children}
           </div>
         </main>
 
-        {/* Right sidebar */}
+        {/* Sağ sidebar */}
         <aside className="sticky top-0 h-screen px-4 py-6 space-y-4 overflow-y-auto">
           <RightPanel />
         </aside>
