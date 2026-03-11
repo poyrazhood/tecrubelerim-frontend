@@ -1,4 +1,6 @@
-﻿'use client'
+$file = "C:\Users\PC\Desktop\tecrubelerim-frontend\app\isletme\[slug]\page.tsx"
+$content = @'
+'use client'
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -16,26 +18,11 @@ import Link from 'next/link'
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '')
 const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
 
-function normalizeRating(raw: number): number {
-  if (!raw || raw <= 0) return 0
-  if (raw <= 5) return raw
-  if (raw <= 50) return raw / 10
-  if (raw <= 500) return raw / 100
-  if (raw <= 5000) return raw / 1000
-  if (raw <= 50000) return raw / 10000
-  return raw / 1000000
-}
 function mapTrustScore(raw: number) {
-  const normalized = normalizeRating(raw)
-  const score = Math.round(normalized * 20)
+  const score = raw > 100 ? Math.round((raw / 1000000) * 20) : raw > 5 ? raw : Math.round(raw * 20)
   const clamped = Math.max(0, Math.min(100, score))
   const grade = clamped >= 90 ? 'A' : clamped >= 75 ? 'B' : clamped >= 60 ? 'C' : clamped >= 40 ? 'D' : 'F'
   return { grade, score: clamped, breakdown: { reviewDepth: Math.round(clamped * 0.9), recencyTrend: Math.round(clamped * 1.05), verifiedRatio: Math.round(clamped * 0.95), engagement: Math.round(clamped * 0.85) }, trend: 'stable' as const }
-}
-
-function cleanFeature(f: string): string {
-  // Bozuk unicode karakterleri temizle, sadece harf/rakam/bosluk/tire birak
-  return f.replace(/[^\p{L}\p{N}\s\-\/&(),.]/gu, '').trim()
 }
 
 function formatRelativeTime(dateStr: string): string {
@@ -234,8 +221,8 @@ function ShareSheet({ name, onClose }: { name: string; onClose: () => void }) {
         <h3 className="text-base font-bold text-white mb-4">{name}</h3>
         <div className="flex gap-4 mb-5">
           {[
-            { label: 'WhatsApp', color: '#25D366', icon: 'ğŸ’¬', href: `https://wa.me/?text=${encodeURIComponent(name + ' ' + url)}` },
-            { label: 'Twitter', color: '#1DA1F2', icon: 'ğŸ¦', href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(name)}&url=${encodeURIComponent(url)}` },
+            { label: 'WhatsApp', color: '#25D366', icon: '💬', href: `https://wa.me/?text=${encodeURIComponent(name + ' ' + url)}` },
+            { label: 'Twitter', color: '#1DA1F2', icon: '🐦', href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(name)}&url=${encodeURIComponent(url)}` },
           ].map(({ label, color, icon, href }) => (
             <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2">
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl" style={{ background: color + '20', border: `1px solid ${color}40` }}>{icon}</div>
@@ -243,7 +230,7 @@ function ShareSheet({ name, onClose }: { name: string; onClose: () => void }) {
             </a>
           ))}
           <button onClick={copy} className="flex flex-col items-center gap-2">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl bg-indigo-500/20 border border-indigo-500/40">{copied ? 'âœ“' : 'ğŸ“‹'}</div>
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl bg-indigo-500/20 border border-indigo-500/40">{copied ? '✓' : '📋'}</div>
             <span className="text-xs text-white/50">{copied ? 'Kopyalandi!' : 'Kopyala'}</span>
           </button>
         </div>
@@ -336,14 +323,14 @@ export default function BusinessPage() {
   const photos: string[] = attrs.photos ?? []
   const coverPhoto: string = attrs.coverPhoto ?? photos[0] ?? `https://picsum.photos/seed/${slug}/800/400`
   const trustScore = mapTrustScore(business.averageRating ?? 0)
-  const features: string[] = (Object.values(attrs.about ?? {}).flat() as string[]).map(cleanFeature).filter(Boolean)
+  const features: string[] = Object.values(attrs.about ?? {}).flat() as string[]
   const platformReviews: any[] = business.reviews ?? []
   const externalReviews: any[] = business.externalReviews ?? []
   const visibleReviews = reviewFilter === 'platform' ? platformReviews : reviewFilter === 'google' ? externalReviews : [...platformReviews, ...externalReviews].sort((a, b) => new Date(b.createdAt ?? b.publishedAt ?? 0).getTime() - new Date(a.createdAt ?? a.publishedAt ?? 0).getTime())
   const totalReviewCount = platformReviews.length + externalReviews.length
   const avgRating = externalReviews.length > 0
     ? (externalReviews.reduce((s: number, r: any) => s + (r.rating ?? 0), 0) / externalReviews.length).toFixed(1)
-    : business.averageRating > 0 ? normalizeRating(business.averageRating).toFixed(1) : null
+    : business.averageRating > 0 ? (business.averageRating > 5 ? (business.averageRating / 1000).toFixed(1) : business.averageRating.toFixed(1)) : null
   const allPhotos = photos.length > 0 ? photos : [coverPhoto]
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(business.name + ' ' + (business.address ?? ''))}`
 
@@ -459,12 +446,12 @@ export default function BusinessPage() {
           {(business.phoneNumber || business.website) && (
             <div className="flex gap-2 mb-5">
               {business.phoneNumber && (
-                <a href={`tel:${business.phoneNumber}`} className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-medium hover:bg-emerald-500/15 transition-colors">
+                <a href={`tel:${business.phoneNumber}`} className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-medium hover:bg-emerald-500/15 transition-colors">
                   <Phone size={13} />{business.phoneNumber}
                 </a>
               )}
               {business.website && (
-                <a href={business.website} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-white/[0.05] text-white/60 border border-white/[0.08] text-xs font-medium hover:bg-white/[0.09] transition-colors">
+                <a href={business.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/[0.05] text-white/60 border border-white/[0.08] text-xs font-medium hover:bg-white/[0.09] transition-colors">
                   <Globe size={13} />Website
                 </a>
               )}
@@ -560,7 +547,7 @@ export default function BusinessPage() {
                 <div key={key} className="bg-surface-1 border border-white/[0.06] rounded-2xl p-4">
                   <h3 className="text-xs font-bold text-white/40 uppercase tracking-wider mb-3">{key}</h3>
                   <div className="flex flex-wrap gap-1.5">
-                    {((attrs.about as any)[key] as string[]).map(cleanFeature).filter(Boolean).map((v: string, i: number) => (
+                    {((attrs.about as any)[key] as string[]).map((v: string, i: number) => (
                       <span key={i} className="text-[11px] px-2.5 py-1 rounded-full bg-white/[0.06] text-white/60 border border-white/[0.08]">{v}</span>
                     ))}
                   </div>
@@ -603,3 +590,6 @@ export default function BusinessPage() {
     </AppLayout>
   )
 }
+'@
+[System.IO.File]::WriteAllText($file, $content, [System.Text.Encoding]::UTF8)
+Write-Host "Tamamlandi!"

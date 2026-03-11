@@ -2,18 +2,18 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Search, PlusCircle, Bell, User, Award, LogOut, MapPin, Sparkles } from 'lucide-react'
+import { Home, Search, PlusCircle, Bell, User, Award, LogOut, MapPin, Sparkles, Sun, Moon } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { MOCK_MUHTARLAR, MOCK_BUSINESSES } from '@/lib/mock-data'
 import { useAuth } from '@/lib/AuthContext'
+import { useEffect, useState } from 'react'
 
 const NAV_ITEMS = [
-  { href: '/',           icon: Home,       label: 'Ana Sayfa' },
-  { href: '/kesfet',     icon: Search,     label: 'Keşfet' },
-  { href: '/yorum-yaz',  icon: PlusCircle, label: 'Yorum Yaz' },
-  { href: '/bildirimler',icon: Bell,       label: 'Bildirimler' },
-  { href: '/profil',     icon: User,       label: 'Profil' },
-  { href: '/muhtarlar',  icon: Award,      label: 'Muhtarlar' },
+  { href: '/',            icon: Home,       label: 'Ana Sayfa' },
+  { href: '/kesfet',      icon: Search,     label: 'Keşfet' },
+  { href: '/yorum-yaz',   icon: PlusCircle, label: 'Yorum Yaz' },
+  { href: '/bildirimler', icon: Bell,       label: 'Bildirimler' },
+  { href: '/profil',      icon: User,       label: 'Profil' },
+  { href: '/muhtarlar',   icon: Award,      label: 'Muhtarlar' },
 ]
 
 const RANK_COLORS: Record<number, string> = {
@@ -22,13 +22,54 @@ const RANK_COLORS: Record<number, string> = {
   3: 'from-amber-700 to-amber-800 text-white',
 }
 
-// ─── Kullanıcı Avatar Yardımcısı ─────────────────────────────────────────────
+// ─── Tema Hook ────────────────────────────────────────────────────────────────
+function useTheme() {
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
 
+  useEffect(() => {
+    const saved = localStorage.getItem('theme') as 'dark' | 'light' | null
+    const initial = saved || 'dark'
+    setTheme(initial)
+    document.documentElement.classList.toggle('dark', initial === 'dark')
+  }, [])
+
+  const toggle = () => {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    setTheme(next)
+    localStorage.setItem('theme', next)
+    document.documentElement.classList.toggle('dark', next === 'dark')
+  }
+
+  return { theme, toggle }
+}
+
+// ─── Tema Toggle Butonu ───────────────────────────────────────────────────────
+function ThemeToggle({ className }: { className?: string }) {
+  const { theme, toggle } = useTheme()
+  return (
+    <button
+      onClick={toggle}
+      className={cn(
+        'relative w-8 h-8 rounded-full flex items-center justify-center transition-all',
+        'bg-white/[0.05] border border-white/[0.08] hover:bg-white/10',
+        'text-white/50 hover:text-white/80',
+        className
+      )}
+      title={theme === 'dark' ? 'Açık moda geç' : 'Koyu moda geç'}
+    >
+      {theme === 'dark'
+        ? <Sun size={14} className="text-amber-400" />
+        : <Moon size={14} className="text-indigo-400" />
+      }
+    </button>
+  )
+}
+
+// ─── Kullanıcı Avatar ─────────────────────────────────────────────────────────
 function UserAvatar({ name, username, avatarUrl, size = 'sm' }: {
   name?: string; username?: string; avatarUrl?: string | null; size?: 'sm' | 'md'
 }) {
-  const initials = ((name || username || 'U')
-    .split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2))
+  const initials = ((name || username || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2))
   const dim = size === 'md' ? 'w-9 h-9 text-xs' : 'w-8 h-8 text-[10px]'
 
   if (avatarUrl) {
@@ -48,82 +89,124 @@ function UserAvatar({ name, username, avatarUrl, size = 'sm' }: {
 }
 
 // ─── Sağ Panel ────────────────────────────────────────────────────────────────
+const API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/api\/?$/, '')
 
 function RightPanel() {
+  const [topUsers, setTopUsers] = useState<any[]>([])
+  const [featuredBiz, setFeaturedBiz] = useState<any>(null)
+
+  useEffect(() => {
+    // Top kullanıcılar
+    fetch(`${API}/api/users?sort=trustScore&limit=5`)
+      .then(r => r.json())
+      .then(d => setTopUsers(Array.isArray(d) ? d : (d.users || d.data || [])))
+      .catch(() => {})
+
+    // Öne çıkan işletme
+    fetch(`${API}/api/businesses?sort=rating&limit=1`)
+      .then(r => r.json())
+      .then(d => {
+        const list = Array.isArray(d) ? d : (d.data || [])
+        if (list[0]) setFeaturedBiz(list[0])
+      })
+      .catch(() => {})
+  }, [])
+
   return (
     <>
+      {/* Top muhtarlar/kullanıcılar */}
       <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Award size={15} className="text-amber-400" />
-            <span className="font-bold text-sm text-white">Mahalle Muhtarları</span>
+            <span className="font-bold text-sm text-white">Öne Çıkanlar</span>
           </div>
           <Link href="/muhtarlar" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-medium">
             Tümü →
           </Link>
         </div>
-        <div className="space-y-2">
-          {MOCK_MUHTARLAR.map((m) => {
-            const handle = m.handle?.replace('@', '') || m.id
-            return (
-              <Link href={`/kullanici/${handle}`} key={m.id}>
+
+        {topUsers.length === 0 ? (
+          <div className="space-y-2">
+            {[1,2,3].map(i => (
+              <div key={i} className="flex items-center gap-3 p-2.5">
+                <div className="w-8 h-8 rounded-full bg-white/[0.06] animate-pulse flex-shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-2.5 bg-white/[0.06] rounded animate-pulse w-3/4" />
+                  <div className="h-2 bg-white/[0.04] rounded animate-pulse w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {topUsers.map((u, i) => (
+              <Link href={`/kullanici/${u.username}`} key={u.id}>
                 <div className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/[0.04] transition-all cursor-pointer">
                   <div className={cn(
                     'w-7 h-7 rounded-full flex items-center justify-center text-xs font-black bg-gradient-to-br flex-shrink-0',
-                    RANK_COLORS[m.rank as 1|2|3] || 'bg-white/10 text-white/50'
+                    RANK_COLORS[(i + 1) as 1 | 2 | 3] || 'bg-white/10 text-white/50'
                   )}>
-                    {m.rank}
+                    {i + 1}
                   </div>
-                  {m.image ? (
-                    <img src={m.image} alt={m.name} className="w-8 h-8 rounded-full object-cover border border-amber-500/20 flex-shrink-0" />
+                  {u.avatarUrl ? (
+                    <img src={u.avatarUrl} alt={u.fullName || u.username} className="w-8 h-8 rounded-full object-cover border border-amber-500/20 flex-shrink-0" />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-indigo-500/30 flex items-center justify-center text-xs font-bold text-indigo-300 border border-amber-500/20 flex-shrink-0">
-                      {m.name.slice(0, 2).toUpperCase()}
+                      {(u.fullName || u.username || 'U').slice(0, 2).toUpperCase()}
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-xs text-white truncate">{m.name}</div>
-                    <div className="text-[10px] text-white/40 truncate">{m.neighborhood} · {m.expertise[0]}</div>
+                    <div className="font-semibold text-xs text-white truncate">{u.fullName || u.username}</div>
+                    <div className="text-[10px] text-white/40 truncate">@{u.username}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className="font-bold text-xs text-emerald-400">{m.helpfulCount.toLocaleString('tr-TR')}</div>
-                    <div className="text-[9px] text-white/30">faydalı</div>
+                    <div className="font-bold text-xs text-emerald-400">{(u.trustScore || 0)}</div>
+                    <div className="text-[9px] text-white/30">puan</div>
                   </div>
                 </div>
               </Link>
-            )
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
-        <div className="flex items-center gap-2 mb-4">
-          <Sparkles size={14} className="text-indigo-400" />
-          <span className="font-bold text-sm text-white">AI Önerisi</span>
-        </div>
-        <Link href={`/isletme/${MOCK_BUSINESSES[0].slug}`}>
-          <div className="group cursor-pointer">
-            <div className="relative rounded-xl overflow-hidden mb-3 h-32">
-              <img src={MOCK_BUSINESSES[0].image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              <div className="absolute bottom-2 left-2">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 backdrop-blur-sm">
-                  %{MOCK_BUSINESSES[0].semanticMatch} eşleşme
-                </span>
+      {/* Öne çıkan işletme */}
+      {featuredBiz && (
+        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles size={14} className="text-indigo-400" />
+            <span className="font-bold text-sm text-white">Öne Çıkan</span>
+          </div>
+          <Link href={`/isletme/${featuredBiz.slug}`}>
+            <div className="group cursor-pointer">
+              {(featuredBiz.attributes?.coverPhoto || featuredBiz.attributes?.photos?.[0]) && (
+                <div className="relative rounded-xl overflow-hidden mb-3 h-32">
+                  <img
+                    src={featuredBiz.attributes.coverPhoto || featuredBiz.attributes.photos[0]}
+                    alt={featuredBiz.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                </div>
+              )}
+              <div className="font-bold text-sm text-white mb-1 group-hover:text-indigo-300 transition-colors">
+                {featuredBiz.name}
+              </div>
+              <div className="flex items-center gap-1 text-xs text-white/40">
+                <MapPin size={10} />
+                <span>{featuredBiz.district || featuredBiz.city}</span>
+                {featuredBiz.category && (
+                  <>
+                    <span className="text-white/20">·</span>
+                    <span>{featuredBiz.category.name}</span>
+                  </>
+                )}
               </div>
             </div>
-            <div className="font-bold text-sm text-white mb-1 group-hover:text-indigo-300 transition-colors">
-              {MOCK_BUSINESSES[0].name}
-            </div>
-            <div className="flex items-center gap-1 text-xs text-white/40">
-              <MapPin size={10} />
-              <span>{MOCK_BUSINESSES[0].district}</span>
-              <span className="text-white/20">·</span>
-              <span>{MOCK_BUSINESSES[0].reviewCount.toLocaleString('tr-TR')} yorum</span>
-            </div>
-          </div>
-        </Link>
-      </div>
+          </Link>
+        </div>
+      )}
 
       <div className="px-1">
         <p className="text-[10px] text-white/20 leading-relaxed">
@@ -136,14 +219,14 @@ function RightPanel() {
 }
 
 // ─── Ana Layout ───────────────────────────────────────────────────────────────
-
 export function AppLayout({ children, hideBottomNav }: {
   children: React.ReactNode
   hideBottomNav?: boolean
 }) {
-  const pathname  = usePathname()
-  const router    = useRouter()
+  const pathname = usePathname()
+  const router = useRouter()
   const { user, logout } = useAuth()
+  const { theme, toggle } = useTheme()
 
   const handleLogout = () => {
     logout()
@@ -159,18 +242,16 @@ export function AppLayout({ children, hideBottomNav }: {
     '/bildirimler': 'Bildirimler',
   }
   const title = pageTitle[pathname] ?? 'Tecrübelerim'
-
   const displayName = user?.fullName || user?.username || '...'
-  const username    = user ? `@${user.username}` : ''
+  const username = user ? `@${user.username}` : ''
 
   return (
     <div className="min-h-screen bg-surface">
 
-      {/* ══════ MOBILE ( < lg ) ══════ */}
+      {/* ══════ MOBILE ══════ */}
       <div className="lg:hidden flex justify-center">
         <div className="w-full max-w-[480px] min-h-screen relative border-x border-white/[0.04] flex flex-col">
 
-          {/* Mobile header */}
           <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-white/[0.06] px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
@@ -180,18 +261,14 @@ export function AppLayout({ children, hideBottomNav }: {
               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 uppercase tracking-wider">Beta</span>
             </div>
             <div className="flex items-center gap-2">
+              <ThemeToggle />
               <Link href="/bildirimler">
                 <button className="relative w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all">
                   <Bell size={15} />
                 </button>
               </Link>
               <Link href="/profil">
-                <UserAvatar
-                  name={user?.fullName}
-                  username={user?.username}
-                  avatarUrl={user?.avatarUrl}
-                  size="sm"
-                />
+                <UserAvatar name={user?.fullName} username={user?.username} avatarUrl={user?.avatarUrl} size="sm" />
               </Link>
             </div>
           </header>
@@ -227,7 +304,7 @@ export function AppLayout({ children, hideBottomNav }: {
         </div>
       </div>
 
-      {/* ══════ DESKTOP ( >= lg ) ══════ */}
+      {/* ══════ DESKTOP ══════ */}
       <div className="hidden lg:grid min-h-screen" style={{ gridTemplateColumns: '260px 1fr 320px', maxWidth: 1240, margin: '0 auto' }}>
 
         {/* Sol sidebar */}
@@ -262,43 +339,52 @@ export function AppLayout({ children, hideBottomNav }: {
             })}
           </nav>
 
-          {/* User card */}
-          <div className="mt-4 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center gap-3">
-            <Link href="/profil">
-              <UserAvatar
-                name={user?.fullName}
-                username={user?.username}
-                avatarUrl={user?.avatarUrl}
-                size="md"
-              />
-            </Link>
-            <div className="flex-1 min-w-0">
-              <div className="font-semibold text-sm text-white truncate">{displayName}</div>
-              <div className="text-xs text-white/40 truncate">{username}</div>
-            </div>
+          {/* User card + tema toggle */}
+          <div className="mt-4 space-y-2">
+            {/* Tema toggle */}
             <button
-              onClick={handleLogout}
-              className="text-white/30 hover:text-red-400 transition-colors p-1"
-              title="Çıkış Yap"
+              onClick={toggle}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-white/50 hover:text-white hover:bg-white/[0.05] font-semibold text-sm"
             >
-              <LogOut size={14} />
+              {theme === 'dark'
+                ? <><Sun size={18} className="text-amber-400" /> Açık Mod</>
+                : <><Moon size={18} className="text-indigo-400" /> Koyu Mod</>
+              }
             </button>
+
+            <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center gap-3">
+              <Link href="/profil">
+                <UserAvatar name={user?.fullName} username={user?.username} avatarUrl={user?.avatarUrl} size="md" />
+              </Link>
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-sm text-white truncate">{displayName}</div>
+                <div className="text-xs text-white/40 truncate">{username}</div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="text-white/30 hover:text-red-400 transition-colors p-1"
+                title="Çıkış Yap"
+              >
+                <LogOut size={14} />
+              </button>
+            </div>
           </div>
         </aside>
 
-        {/* Orta — ana içerik */}
+        {/* Orta */}
         <main className="flex flex-col border-r border-white/[0.06] min-w-0">
           <div className="sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-white/[0.06] px-6 py-4 flex items-center justify-between">
             <h1 className="font-black text-lg text-white">{title}</h1>
-            <Link href="/bildirimler">
-              <button className="w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all">
-                <Bell size={15} />
-              </button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Link href="/bildirimler">
+                <button className="w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all">
+                  <Bell size={15} />
+                </button>
+              </Link>
+            </div>
           </div>
-          <div className={hideBottomNav ? '' : 'pb-8'}>
-            {children}
-          </div>
+          <div className={hideBottomNav ? '' : 'pb-8'}>{children}</div>
         </main>
 
         {/* Sağ sidebar */}
@@ -306,7 +392,6 @@ export function AppLayout({ children, hideBottomNav }: {
           <RightPanel />
         </aside>
       </div>
-
     </div>
   )
 }

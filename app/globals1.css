@@ -1,0 +1,256 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --font-satoshi: 'DM Sans', system-ui, sans-serif;
+  --font-clash: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --radius: 0.75rem;
+
+  /* Trust Colors */
+  --trust-a: #22C55E;
+  --trust-b: #84CC16;
+  --trust-c: #EAB308;
+  --trust-d: #F97316;
+  --trust-f: #EF4444;
+
+  /* AI accent */
+  --ai-glow: rgba(99, 102, 241, 0.15);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: #0C0C0F;
+  color: #FAFAFA;
+  font-family: var(--font-satoshi);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2E2E35; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #3F3F47; }
+
+/* Trust Score Conic Ring */
+.trust-ring {
+  background: conic-gradient(var(--trust-color) var(--pct), #26262C var(--pct));
+  border-radius: 50%;
+}
+
+/* AI Highlight */
+.ai-highlight {
+  background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(168,85,247,0.15));
+  border-bottom: 1px solid rgba(99,102,241,0.4);
+  padding: 0 3px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+/* Skeleton shimmer */
+.skeleton {
+  background: linear-gradient(90deg, #1F1F24 25%, #26262C 50%, #1F1F24 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+/* Glass card */
+.glass {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  backdrop-filter: blur(12px);
+}
+
+/* Feed card hover */
+.feed-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.feed-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+/* Glow effect */
+.glow-green { box-shadow: 0 0 20px rgba(34,197,94,0.2); }
+.glow-purple { box-shadow: 0 0 20px rgba(99,102,241,0.2); }
+
+/* Input focus */
+input:focus, textarea:focus {
+  outline: none;
+}
+
+/* Selection */
+::selection {
+  background: rgba(99,102,241,0.3);
+  color: white;
+}
+
+/* Noise texture overlay */
+.noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+/* ── Staggered children animation ────────────────────── */
+.stagger-children > * {
+  animation: fade-up 0.45s cubic-bezier(0.16,1,0.3,1) both;
+}
+.stagger-children > *:nth-child(1)  { animation-delay: 0ms }
+.stagger-children > *:nth-child(2)  { animation-delay: 60ms }
+.stagger-children > *:nth-child(3)  { animation-delay: 120ms }
+.stagger-children > *:nth-child(4)  { animation-delay: 180ms }
+.stagger-children > *:nth-child(5)  { animation-delay: 240ms }
+.stagger-children > *:nth-child(6)  { animation-delay: 300ms }
+.stagger-children > *:nth-child(7)  { animation-delay: 360ms }
+.stagger-children > *:nth-child(8)  { animation-delay: 420ms }
+
+/* ── Page enter animation ─────────────────────────────── */
+.page-enter {
+  animation: fade-up 0.5s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* ── Button press effect ──────────────────────────────── */
+.btn-press {
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.btn-press:active {
+  transform: scale(0.95);
+}
+
+/* ── Interactive card ─────────────────────────────────── */
+.card-interactive {
+  transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), 
+              box-shadow 0.2s ease,
+              border-color 0.2s ease;
+  cursor: pointer;
+}
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+}
+.card-interactive:active {
+  transform: translateY(0px) scale(0.99);
+}
+
+/* ── Like button pop ──────────────────────────────────── */
+.like-pop {
+  animation: pop 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+
+/* ── Ripple effect ────────────────────────────────────── */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+.ripple::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.ripple:active::after {
+  opacity: 1;
+}
+
+/* ── Skeleton loading ─────────────────────────────────── */
+.skeleton-line {
+  background: linear-gradient(90deg, #1F1F24 25%, #2A2A30 50%, #1F1F24 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s linear infinite;
+  border-radius: 6px;
+}
+
+/* ── Trust ring entrance ──────────────────────────────── */
+.trust-ring-animate {
+  animation: fade-in-scale 0.6s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* ── Bottom sheet ─────────────────────────────────────── */
+.bottom-sheet-enter {
+  animation: slide-up 0.4s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* ── Notification dot pulse ───────────────────────────── */
+.notif-dot {
+  position: relative;
+}
+.notif-dot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: inherit;
+  animation: ping-once 1.5s ease-out infinite;
+}
+
+/* ── Tab underline slide ──────────────────────────────── */
+.tab-active-indicator {
+  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), width 0.3s ease;
+}
+
+/* ── Input focus glow ─────────────────────────────────── */
+.input-glow:focus {
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.15), 0 0 0 1px rgba(99,102,241,0.4);
+  border-color: rgba(99,102,241,0.5);
+}
+
+/* ── Score number counter ─────────────────────────────── */
+.score-number {
+  font-variant-numeric: tabular-nums;
+  animation: number-tick 0.4s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* ── Floating action button ───────────────────────────── */
+.fab {
+  animation: bounce-in 0.5s cubic-bezier(0.16,1,0.3,1) both;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.fab:hover {
+  transform: scale(1.08) translateY(-1px);
+  box-shadow: 0 16px 40px rgba(99,102,241,0.4);
+}
+.fab:active {
+  transform: scale(0.95);
+}
+
+/* ── Scroll reveal (JS-powered) ───────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16,1,0.3,1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Header scroll shrink ─────────────────────────────── */
+.header-shrink {
+  transition: padding 0.3s ease, backdrop-filter 0.3s ease;
+}

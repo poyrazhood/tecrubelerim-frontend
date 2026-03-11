@@ -1,11 +1,13 @@
-﻿'use client'
+$file = "C:\Users\PC\Desktop\tecrubelerim-frontend\app\profil\page.tsx"
+Set-Content $file -Encoding UTF8 -Value @'
+'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import {
   Settings, TrendingUp, Camera, Edit3, ChevronRight,
   Shield, Bookmark, MessageSquare, Bell, LogOut,
-  MapPin, Award, User, Loader2, Trash2, Star, Pencil, Check, X, Building2
+  MapPin, Award, User, Loader2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ReviewCard } from '@/components/feed/ReviewCard'
@@ -103,11 +105,6 @@ export default function ProfilPage() {
   const [bioError, setBioError] = useState('')
 
   const [myReviews, setMyReviews] = useState<any[]>([])
-  const [editingReview, setEditingReview] = useState<string | null>(null)
-  const [editContent, setEditContent] = useState("")
-  const [editRating, setEditRating] = useState(5)
-  const [editSaving, setEditSaving] = useState(false)
-  const [deletingReview, setDeletingReview] = useState<string | null>(null)
   const [reviewsLoading, setReviewsLoading] = useState(false)
   const [reviewsLoaded, setReviewsLoaded] = useState(false)
 
@@ -238,24 +235,7 @@ export default function ProfilPage() {
                   {badgeColor.label[0]}
                 </div>
               )}
-              <input type="file" accept="image/*" id="avatar-upload" className="hidden" onChange={async (e) => {
-                const f = e.target.files?.[0]
-                if (!f) return
-                const fd = new FormData()
-                fd.append("file", f)
-                const token = localStorage.getItem("token") || sessionStorage.getItem("token")
-                const res = await fetch(`${API_BASE}/api/upload/avatar`, {
-                  method: "POST",
-                  headers: token ? { Authorization: `Bearer ${token}` } : {},
-                  body: fd,
-                })
-                if (res.ok) {
-                  const d = await res.json()
-                  setUser((prev: any) => ({ ...prev, avatarUrl: d.url }))
-                }
-              }} />
-              <button onClick={() => document.getElementById("avatar-upload")?.click()}
-                className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center border-2 border-surface hover:bg-indigo-600 transition-colors">
+              <button className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center border-2 border-surface hover:bg-indigo-600 transition-colors">
                 <Camera size={12} className="text-white" />
               </button>
             </div>
@@ -350,78 +330,7 @@ export default function ProfilPage() {
                   <div className="text-white/40 text-sm mb-1">Henuz yorum yok</div>
                   <Link href="/yorum-yaz" className="text-indigo-400 text-sm font-medium hover:text-indigo-300">Ilk yorumunu yaz</Link>
                 </div>
-              ) : myReviews.map((r) => (
-                <div key={r.id} className="bg-surface-1 border border-white/[0.06] rounded-2xl p-4 mb-3">
-                  {editingReview === r.id ? (
-                    <div>
-                      <div className="flex gap-1 mb-3">
-                        {[1,2,3,4,5].map(s => (
-                          <button key={s} onClick={() => setEditRating(s)}>
-                            <Star size={18} className={s <= editRating ? "text-amber-400 fill-amber-400" : "text-white/20"} />
-                          </button>
-                        ))}
-                      </div>
-                      <textarea value={editContent} onChange={e => setEditContent(e.target.value)} rows={3} maxLength={1000}
-                        className="w-full bg-surface-2 border border-indigo-500/40 rounded-xl p-3 text-sm text-white outline-none resize-none placeholder-white/20 mb-3"
-                        placeholder="Yorumunuzu yazin..." />
-                      <div className="flex gap-2">
-                        <button onClick={async () => {
-                          setEditSaving(true)
-                          const token = getToken()
-                          const res = await fetch(`${API_BASE}/api/reviews/${r.id}`, {
-                            method: "PUT",
-                            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                            body: JSON.stringify({ content: editContent, rating: editRating })
-                          })
-                          if (res.ok) {
-                            setMyReviews(prev => prev.map(x => x.id === r.id ? { ...x, content: editContent, rating: editRating } : x))
-                            setEditingReview(null)
-                          }
-                          setEditSaving(false)
-                        }} disabled={editSaving} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-indigo-500 text-white text-xs font-bold disabled:opacity-50">
-                          {editSaving ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />}Kaydet
-                        </button>
-                        <button onClick={() => setEditingReview(null)} className="px-4 py-1.5 rounded-lg bg-white/[0.05] text-white/50 text-xs font-medium">
-                          <X size={11} />
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div>
-                          <p className="text-xs font-bold text-white/80 mb-1">{r.business?.name ?? "İşletme"}</p>
-                          <div className="flex gap-0.5 mb-2">
-                            {[1,2,3,4,5].map(s => <Star key={s} size={12} className={s <= (r.rating ?? 0) ? "text-amber-400 fill-amber-400" : "text-white/20"} />)}
-                          </div>
-                          <p className="text-sm text-white/60 leading-relaxed">{r.content}</p>
-                        </div>
-                        <div className="flex gap-1.5 flex-shrink-0">
-                          <button onClick={() => { setEditingReview(r.id); setEditContent(r.content); setEditRating(r.rating ?? 5) }}
-                            className="w-8 h-8 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white/40 hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors">
-                            <Pencil size={13} />
-                          </button>
-                          <button onClick={async () => {
-                            if (!confirm("Bu yorumu silmek istediginizden emin misiniz?")) return
-                            setDeletingReview(r.id)
-                            const token = getToken()
-                            const res = await fetch(`${API_BASE}/api/reviews/${r.id}`, {
-                              method: "DELETE",
-                              headers: { Authorization: `Bearer ${token}` }
-                            })
-                            if (res.ok) setMyReviews(prev => prev.filter(x => x.id !== r.id))
-                            setDeletingReview(null)
-                          }} disabled={deletingReview === r.id}
-                            className="w-8 h-8 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50">
-                            {deletingReview === r.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
-                          </button>
-                        </div>
-                      </div>
-                      <p className="text-[10px] text-white/25 mt-2">{new Date(r.createdAt).toLocaleDateString("tr-TR")}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
+              ) : myReviews.map((r) => <ReviewCard key={r.id} review={r} />)}
             </div>
           )}
 
@@ -490,8 +399,6 @@ export default function ProfilPage() {
               <SettingsItem icon={Bell}     label="Bildirimler"       sub="Push, e-posta bildirimleri"        href="/profil/bildirimler" />
               <SettingsItem icon={Shield}   label="Gizlilik"          sub="Profil gorunurlugu, veri"          href="/profil/gizlilik" />
               <SettingsItem icon={Bookmark} label="Kaydedilen Yerler" sub="Kaydettiginiz isletmeler"          href="/profil/kaydedilenler" />
-              <SettingsItem icon={Building2} label="Sahip Paneli" sub="Isletmenizi yonetin veya sahiplenin" href="/sahip-paneli" />
-              <SettingsItem icon={Building2} label="Sahip Paneli"      sub="Isletmenizi yonetin veya sahiplenin"  href="/sahip-paneli" />
               <SettingsItem icon={Award}    label="Muhtar Basvurusu"  sub="Mahallenizin guvenilir yorumcusu olun" />
               <div className="pt-2">
                 <SettingsItem icon={LogOut} label="Cikis Yap" danger onClick={handleLogout} />
@@ -503,3 +410,5 @@ export default function ProfilPage() {
     </AppLayout>
   )
 }
+'@
+Write-Host "Tamamlandi!"

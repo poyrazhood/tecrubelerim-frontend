@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
@@ -8,7 +8,7 @@ import { Filter, MapPin, Sparkles, X, Search, SlidersHorizontal } from 'lucide-r
 import { cn } from '@/lib/utils'
 import type { Business, TrustScore, TrustStack } from '@/types'
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
 const TRUST_GRADES = ['Tümü', 'A', 'B', 'C']
 const SORT_OPTIONS = [

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { PWAInstallBanner, IOSInstallGuide } from '@/components/ui/PWAInstallBanner'
 import { AuthProvider } from '@/lib/AuthContext'
+import { ThemeInit } from '@/components/layout/ThemeInit'
 
 export const metadata: Metadata = {
   title: 'Tecrübelerim — Güvenilir Mahalle Deneyimleri',
@@ -60,6 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="msapplication-TileImage" content="/icons/icon-144.png" />
       </head>
       <body>
+	  <ThemeInit />
         <AuthProvider>
           {children}
           <PWAInstallBanner />

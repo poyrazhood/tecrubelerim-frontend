@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
@@ -12,7 +12,7 @@ import Link from 'next/link'
 import type { Business, MuhtarUser, TrustScore, TrustStack } from '@/types'
 
 const TABS = ['Tümü', 'Yakınımda', 'Muhtarlar', 'Trend']
-const API  = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
 // ─── Mapper'lar ────────────────────────────────────────────────────────────────
 
