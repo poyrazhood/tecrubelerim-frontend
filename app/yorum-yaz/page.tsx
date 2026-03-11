@@ -1,17 +1,18 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import {
   ChevronLeft, ChevronRight, Search, Star, Camera,
   X, Check, MapPin, Sparkles, Shield, Upload,
   ThumbsUp, AlertTriangle, Smile, Meh, Frown,
-  Plus
+  Plus, Building2
 } from 'lucide-react'
 import { cn, getTrustColor } from '@/lib/utils'
-import { MOCK_BUSINESSES } from '@/lib/mock-data'
 import Link from 'next/link'
-import type { Business } from '@/types'
+import { useRouter } from 'next/navigation'
+
+const API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/api\/?$/, '')
 
 const STEPS = ['İşletme Seç', 'Puanla', 'Anlat', 'Kanıtla', 'Yayınla']
 
@@ -23,12 +24,17 @@ const CATEGORY_ASPECTS: Record<string, string[]> = {
   Restoran: ['Lezzet', 'Porsiyon', 'Servis', 'Temizlik', 'Fiyat'],
 }
 
-const AI_SUGGESTIONS = [
-  'Çalışma ortamı olarak çok uygun, WiFi hızlı ve bol priz var.',
-  'Servis güleryüzlü, siparişler hızlı geliyor.',
-  'Fiyatlar piyasaya göre uygun, porsiyon doyurucu.',
-  'Hafta sonu kalabalık oluyor, hafta içi daha sakin.',
-]
+interface ApiBusiness {
+  id: string
+  name: string
+  slug: string
+  address: string
+  city: string
+  district?: string
+  averageRating?: number
+  category?: { id: string; name: string; slug: string }
+  photos?: { url: string }[]
+}
 
 function StepIndicator({ current, total }: { current: number; total: number }) {
   return (
@@ -52,12 +58,32 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
   )
 }
 
-// Step 1: Business picker
-function Step1BusinessPicker({ onSelect }: { onSelect: (b: Business) => void }) {
+// Step 1: Business picker - API'den
+function Step1BusinessPicker({ onSelect }: { onSelect: (b: ApiBusiness) => void }) {
   const [query, setQuery] = useState('')
-  const filtered = MOCK_BUSINESSES.filter((b) =>
-    !query || b.name.toLowerCase().includes(query.toLowerCase()) || b.district.toLowerCase().includes(query.toLowerCase())
-  )
+  const [results, setResults] = useState<ApiBusiness[]>([])
+  const [loading, setLoading] = useState(false)
+  const debounceRef = useRef<NodeJS.Timeout>()
+
+  useEffect(() => {
+    clearTimeout(debounceRef.current)
+    if (!query.trim()) { setResults([]); return }
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true)
+      try {
+        const r = await fetch(`${API}/api/businesses?search=${encodeURIComponent(query)}&limit=15`)
+        const d = await r.json()
+        const raw = Array.isArray(d) ? d : (d.data || d.businesses || [])
+        // API photos → attributes.photos string[] veya coverPhoto olarak geliyor
+        const mapped = raw.map((b: any) => ({
+          ...b,
+          _coverPhoto: b.attributes?.coverPhoto || b.attributes?.photos?.[0] || null,
+        }))
+        setResults(mapped)
+      } catch { setResults([]) }
+      finally { setLoading(false) }
+    }, 350)
+  }, [query])
 
   return (
     <div className="px-4 pt-2">
@@ -72,32 +98,53 @@ function Step1BusinessPicker({ onSelect }: { onSelect: (b: Business) => void }) 
           onChange={(e) => setQuery(e.target.value)}
           placeholder="İşletme adı veya mahalle..."
           className="flex-1 bg-transparent text-sm text-white placeholder-white/25 outline-none"
+          autoFocus
         />
+        {loading && <div className="w-4 h-4 rounded-full border-2 border-white/20 border-t-indigo-400 animate-spin" />}
+        {query && !loading && <button onClick={() => setQuery('')}><X size={14} className="text-white/30" /></button>}
       </div>
 
+      {!query && (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <Building2 size={32} className="text-white/20 mb-3" />
+          <p className="text-sm text-white/30">İşletme adını yazmaya başlayın</p>
+        </div>
+      )}
+
+      {query && results.length === 0 && !loading && (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="text-3xl mb-3">🔍</div>
+          <p className="text-sm text-white/40">"{query}" için işletme bulunamadı</p>
+          <p className="text-xs text-white/25 mt-1">Farklı kelimeler deneyin</p>
+        </div>
+      )}
+
       <div className="space-y-2">
-        {filtered.map((b) => (
+        {results.map((b) => (
           <button
             key={b.id}
             onClick={() => onSelect(b)}
             className="w-full flex items-center gap-3 p-3 rounded-2xl border border-white/[0.06] bg-surface-1 hover:bg-surface-2 hover:border-indigo-500/30 transition-all text-left group"
           >
-            <img src={b.image} alt={b.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+            {(b as any)._coverPhoto ? (
+              <img src={(b as any)._coverPhoto} alt={b.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+            ) : (
+              <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                <Building2 size={20} className="text-indigo-400" />
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <div className="font-semibold text-sm text-white truncate">{b.name}</div>
               <div className="flex items-center gap-1.5 text-xs text-white/40 mt-0.5">
                 <MapPin size={10} />
-                <span>{b.district}</span>
-                <span className="text-white/20">·</span>
-                <span>{b.category}</span>
+                <span>{b.district || b.city}</span>
+                {b.category && <>
+                  <span className="text-white/20">·</span>
+                  <span>{b.category.name}</span>
+                </>}
               </div>
             </div>
-            <div className="flex flex-col items-end gap-1 flex-shrink-0">
-              <span className="text-sm font-black" style={{ color: getTrustColor(b.trustScore.grade) }}>
-                {b.trustScore.grade}
-              </span>
-              <ChevronRight size={14} className="text-white/20 group-hover:text-indigo-400 transition-colors" />
-            </div>
+            <ChevronRight size={14} className="text-white/20 group-hover:text-indigo-400 transition-colors flex-shrink-0" />
           </button>
         ))}
       </div>
@@ -109,32 +156,37 @@ function Step1BusinessPicker({ onSelect }: { onSelect: (b: Business) => void }) 
 function Step2Rating({
   business, rating, setRating, aspects, setAspects
 }: {
-  business: Business
+  business: ApiBusiness
   rating: number
   setRating: (n: number) => void
   aspects: Record<string, number>
   setAspects: (a: Record<string, number>) => void
 }) {
   const [hovered, setHovered] = useState(0)
-  const categoryAspects = CATEGORY_ASPECTS[business.category] || ['Genel Deneyim', 'Servis', 'Fiyat', 'Temizlik', 'Tekrar Gelir misiniz?']
-
+  const categoryName = business.category?.name || ''
+  const categoryAspects = CATEGORY_ASPECTS[categoryName] || ['Genel Deneyim', 'Servis', 'Fiyat', 'Temizlik', 'Tekrar Gelir misiniz?']
   const labels = ['', 'Kötü', 'Fena Değil', 'İyi', 'Çok İyi', 'Mükemmel']
   const display = hovered || rating
 
   return (
     <div className="px-4 pt-2">
       <div className="flex items-center gap-3 mb-6 p-3 rounded-2xl bg-surface-2 border border-white/[0.06]">
-        <img src={business.image} alt={business.name} className="w-12 h-12 rounded-xl object-cover" />
+        {(business as any)._coverPhoto ? (
+          <img src={(business as any)._coverPhoto} alt={business.name} className="w-12 h-12 rounded-xl object-cover" />
+        ) : (
+          <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+            <Building2 size={20} className="text-indigo-400" />
+          </div>
+        )}
         <div>
           <div className="font-bold text-sm text-white">{business.name}</div>
-          <div className="text-xs text-white/40">{business.district} · {business.category}</div>
+          <div className="text-xs text-white/40">{business.district || business.city}{business.category ? ` · ${business.category.name}` : ''}</div>
         </div>
       </div>
 
       <h2 className="text-xl font-black text-white mb-1">Genel Puan</h2>
       <p className="text-sm text-white/40 mb-6">Bu işletmeyi nasıl değerlendirirsiniz?</p>
 
-      {/* Star rating */}
       <div className="flex flex-col items-center mb-8">
         <div className="flex gap-3 mb-3">
           {[1, 2, 3, 4, 5].map((i) => (
@@ -154,11 +206,10 @@ function Step2Rating({
           ))}
         </div>
         {display > 0 && (
-          <span className="text-lg font-bold text-amber-400 animate-fade-in">{labels[display]}</span>
+          <span className="text-lg font-bold text-amber-400">{labels[display]}</span>
         )}
       </div>
 
-      {/* Aspect ratings */}
       <div className="mb-4">
         <div className="text-sm font-bold text-white mb-3">Detaylı Değerlendirme</div>
         <div className="space-y-3">
@@ -180,7 +231,7 @@ function Step2Rating({
                 ))}
               </div>
               <span className="text-xs font-bold text-indigo-400 w-4 text-right">
-                {aspects[aspect] || '—'}
+                {aspects[aspect] || '–'}
               </span>
             </div>
           ))}
@@ -194,7 +245,7 @@ function Step2Rating({
 function Step3Write({
   content, setContent, business
 }: {
-  content: string; setContent: (s: string) => void; business: Business
+  content: string; setContent: (s: string) => void; business: ApiBusiness
 }) {
   const [sentiment, setSentiment] = useState<'positive' | 'neutral' | 'negative' | null>(null)
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -206,12 +257,18 @@ function Step3Write({
     { key: 'negative' as const, Icon: Frown, label: 'Olumsuz', color: 'text-red-400 bg-red-500/15 border-red-500/40' },
   ]
 
+  const suggestions = [
+    'Çalışma ortamı olarak çok uygun, WiFi hızlı ve bol priz var.',
+    'Servis güleryüzlü, siparişler hızlı geliyor.',
+    'Fiyatlar piyasaya göre uygun, porsiyon doyurucu.',
+    'Hafta sonu kalabalık oluyor, hafta içi daha sakin.',
+  ]
+
   return (
     <div className="px-4 pt-2">
       <h2 className="text-xl font-black text-white mb-1">Deneyiminizi Anlatın</h2>
       <p className="text-sm text-white/40 mb-5">En az 50 kelime yazmanız TrustScore'unuzu artırır</p>
 
-      {/* Sentiment selector */}
       <div className="flex gap-2 mb-4">
         {sentiments.map(({ key, Icon, label, color }) => (
           <button
@@ -228,7 +285,6 @@ function Step3Write({
         ))}
       </div>
 
-      {/* Textarea */}
       <div className="relative mb-3">
         <textarea
           value={content}
@@ -245,7 +301,6 @@ function Step3Write({
         </div>
       </div>
 
-      {/* AI suggestions */}
       <button
         onClick={() => setShowSuggestions(!showSuggestions)}
         className="flex items-center gap-2 text-xs text-indigo-400 hover:text-indigo-300 mb-3 transition-colors"
@@ -256,10 +311,8 @@ function Step3Write({
 
       {showSuggestions && (
         <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.06] p-3 mb-4 space-y-2">
-          <div className="text-[10px] font-bold text-indigo-400/70 uppercase tracking-wider mb-2">
-            Sıkça bahsedilen konular
-          </div>
-          {AI_SUGGESTIONS.map((s) => (
+          <div className="text-[10px] font-bold text-indigo-400/70 uppercase tracking-wider mb-2">Sıkça bahsedilen konular</div>
+          {suggestions.map((s) => (
             <button
               key={s}
               onClick={() => setContent(content + (content ? ' ' : '') + s)}
@@ -272,7 +325,6 @@ function Step3Write({
         </div>
       )}
 
-      {/* Progress bar */}
       <div className="flex items-center gap-3">
         <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
           <div
@@ -287,28 +339,32 @@ function Step3Write({
 }
 
 // Step 4: Photos
-function Step4Photos({ photos, setPhotos }: { photos: string[]; setPhotos: (p: string[]) => void }) {
+function Step4Photos({ photos, setPhotos, photoFiles, setPhotoFiles }: {
+  photos: string[]
+  setPhotos: (p: string[]) => void
+  photoFiles: File[]
+  setPhotoFiles: (f: File[]) => void
+}) {
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const DEMO_PHOTOS = [
-    'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=300&h=300&fit=crop',
-    'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=300&h=300&fit=crop',
-    'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=300&h=300&fit=crop',
-  ]
-
-  const addDemo = () => {
-    const next = DEMO_PHOTOS.find((p) => !photos.includes(p))
-    if (next) setPhotos([...photos, next])
+  const handleFiles = (files: FileList | null) => {
+    if (!files) return
+    const newFiles = Array.from(files).slice(0, 6 - photos.length)
+    const newUrls = newFiles.map(f => URL.createObjectURL(f))
+    setPhotos([...photos, ...newUrls])
+    setPhotoFiles([...photoFiles, ...newFiles])
   }
 
-  const remove = (p: string) => setPhotos(photos.filter((x) => x !== p))
+  const remove = (idx: number) => {
+    setPhotos(photos.filter((_, i) => i !== idx))
+    setPhotoFiles(photoFiles.filter((_, i) => i !== idx))
+  }
 
   return (
     <div className="px-4 pt-2">
       <h2 className="text-xl font-black text-white mb-1">Fotoğraf Ekleyin</h2>
       <p className="text-sm text-white/40 mb-2">Fotoğraflı yorumlar 3x daha fazla faydalı bulunuyor</p>
 
-      {/* Trust boost info */}
       <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/[0.08] border border-emerald-500/20 mb-5">
         <Shield size={14} className="text-emerald-400 flex-shrink-0" />
         <p className="text-xs text-emerald-400/80">
@@ -316,9 +372,17 @@ function Step4Photos({ photos, setPhotos }: { photos: string[]; setPhotos: (p: s
         </p>
       </div>
 
-      {/* Upload area */}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={e => handleFiles(e.target.files)}
+      />
+
       <button
-        onClick={addDemo}
+        onClick={() => inputRef.current?.click()}
         className="w-full h-32 rounded-2xl border-2 border-dashed border-white/[0.12] bg-white/[0.02] flex flex-col items-center justify-center gap-2 hover:border-indigo-500/40 hover:bg-indigo-500/[0.04] transition-all mb-4 group"
       >
         <div className="w-10 h-10 rounded-xl bg-indigo-500/15 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -328,14 +392,13 @@ function Step4Photos({ photos, setPhotos }: { photos: string[]; setPhotos: (p: s
         <span className="text-xs text-white/25">JPG, PNG · Max 10MB</span>
       </button>
 
-      {/* Photo grid */}
       {photos.length > 0 && (
         <div className="grid grid-cols-3 gap-2 mb-4">
-          {photos.map((p) => (
-            <div key={p} className="relative aspect-square rounded-xl overflow-hidden">
+          {photos.map((p, idx) => (
+            <div key={idx} className="relative aspect-square rounded-xl overflow-hidden">
               <img src={p} alt="" className="w-full h-full object-cover" />
               <button
-                onClick={() => remove(p)}
+                onClick={() => remove(idx)}
                 className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-black/80 transition-colors"
               >
                 <X size={10} />
@@ -344,7 +407,7 @@ function Step4Photos({ photos, setPhotos }: { photos: string[]; setPhotos: (p: s
           ))}
           {photos.length < 6 && (
             <button
-              onClick={addDemo}
+              onClick={() => inputRef.current?.click()}
               className="aspect-square rounded-xl border-2 border-dashed border-white/[0.1] flex items-center justify-center text-white/20 hover:border-white/25 hover:text-white/40 transition-all"
             >
               <Plus size={20} />
@@ -353,7 +416,6 @@ function Step4Photos({ photos, setPhotos }: { photos: string[]; setPhotos: (p: s
         </div>
       )}
 
-      {/* Verification info */}
       <div className="rounded-2xl border border-white/[0.07] bg-surface-2 p-4 space-y-3">
         <div className="text-xs font-bold text-white/50 uppercase tracking-wider">Doğrulama Seçenekleri</div>
         {[
@@ -381,37 +443,31 @@ function Step4Photos({ photos, setPhotos }: { photos: string[]; setPhotos: (p: s
 
 // Step 5: Preview & publish
 function Step5Publish({
-  business, rating, content, photos, onPublish, publishing
+  business, rating, content, photos, onPublish, publishing, error
 }: {
-  business: Business
+  business: ApiBusiness
   rating: number
   content: string
   photos: string[]
   onPublish: () => void
   publishing: boolean
+  error: string | null
 }) {
   const wordCount = content.trim().split(/\s+/).filter(Boolean).length
-  const trustBoost = Math.min(wordCount >= 50 ? 15 : wordCount >= 25 ? 8 : 3) + (photos.length > 0 ? 10 : 0)
+  const trustBoost = (wordCount >= 50 ? 15 : wordCount >= 25 ? 8 : 3) + (photos.length > 0 ? 10 : 0)
 
   return (
     <div className="px-4 pt-2">
       <h2 className="text-xl font-black text-white mb-1">Yorum Önizleme</h2>
       <p className="text-sm text-white/40 mb-5">Yayınlamadan önce kontrol edin</p>
 
-      {/* Preview card */}
       <div className="rounded-2xl border border-white/[0.08] bg-surface-2 p-4 mb-4">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 rounded-full bg-indigo-500/30 flex items-center justify-center text-sm font-bold text-indigo-300">
-            AY
+            S
           </div>
           <div>
-            <div className="font-semibold text-sm text-white">Ayşe Yılmaz</div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-white/40">@ayseyilmaz</span>
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                Moda Muhtarı
-              </span>
-            </div>
+            <div className="font-semibold text-sm text-white">Siz</div>
           </div>
           <div className="ml-auto flex">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -419,26 +475,22 @@ function Step5Publish({
             ))}
           </div>
         </div>
-
         <div className="flex items-center gap-2 text-xs text-indigo-400 mb-3 font-medium">
           <MapPin size={11} />
           {business.name}
         </div>
-
         <p className="text-sm text-white/75 leading-relaxed mb-3 line-clamp-4">
           {content || 'Yorum içeriği...'}
         </p>
-
         {photos.length > 0 && (
           <div className="flex gap-2">
-            {photos.slice(0, 3).map((p) => (
-              <img key={p} src={p} alt="" className="w-16 h-16 rounded-lg object-cover" />
+            {photos.slice(0, 3).map((p, i) => (
+              <img key={i} src={p} alt="" className="w-16 h-16 rounded-lg object-cover" />
             ))}
           </div>
         )}
       </div>
 
-      {/* Trust score impact */}
       <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.07] p-4 mb-4">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles size={14} className="text-indigo-400" />
@@ -465,13 +517,19 @@ function Step5Publish({
         </div>
       </div>
 
-      {/* Warning */}
-      <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/[0.08] border border-amber-500/20 mb-5">
+      <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/[0.08] border border-amber-500/20 mb-4">
         <AlertTriangle size={13} className="text-amber-400 mt-0.5 flex-shrink-0" />
         <p className="text-xs text-amber-400/80 leading-relaxed">
           Yorumunuz AI tarafından ironi ve spam kontrolünden geçirilecektir. Gerçek dışı içerikler kaldırılır.
         </p>
       </div>
+
+      {error && (
+        <div className="flex items-start gap-2 p-3 rounded-xl bg-red-500/[0.08] border border-red-500/20 mb-4">
+          <AlertTriangle size={13} className="text-red-400 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-red-400">{error}</p>
+        </div>
+      )}
 
       <button
         onClick={onPublish}
@@ -494,8 +552,7 @@ function Step5Publish({
   )
 }
 
-// Success screen
-function SuccessScreen({ business }: { business: Business }) {
+function SuccessScreen({ business }: { business: ApiBusiness }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center">
       <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-2xl shadow-emerald-500/30 mb-6">
@@ -506,7 +563,6 @@ function SuccessScreen({ business }: { business: Business }) {
         <span className="text-white font-semibold">{business.name}</span> için yorumunuz başarıyla paylaşıldı.
       </p>
       <p className="text-white/30 text-xs mb-8">AI spam kontrolünden geçtikten sonra aktif olacak.</p>
-
       <div className="flex flex-col gap-3 w-full max-w-xs">
         <Link
           href={`/isletme/${business.slug}`}
@@ -526,14 +582,17 @@ function SuccessScreen({ business }: { business: Business }) {
 }
 
 export default function YorumYazPage() {
+  const router = useRouter()
   const [step, setStep] = useState(0)
-  const [business, setBusiness] = useState<Business | null>(null)
+  const [business, setBusiness] = useState<ApiBusiness | null>(null)
   const [rating, setRating] = useState(0)
   const [aspects, setAspects] = useState<Record<string, number>>({})
   const [content, setContent] = useState('')
   const [photos, setPhotos] = useState<string[]>([])
+  const [photoFiles, setPhotoFiles] = useState<File[]>([])
   const [publishing, setPublishing] = useState(false)
   const [published, setPublished] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const canNext = () => {
     if (step === 0) return !!business
@@ -543,13 +602,53 @@ export default function YorumYazPage() {
   }
 
   const handleNext = () => {
-    if (step === 0 && !business) return
-    setStep((s) => s + 1)
+    if (canNext()) setStep(s => s + 1)
   }
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
+    if (!business) return
     setPublishing(true)
-    setTimeout(() => { setPublishing(false); setPublished(true) }, 2000)
+    setError(null)
+
+    try {
+      // Token localStorage'dan al
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token')
+
+      const body = {
+        businessId: business.id,
+        rating,
+        content,
+        photoUrls: [], // gerçek upload için ayrı endpoint gerekir
+      }
+
+      const res = await fetch(`${API}/api/reviews`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(body),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        // 401 = giriş gerekli
+        if (res.status === 401) {
+          setError('Yorum yazmak için giriş yapmanız gerekiyor.')
+          setTimeout(() => router.push('/giris'), 1500)
+        } else {
+          setError(data.error || data.message || 'Yorum gönderilemedi.')
+        }
+        return
+      }
+
+      setPublished(true)
+    } catch (e) {
+      setError('Bağlantı hatası. Lütfen tekrar deneyin.')
+    } finally {
+      setPublishing(false)
+    }
   }
 
   if (published && business) {
@@ -562,7 +661,6 @@ export default function YorumYazPage() {
 
   return (
     <AppLayout hideBottomNav>
-      {/* Sticky header */}
       <div className="sticky top-0 z-40 bg-surface/90 backdrop-blur-xl border-b border-white/[0.06] px-4 py-3 flex items-center gap-3">
         {step === 0 ? (
           <Link href="/" className="w-9 h-9 rounded-full bg-white/[0.05] flex items-center justify-center border border-white/[0.08] text-white/70">
@@ -570,15 +668,13 @@ export default function YorumYazPage() {
           </Link>
         ) : (
           <button
-            onClick={() => setStep((s) => s - 1)}
+            onClick={() => setStep(s => s - 1)}
             className="w-9 h-9 rounded-full bg-white/[0.05] flex items-center justify-center border border-white/[0.08] text-white/70"
           >
             <ChevronLeft size={18} />
           </button>
         )}
-
         <StepIndicator current={step} total={STEPS.length} />
-
         <div className="w-9 text-right">
           <span className="text-xs text-white/30">{step + 1}/{STEPS.length}</span>
         </div>
@@ -595,7 +691,7 @@ export default function YorumYazPage() {
           <Step3Write content={content} setContent={setContent} business={business} />
         )}
         {step === 3 && (
-          <Step4Photos photos={photos} setPhotos={setPhotos} />
+          <Step4Photos photos={photos} setPhotos={setPhotos} photoFiles={photoFiles} setPhotoFiles={setPhotoFiles} />
         )}
         {step === 4 && business && (
           <Step5Publish
@@ -605,11 +701,11 @@ export default function YorumYazPage() {
             photos={photos}
             onPublish={handlePublish}
             publishing={publishing}
+            error={error}
           />
         )}
       </div>
 
-      {/* Bottom nav */}
       {step < 4 && (
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] p-4 bg-surface/90 backdrop-blur-xl border-t border-white/[0.06]">
           <div className="flex items-center gap-3">
