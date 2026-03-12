@@ -29,13 +29,13 @@ function mapTrustScore(raw: number) {
   const normalized = normalizeRating(raw)
   const score = Math.round(normalized * 20)
   const clamped = Math.max(0, Math.min(100, score))
-  const grade = clamped >= 90 ? 'A' : clamped >= 75 ? 'B' : clamped >= 60 ? 'C' : clamped >= 40 ? 'D' : 'F'
+  const grade = (clamped >= 90 ? 'A' : clamped >= 75 ? 'B' : clamped >= 60 ? 'C' : clamped >= 40 ? 'D' : 'F') as 'A' | 'B' | 'C' | 'D' | 'F'
   return { grade, score: clamped, breakdown: { reviewDepth: Math.round(clamped * 0.9), recencyTrend: Math.round(clamped * 1.05), verifiedRatio: Math.round(clamped * 0.95), engagement: Math.round(clamped * 0.85) }, trend: 'stable' as const }
 }
 
 function cleanFeature(f: string): string {
   // Bozuk unicode karakterleri temizle, sadece harf/rakam/bosluk/tire birak
-  return f.replace(/[^\p{L}\p{N}\s\-\/&(),.]/gu, '').trim()
+  return f.replace(/[^a-zA-Z0-9\s\u00C0-\u024F\-\/&(),.]/g, '').trim()
 }
 
 function formatRelativeTime(dateStr: string): string {

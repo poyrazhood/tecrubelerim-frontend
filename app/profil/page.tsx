@@ -251,7 +251,7 @@ export default function ProfilPage() {
                 })
                 if (res.ok) {
                   const d = await res.json()
-                  setUser((prev: any) => ({ ...prev, avatarUrl: d.url }))
+                  window.location.reload()
                 }
               }} />
               <button onClick={() => document.getElementById("avatar-upload")?.click()}
@@ -494,6 +494,15 @@ export default function ProfilPage() {
               <SettingsItem icon={Award}    label="Muhtar Basvurusu"  sub="Mahallenizin guvenilir yorumcusu olun" />
               <div className="pt-2">
                 <SettingsItem icon={LogOut} label="Cikis Yap" danger onClick={handleLogout} />
+              </div>
+              <div className="pt-4 pb-2 px-1">
+                <p className="text-[11px] text-white/20 leading-relaxed">
+                  Tecrubelerim Beta &middot;{' '}
+                  <a href="/sozlesme/privacy_policy" className="hover:text-white/40 transition-colors">Gizlilik</a> &middot;{' '}
+                  <a href="/sozlesme/terms_of_service" className="hover:text-white/40 transition-colors">Kullanim Kosullari</a> &middot;{' '}
+                  <a href="/sozlesme/help" className="hover:text-white/40 transition-colors">Yardim</a>
+                </p>
+                <p className="text-[11px] text-white/15 mt-1">© 2026 Tecrubelerim</p>
               </div>
             </div>
           )}

@@ -1,3 +1,21 @@
+﻿const withPWA = require('next-pwa')({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development',
+  runtimeCaching: [
+    {
+      urlPattern: /^https?.*/,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'tecrubelerim-cache',
+        expiration: { maxEntries: 200, maxAgeSeconds: 86400 },
+        networkTimeoutSeconds: 10,
+      },
+    },
+  ],
+})
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -20,10 +38,19 @@ const nextConfig = {
         source: '/(.*)',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer-when-downgrade' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+        ],
+      },
+      {
+        source: '/sw.js',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' },
+          { key: 'Service-Worker-Allowed', value: '/' },
         ],
       },
     ]
   },
 }
 
-module.exports = nextConfig
+module.exports = withPWA(nextConfig)

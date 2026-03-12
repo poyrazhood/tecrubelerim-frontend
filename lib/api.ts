@@ -1,4 +1,4 @@
-// lib/api.ts — Tecrübelerim Frontend API Client
+// lib/api.ts — Tecrubelerim Frontend API Client
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
@@ -17,7 +17,7 @@ async function api<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     },
   })
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Sunucu hatası' }))
+    const err = await res.json().catch(() => ({ error: 'Sunucu hatasi' }))
     throw new ApiError(res.status, err.error || err.message || 'Hata')
   }
   return res.json()
@@ -27,6 +27,13 @@ export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message); this.name = 'ApiError'
   }
+}
+
+function toQS(p: Record<string, string | number | boolean | undefined>): string {
+  const entries = Object.entries(p)
+    .filter(([, v]) => v !== undefined)
+    .map(([k, v]) => [k, String(v)] as [string, string])
+  return entries.length ? '?' + new URLSearchParams(entries).toString() : ''
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -42,13 +49,13 @@ export const auth = {
 
 // ── Businesses ────────────────────────────────────────────────────────────────
 export const businesses = {
-  list: (p?: Record<string, string | number>) => {
-    const qs = p ? '?' + new URLSearchParams(p as Record<string, string>).toString() : ''
+  list: (p?: Record<string, string | number | undefined>) => {
+    const qs = p ? toQS(p) : ''
     return api<{ data: Business[]; pagination: Pagination }>(`/businesses${qs}`)
   },
   get:     (slug: string) => api<Business>(`/businesses/${slug}`),
-  reviews: (id: string, p?: Record<string, string | number>) => {
-    const qs = p ? '?' + new URLSearchParams(p as Record<string, string>).toString() : ''
+  reviews: (id: string, p?: Record<string, string | number | undefined>) => {
+    const qs = p ? toQS(p) : ''
     return api<{ data: Review[]; pagination: Pagination }>(`/businesses/${id}/reviews${qs}`)
   },
   claim: (id: string, d?: { documents?: string[]; notes?: string }) =>
@@ -78,7 +85,7 @@ export const users = {
   followers: (username: string, page = 1) =>
     api<{ data: User[]; pagination: Pagination }>(`/users/${username}/followers?page=${page}`),
   muhtarlar: (p?: { city?: string; limit?: number }) => {
-    const qs = p ? '?' + new URLSearchParams(p as Record<string, string>).toString() : ''
+    const qs = p ? toQS(p as Record<string, string | number | undefined>) : ''
     return api<{ data: User[] }>(`/users/leaderboard/muhtarlar${qs}`)
   },
 }
@@ -86,8 +93,8 @@ export const users = {
 // ── Search ────────────────────────────────────────────────────────────────────
 export const search = {
   query: (p: { q: string; type?: string; city?: string; page?: number }) => {
-    const qs = new URLSearchParams(p as Record<string, string>).toString()
-    return api<SearchResults>(`/search?${qs}`)
+    const qs = toQS(p as Record<string, string | number | undefined>)
+    return api<SearchResults>(`/search${qs}`)
   },
   suggestions: (q: string) =>
     api<{ suggestions: Suggestion[] }>(`/search/suggestions?q=${encodeURIComponent(q)}`),
@@ -96,8 +103,8 @@ export const search = {
 
 // ── Notifications ─────────────────────────────────────────────────────────────
 export const notifications = {
-  list:        (p?: { page?: number; unreadOnly?: boolean }) => {
-    const qs = p ? '?' + new URLSearchParams(p as Record<string, string>).toString() : ''
+  list: (p?: { page?: number; unreadOnly?: boolean }) => {
+    const qs = p ? toQS(p as Record<string, string | number | boolean | undefined>) : ''
     return api<NotifResponse>(`/notifications${qs}`)
   },
   unreadCount: () => api<{ count: number }>('/notifications/unread-count'),

@@ -1,8 +1,8 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Search, PlusCircle, Bell, User, Award, LogOut, MapPin, Sparkles, Sun, Moon } from 'lucide-react'
+import { Home, Search, PlusCircle, Bell, User, Award, LogOut, MapPin, Sparkles, Sun, Moon, Building2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/AuthContext'
 import { useEffect, useState } from 'react'
@@ -208,10 +208,10 @@ function RightPanel() {
         </div>
       )}
 
+
       <div className="px-1">
-        <p className="text-[10px] text-white/20 leading-relaxed">
-          Tecrübelerim Beta · Gizlilik · Kullanım Koşulları · Yardım
-        </p>
+        <p className="text-[10px] text-white/20 leading-relaxed">Tecrübelerim Beta · <a href="/sozlesme/privacy_policy" className="hover:text-white/40 transition-colors">Gizlilik</a> · <a href="/sozlesme/terms_of_service" className="hover:text-white/40 transition-colors">Kullanım Koşulları</a> · <a href="/sozlesme/help" className="hover:text-white/40 transition-colors">Yardım</a></p>
+
         <p className="text-[10px] text-white/15 mt-1">© 2026 Tecrübelerim</p>
       </div>
     </>
@@ -226,6 +226,26 @@ export function AppLayout({ children, hideBottomNav }: {
   const pathname = usePathname()
   const router = useRouter()
   const { user, logout } = useAuth()
+  const [hasBusiness, setHasBusiness] = useState(false)
+  const [unreadReplies, setUnreadReplies] = useState(0)
+
+  useEffect(() => {
+    if (!user) return
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+    if (!token) return
+    fetch(`${API}/api/users/me/businesses`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => {
+        const businesses = d.businesses || d || []
+        if (businesses.length > 0) {
+          setHasBusiness(true)
+          // Yanitlanmamis yorum sayisi
+          const total = businesses.reduce((acc: number, b: any) => acc + (b.totalReviews || 0), 0)
+          setUnreadReplies(total > 0 ? 1 : 0)
+        }
+      })
+      .catch(() => {})
+  }, [user])
   const { theme, toggle } = useTheme()
 
   const handleLogout = () => {
@@ -279,6 +299,22 @@ export function AppLayout({ children, hideBottomNav }: {
             <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 bg-surface/90 backdrop-blur-xl border-t border-white/[0.06] px-2 py-2">
               <div className="flex items-center justify-around">
                 {NAV_ITEMS.slice(0, 5).map(({ href, icon: Icon, label }) => {
+                  // Kesfet slotunu isletmem ile degistir
+                  if (href === '/kesfet' && hasBusiness) {
+                    const active = pathname === '/sahip-paneli'
+                    return (
+                      <Link key="sahip-paneli" href="/sahip-paneli" className={cn(
+                        'flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all relative',
+                        active ? 'text-indigo-400' : 'text-white/30 hover:text-white/60'
+                      )}>
+                        <div className="relative">
+                          <Building2 size={20} className={active ? 'fill-indigo-400/20' : ''} />
+                          {unreadReplies > 0 && <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />}
+                        </div>
+                        <span className="text-[10px] font-medium">İşletmem</span>
+                      </Link>
+                    )
+                  }
                   const active = pathname === href
                   return (
                     <Link key={href} href={href} className={cn(
@@ -338,6 +374,23 @@ export function AppLayout({ children, hideBottomNav }: {
               )
             })}
           </nav>
+
+          {/* Isletmem butonu */}
+          {hasBusiness && (
+            <Link href="/sahip-paneli" className={cn(
+              'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-semibold text-sm mt-1 relative',
+              'border',
+              pathname === '/sahip-paneli'
+                ? 'bg-indigo-500/15 text-indigo-400 border-indigo-500/25'
+                : 'text-indigo-300/70 border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10 hover:text-indigo-300'
+            )}>
+              <div className="relative">
+                <Building2 size={18} />
+                {unreadReplies > 0 && <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />}
+              </div>
+              İşletmem
+            </Link>
+          )}
 
           {/* User card + tema toggle */}
           <div className="mt-4 space-y-2">

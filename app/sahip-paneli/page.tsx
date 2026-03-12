@@ -20,6 +20,242 @@ function normalizeRating(raw: number) {
   return raw / 1000
 }
 
+function AnalyticsTab({ business }: { business: any }) {
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [replyingTo, setReplyingTo] = useState<string | null>(null)
+  const [replyText, setReplyText] = useState('')
+  const [replySaving, setReplySaving] = useState(false)
+  const [recentReviews, setRecentReviews] = useState<any[]>([])
+  const [view, setView] = useState<'aylik'|'trend'>('aylik')
+
+  useEffect(() => {
+    const token = getToken()
+    Promise.all([
+      fetch(`${API}/api/businesses/${business.id}/analytics`, { headers: { Authorization: `Bearer `+token } }).then(r => r.json()),
+      fetch(`${API}/api/businesses/${business.id}/reviews?limit=5`).then(r => r.json())
+    ]).then(([analytics, reviews]) => {
+      setData(analytics)
+      setRecentReviews(reviews.data || [])
+      setLoading(false)
+    }).catch(() => setLoading(false))
+  }, [business.id])
+
+  const saveReply = async (reviewId: string) => {
+    setReplySaving(true)
+    const token = getToken()
+    const res = await fetch(`${API}/api/reviews/${reviewId}/owner-reply`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer `+token },
+      body: JSON.stringify({ ownerReply: replyText })
+    })
+    if (res.ok) {
+      setRecentReviews(prev => prev.map(r => r.id === reviewId ? { ...r, ownerReply: replyText } : r))
+      setReplyingTo(null)
+      setReplyText('')
+    }
+    setReplySaving(false)
+  }
+
+  const downloadPDF = async () => {
+    const { default: jsPDF } = await import('jspdf')
+    const doc = new jsPDF()
+    const d = data?.overview
+    doc.setFontSize(18)
+    doc.text(business.name, 20, 20)
+    doc.setFontSize(11)
+    doc.text(`Rapor Tarihi: ${new Date().toLocaleDateString('tr-TR')}`, 20, 30)
+    doc.line(20, 34, 190, 34)
+    doc.setFontSize(13)
+    doc.text('Genel Ozet', 20, 44)
+    doc.setFontSize(11)
+    doc.text(`Toplam Goruntulenme: ${d?.totalViews ?? 0}`, 20, 54)
+    doc.text(`Toplam Yorum: ${d?.totalReviews ?? 0}`, 20, 62)
+    doc.text(`Ortalama Puan: ${d?.averageRating?.toFixed(1) ?? 0}`, 20, 70)
+    doc.text(`Sehir Sirasi: #${d?.cityRank ?? '-'}`, 20, 78)
+    doc.setFontSize(13)
+    doc.text('Aylik Yorum Trendi', 20, 94)
+    doc.setFontSize(10)
+    let y = 104
+    data?.monthlyTrend?.forEach((m: any) => {
+      doc.text(`${m.month}: ${m.count} yorum, ort puan ${m.avgRating}`, 25, y)
+      y += 8
+    })
+    doc.setFontSize(13)
+    doc.text('Kategori Karsilastirmasi', 20, y + 10)
+    doc.setFontSize(10)
+    y += 20
+    data?.competitors?.forEach((c: any, i: number) => {
+      doc.text(`${i+1}. ${c.name}${c.isSelf ? ' (siz)' : ''} — Puan: ${c.averageRating?.toFixed(1)}, Yorum: ${c.totalReviews}`, 25, y)
+      y += 8
+    })
+    doc.save(`${business.name}-rapor.pdf`)
+  }
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-white/40" /></div>
+  if (!data) return <div className="text-center py-12 text-white/40 text-sm">Veri yuklenemedi.</div>
+
+  const maxCount = Math.max(...(data.monthlyTrend?.map((m: any) => m.count) ?? [1]), 1)
+  const maxRating = 5
+  const MONTHS_TR = ['Oca','Sub','Mar','Nis','May','Haz','Tem','Agu','Eyl','Eki','Kas','Ara']
+
+  return (
+    <div className="space-y-4 p-4">
+
+      {/* PDF indir butonu */}
+      <button onClick={downloadPDF} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-500/15 border border-indigo-500/25 text-indigo-400 text-xs font-bold hover:bg-indigo-500/25 transition-all">
+        <BarChart2 size={14} /> PDF Rapor Indir
+      </button>
+
+      {/* Overview kartlari */}
+      <div className="grid grid-cols-2 gap-3">
+        {[
+          { label: 'Toplam Goruntulenme', value: data.overview.totalViews?.toLocaleString('tr'), icon: Eye, color: 'indigo' },
+          { label: 'Toplam Yorum', value: data.overview.totalReviews, icon: MessageSquare, color: 'emerald' },
+          { label: 'Ortalama Puan', value: data.overview.averageRating?.toFixed(1), icon: Star, color: 'amber' },
+          { label: 'Sehir Sirasi', value: `#${data.overview.cityRank}`, icon: TrendingUp, color: 'purple' },
+        ].map(({ label, value, icon: Icon, color }) => (
+          <div key={label} className="p-3.5 rounded-2xl bg-surface-1 border border-white/[0.07]">
+            <div className={`w-8 h-8 rounded-xl bg-${color}-500/15 flex items-center justify-center mb-2`}>
+              <Icon size={15} className={`text-${color}-400`} />
+            </div>
+            <div className="text-lg font-bold text-white">{value ?? '—'}</div>
+            <div className="text-[11px] text-white/40 mt-0.5">{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Trend grafigi — toggle */}
+      {data.monthlyTrend?.length > 0 && (
+        <div className="p-4 rounded-2xl bg-surface-1 border border-white/[0.07]">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-xs font-bold text-white/70">Son 6 Ay Trendi</div>
+            <div className="flex gap-1">
+              {(['aylik','trend'] as const).map(v => (
+                <button key={v} onClick={() => setView(v)} className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-all ${view === v ? 'bg-indigo-500/30 text-indigo-300' : 'text-white/30 hover:text-white/60'}`}>
+                  {v === 'aylik' ? 'Yorum' : 'Puan'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-end gap-1.5 h-24">
+            {data.monthlyTrend.map((m: any) => {
+              const val = view === 'aylik' ? m.count : m.avgRating
+              const max = view === 'aylik' ? maxCount : maxRating
+              const height = Math.max((val / max) * 100, 4)
+              const monthIdx = parseInt(m.month.split('-')[1]) - 1
+              const color = view === 'aylik' ? 'bg-indigo-500/70 hover:bg-indigo-400' : 'bg-amber-500/70 hover:bg-amber-400'
+              return (
+                <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
+                  <div className="text-[9px] text-white/50">{val}</div>
+                  <div className={`w-full rounded-t-md ${color} transition-all`} style={{ height: `${height}%` }} />
+                  <div className="text-[9px] text-white/40">{MONTHS_TR[monthIdx]}</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Puan dagilimi */}
+      <div className="p-4 rounded-2xl bg-surface-1 border border-white/[0.07]">
+        <div className="text-xs font-bold text-white/70 mb-3">Puan Dagilimi</div>
+        <div className="space-y-2">
+          {data.ratingDistribution?.map((r: any) => {
+            const total = data.ratingDistribution.reduce((a: number, b: any) => a + b.count, 0)
+            const pct = total > 0 ? Math.round((r.count / total) * 100) : 0
+            return (
+              <div key={r.star} className="flex items-center gap-2">
+                <div className="flex items-center gap-0.5 w-16 flex-shrink-0">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} size={9} className={i < r.star ? 'text-amber-400 fill-amber-400' : 'text-white/10'} />
+                  ))}
+                </div>
+                <div className="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                  <div className="h-full rounded-full bg-amber-400/70" style={{ width: `${pct}%` }} />
+                </div>
+                <div className="text-[11px] text-white/40 w-8 text-right">{r.count}</div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Rakip karsilastirma */}
+      {data.competitors?.length > 1 && (
+        <div className="p-4 rounded-2xl bg-surface-1 border border-white/[0.07]">
+          <div className="text-xs font-bold text-white/70 mb-3">Kategori Karsilastirmasi</div>
+          <div className="space-y-2.5">
+            {data.competitors.map((c: any, i: number) => (
+              <div key={i} className={`flex items-center gap-3 p-2.5 rounded-xl ${c.isSelf ? 'bg-indigo-500/10 border border-indigo-500/20' : 'bg-white/[0.03] hover:bg-white/[0.06] cursor-pointer'} transition-all`}
+                onClick={() => !c.isSelf && c.slug && window.open(`/isletme/${c.slug}`, '_blank')}>
+                <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[10px] text-white/50 font-bold flex-shrink-0">{i + 1}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold text-white truncate">{c.name} {c.isSelf && <span className="text-indigo-400 text-[10px]">(siz)</span>}</div>
+                  <div className="text-[10px] text-white/40">{c.totalReviews} yorum · {c.totalViews} goruntulenme</div>
+                </div>
+                <div className="text-sm font-bold text-amber-400">{c.averageRating?.toFixed(1)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Hizli yorum yanitla */}
+      {recentReviews.length > 0 && (
+        <div className="p-4 rounded-2xl bg-surface-1 border border-white/[0.07]">
+          <div className="text-xs font-bold text-white/70 mb-3">Son Yorumlar — Hizli Yanit</div>
+          <div className="space-y-3">
+            {recentReviews.map((review: any) => (
+              <div key={review.id} className="border-b border-white/[0.05] pb-3 last:border-0 last:pb-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="text-[11px] font-semibold text-white">{review.user?.username ?? 'Anonim'}</span>
+                      <div className="flex gap-0.5">
+                        {Array.from({length:5}).map((_,i) => <Star key={i} size={8} className={i < review.rating ? 'text-amber-400 fill-amber-400' : 'text-white/10'} />)}
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-white/60 line-clamp-2">{review.content}</p>
+                    {review.ownerReply && (
+                      <div className="mt-1.5 pl-2 border-l-2 border-indigo-500/40">
+                        <p className="text-[10px] text-indigo-300/70">{review.ownerReply}</p>
+                      </div>
+                    )}
+                  </div>
+                  {!review.ownerReply && (
+                    <button onClick={() => { setReplyingTo(review.id); setReplyText('') }}
+                      className="flex-shrink-0 text-[10px] px-2 py-1 rounded-lg bg-indigo-500/15 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/25 transition-all">
+                      Yanit
+                    </button>
+                  )}
+                </div>
+                {replyingTo === review.id && (
+                  <div className="mt-2 space-y-2">
+                    <textarea value={replyText} onChange={e => setReplyText(e.target.value)}
+                      className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 resize-none focus:outline-none focus:border-indigo-500/50"
+                      rows={2} placeholder="Yanitinizi yazin..." />
+                    <div className="flex gap-2">
+                      <button onClick={() => saveReply(review.id)} disabled={replySaving || !replyText.trim()}
+                        className="flex-1 py-1.5 rounded-lg bg-indigo-500 text-white text-[11px] font-bold disabled:opacity-40 hover:bg-indigo-600 transition-all">
+                        {replySaving ? 'Gonderiliyor...' : 'Gonder'}
+                      </button>
+                      <button onClick={() => setReplyingTo(null)} className="px-3 py-1.5 rounded-lg bg-white/[0.06] text-white/50 text-[11px] hover:bg-white/[0.1] transition-all">
+                        Iptal
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+    </div>
+  )
+}
+
 function ReviewsTab({ business }: { business: any }) {
   const [reviews, setReviews] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -127,7 +363,7 @@ export default function SahipPaneliPage() {
   const [claiming, setClaiming] = useState<string | null>(null)
   const [claimMsg, setClaimMsg] = useState<string | null>(null)
   const [photoUploading, setPhotoUploading] = useState(false)
-  const [activeTab, setActiveTab] = useState<'overview'|'edit'|'reviews'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview'|'edit'|'reviews'|'analytics'>('overview')
 
   useEffect(() => {
     const token = getToken()
@@ -244,7 +480,7 @@ export default function SahipPaneliPage() {
 
           {/* Tabs */}
           <div className="flex border-b border-white/[0.07] px-4 mt-2">
-            {([['overview','Genel Bakış'],['edit','Bilgileri Düzenle'],['reviews','Yorumlar']] as const).map(([key, label]) => (
+            {([['overview','Genel Bakış'],['edit','Bilgileri Düzenle'],['reviews','Yorumlar'],['analytics','Analitik']] as const).map(([key, label]) => (
               <button key={key} onClick={() => setActiveTab(key)}
                 className={cn('py-3 px-4 text-xs font-bold border-b-2 transition-colors',
                   activeTab === key ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-white/40 hover:text-white/60'
@@ -369,6 +605,10 @@ export default function SahipPaneliPage() {
             {/* Reviews Tab */}
             {activeTab === 'reviews' && (
               <ReviewsTab business={selected} />
+            )}
+            {/* Analytics Tab */}
+            {activeTab === 'analytics' && (
+              <AnalyticsTab business={selected} />
             )}
           </div>
         </div>

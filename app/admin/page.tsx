@@ -1,10 +1,10 @@
 ﻿'use client'
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   Building2, Users, MessageSquare, CheckCircle, XCircle, Loader2,
   Search, Ban, ChevronLeft, ChevronRight, Star, AlertTriangle,
   Trash2, Eye, Shield, Flag, Clock, Filter, RefreshCw
-} from 'lucide-react'
+, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -32,8 +32,155 @@ const REASON_COLOR: Record<string, string> = {
   OTHER: 'bg-white/[0.06] text-white/40'
 }
 
+function MuhtarTab({ apiBase }: { apiBase: string }) {
+  const [apps, setApps] = React.useState<any[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [statusFilter, setStatusFilter] = React.useState('PENDING')
+  const [actionLoading, setActionLoading] = React.useState<string|null>(null)
+  const [adminNote, setAdminNote] = React.useState<Record<string,string>>({})
+
+  const load = async () => {
+    setLoading(true)
+    const token = localStorage.getItem('auth_token')
+    const res = await fetch(`${apiBase}/api/muhtar/admin/list?status=${statusFilter}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const d = await res.json()
+    setApps(d.apps || [])
+    setLoading(false)
+  }
+
+  React.useEffect(() => { load() }, [statusFilter])
+
+  const handleAction = async (id: string, action: 'APPROVED'|'REJECTED') => {
+    setActionLoading(id)
+    const token = localStorage.getItem('auth_token')
+    await fetch(`${apiBase}/api/muhtar/admin/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action, adminNote: adminNote[id] || '' })
+    })
+    setActionLoading(null)
+    load()
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        {['PENDING','APPROVED','REJECTED'].map(s => (
+          <button key={s} onClick={() => setStatusFilter(s)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${statusFilter === s ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-white/40 hover:text-white bg-white/[0.03]'}`}>
+            {s === 'PENDING' ? 'Bekleyen' : s === 'APPROVED' ? 'Onaylanan' : 'Reddedilen'}
+          </button>
+        ))}
+      </div>
+      {loading ? (
+        <div className="text-white/30 text-sm text-center py-8">Yukleniyor...</div>
+      ) : apps.length === 0 ? (
+        <div className="text-white/30 text-sm text-center py-8">Basvuru yok</div>
+      ) : apps.map((app: any) => (
+        <div key={app.id} className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="font-bold text-sm text-white">{app.user?.fullName || app.user?.username}</div>
+              <div className="text-xs text-white/40 mt-0.5">{app.user?.totalReviews} yorum · TrustScore: {app.user?.trustScore} · {app.user?.trustLevel}</div>
+              <div className="text-xs text-indigo-300 mt-1">{app.neighborhood}, {app.district} / {app.city}</div>
+            </div>
+            <div className={`text-[10px] font-bold px-2 py-1 rounded-lg ${app.status === 'PENDING' ? 'bg-amber-500/15 text-amber-400' : app.status === 'APPROVED' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}`}>
+              {app.status}
+            </div>
+          </div>
+          <div className="text-xs text-white/50 bg-white/[0.03] rounded-xl p-3 leading-relaxed">{app.reason}</div>
+          {app.status === 'PENDING' && (
+            <div className="space-y-2">
+              <input value={adminNote[app.id] || ''} onChange={e => setAdminNote(n => ({...n, [app.id]: e.target.value}))}
+                placeholder="Admin notu (opsiyonel)"
+                className="w-full bg-white/[0.04] border border-white/[0.07] rounded-xl px-3 py-2 text-xs text-white placeholder-white/20 focus:outline-none focus:border-indigo-500/40" />
+              <div className="flex gap-2">
+                <button onClick={() => handleAction(app.id, 'APPROVED')} disabled={actionLoading === app.id}
+                  className="flex-1 py-2 rounded-xl bg-emerald-500/15 text-emerald-400 text-xs font-bold border border-emerald-500/20 hover:bg-emerald-500/25 disabled:opacity-40 transition-all">
+                  {actionLoading === app.id ? 'Isleniyor...' : 'Onayla (MUHTAR yap)'}
+                </button>
+                <button onClick={() => handleAction(app.id, 'REJECTED')} disabled={actionLoading === app.id}
+                  className="flex-1 py-2 rounded-xl bg-red-500/10 text-red-400 text-xs font-bold border border-red-500/20 hover:bg-red-500/15 disabled:opacity-40 transition-all">
+                  Reddet
+                </button>
+              </div>
+            </div>
+          )}
+          {app.adminNote && <div className="text-[11px] text-white/30 italic">Admin notu: {app.adminNote}</div>}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function SiteSettingsTab({ apiBase }: { apiBase: string }) {
+  const CONFIGS = [
+    { key: 'privacy_policy',   label: 'Gizlilik Politikasi' },
+    { key: 'terms_of_service', label: 'Kullanim Kosullari' },
+    { key: 'help',             label: 'Yardim' },
+  ]
+  const [values, setValues] = useState<Record<string, string>>({})
+  const [saving, setSaving] = useState<string | null>(null)
+  const [saved, setSaved] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    Promise.all(
+      CONFIGS.map(c =>
+        fetch(`${apiBase}/api/site-config/${c.key}`)
+          .then(r => r.json())
+          .then(d => ({ key: c.key, value: d.value || '' }))
+          .catch(() => ({ key: c.key, value: '' }))
+      )
+    ).then(results => {
+      const map: Record<string, string> = {}
+      results.forEach(r => { map[r.key] = r.value })
+      setValues(map)
+      setLoading(false)
+    })
+  }, [])
+
+  const save = async (key: string) => {
+    setSaving(key)
+    await fetch(`${apiBase}/api/admin/site-config/${key}`, {
+      method: 'PATCH',
+      headers: getH(),
+      body: JSON.stringify({ value: values[key] })
+    })
+    setSaving(null)
+    setSaved(key)
+    setTimeout(() => setSaved(null), 2000)
+  }
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-white/30" /></div>
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-xl font-black">Site Ayarlari</h2>
+      {CONFIGS.map(({ key, label }) => (
+        <div key={key} className="rounded-2xl bg-white/[0.03] border border-white/[0.07] p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-sm text-white">{label}</h3>
+            <button onClick={() => save(key)} disabled={saving === key}
+              className="px-4 py-1.5 rounded-xl bg-indigo-500 text-white text-xs font-bold hover:bg-indigo-600 disabled:opacity-40 transition-all flex items-center gap-1.5">
+              {saving === key ? <Loader2 size={12} className="animate-spin" /> : saved === key ? '✓ Kaydedildi' : 'Kaydet'}
+            </button>
+          </div>
+          <textarea value={values[key] || ''}
+            onChange={e => setValues(prev => ({ ...prev, [key]: e.target.value }))}
+            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 resize-none focus:outline-none focus:border-indigo-500/50 font-mono"
+            rows={10} placeholder={`${label} icerigini buraya yazin...`} />
+          <p className="text-[11px] text-white/30 mt-2">Satirlari ayirmak icin Enter kullanin.</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function AdminPage() {
-  const [tab, setTab] = useState<'stats'|'reports'|'flagged'|'claims'|'businesses'|'users'|'reviews'>('stats')
+  const [tab, setTab] = useState<'stats'|'reports'|'flagged'|'claims'|'businesses'|'users'|'reviews'|'settings'|'muhtar'>('stats')
   const [stats, setStats] = useState<any>(null)
   const [modStats, setModStats] = useState<any>(null)
   const [data, setData] = useState<any[]>([])
@@ -128,6 +275,8 @@ export default function AdminPage() {
     { key: 'businesses', label: 'İşletmeler',      icon: Building2 },
     { key: 'users',      label: 'Kullanıcılar',    icon: Users },
     { key: 'reviews',    label: 'Tüm Yorumlar',    icon: MessageSquare },
+    { key: 'muhtar',    label: 'Muhtar Basvurulari', icon: Shield },
+    { key: 'settings',   label: 'Site Ayarlari',    icon: Settings },
   ] as const
 
   const totalPages = Math.ceil(total / 20)
@@ -582,6 +731,14 @@ export default function AdminPage() {
             </div>
           )}
 
+
+          {/* ── SITE SETTINGS ── */}
+          {tab === 'muhtar' && (
+            <MuhtarTab apiBase={API} />
+          )}
+          {tab === 'settings' && (
+            <SiteSettingsTab apiBase={API} />
+          )}
         </div>
       </div>
     </div>

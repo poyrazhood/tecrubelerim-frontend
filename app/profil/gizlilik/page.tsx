@@ -5,6 +5,8 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { ArrowLeft, Eye, EyeOff, Shield, Loader2, Check } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
+const API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '')
+const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
 
 function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -45,6 +47,11 @@ export default function GizlilikPage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
+  const [exporting, setExporting] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteText, setDeleteText] = useState('')
+
   const update = (key: string, val: boolean) => setSettings(s => ({ ...s, [key]: val }))
 
   const handleSave = async () => {
@@ -53,6 +60,27 @@ export default function GizlilikPage() {
     setSaved(true)
     setSaving(false)
     setTimeout(() => setSaved(false), 2000)
+  }
+  const handleExport = async () => {
+    setExporting(true)
+    const token = getToken()
+    const res = await fetch(`${API}/api/users/me/export`, { headers: { Authorization: `Bearer `+token } })
+    const data = await res.json()
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = 'tecrubelerim-verim.json'; a.click()
+    URL.revokeObjectURL(url)
+    setExporting(false)
+  }
+
+  const handleDelete = async () => {
+    if (deleteText !== 'HESABIMI SIL') return
+    setDeleting(true)
+    const token = getToken()
+    await fetch(`${API}/api/users/me`, { method: 'DELETE', headers: { Authorization: `Bearer `+token } })
+    localStorage.removeItem('auth_token')
+    window.location.href = '/'
   }
 
   return (
@@ -86,6 +114,55 @@ export default function GizlilikPage() {
             </div>
           </div>
 
+
+          {/* KVKK Bolumu */}
+          <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 space-y-3">
+            <div className="flex items-center gap-2 mb-1">
+              <Shield size={14} className="text-indigo-400" />
+              <span className="text-sm font-bold text-white">KVKK — Veri Haklariniz</span>
+            </div>
+
+            {/* Veri Disa Aktar */}
+            <div className="flex items-center justify-between py-2 border-b border-white/[0.05]">
+              <div>
+                <div className="text-xs font-semibold text-white">Verilerimi Indir</div>
+                <div className="text-[11px] text-white/40">Tum verilerinizi JSON olarak indirin</div>
+              </div>
+              <button onClick={handleExport} disabled={exporting}
+                className="px-3 py-1.5 rounded-xl bg-indigo-500/15 text-indigo-400 text-xs font-bold border border-indigo-500/20 hover:bg-indigo-500/25 disabled:opacity-40 transition-all flex items-center gap-1.5">
+                {exporting ? <Loader2 size={11} className="animate-spin" /> : '↓ Indir'}
+              </button>
+            </div>
+
+            {/* Hesap Sil */}
+            <div className="pt-1">
+              <div className="text-xs font-semibold text-red-400 mb-1">Hesabi Sil</div>
+              <div className="text-[11px] text-white/40 mb-3">Hesabiniz anonimlestirilir, yorumlariniz anonim olarak kalir. Bu islem geri alinamaz.</div>
+              {!deleteConfirm ? (
+                <button onClick={() => setDeleteConfirm(true)}
+                  className="w-full py-2 rounded-xl bg-red-500/10 text-red-400 text-xs font-bold border border-red-500/20 hover:bg-red-500/15 transition-all">
+                  Hesabimi Sil
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-[11px] text-red-400/70">Onaylamak icin asagiya <span className="font-bold text-red-400">HESABIMI SIL</span> yazin:</p>
+                  <input value={deleteText} onChange={e => setDeleteText(e.target.value)}
+                    className="w-full bg-red-500/[0.06] border border-red-500/20 rounded-xl px-3 py-2 text-xs text-white placeholder-white/20 focus:outline-none focus:border-red-500/40"
+                    placeholder="HESABIMI SIL" />
+                  <div className="flex gap-2">
+                    <button onClick={handleDelete} disabled={deleteText !== 'HESABIMI SIL' || deleting}
+                      className="flex-1 py-2 rounded-xl bg-red-500 text-white text-xs font-bold disabled:opacity-30 hover:bg-red-600 transition-all">
+                      {deleting ? 'Siliniyor...' : 'Onayla ve Sil'}
+                    </button>
+                    <button onClick={() => { setDeleteConfirm(false); setDeleteText('') }}
+                      className="px-4 py-2 rounded-xl bg-white/[0.06] text-white/50 text-xs hover:bg-white/[0.1] transition-all">
+                      Iptal
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
           <button
             onClick={handleSave}
             disabled={saving}

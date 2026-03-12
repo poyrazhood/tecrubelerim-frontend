@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
@@ -92,7 +92,7 @@ interface ApiUser {
 function mapBusiness(b: ApiBusiness) {
   const rating = b.averageRating || 0
   const score = Math.round(rating * 20)
-  const grade = score >= 90 ? 'A' : score >= 75 ? 'B' : score >= 60 ? 'C' : score >= 40 ? 'D' : 'F'
+  const grade = (score >= 90 ? 'A' : score >= 75 ? 'B' : score >= 60 ? 'C' : score >= 40 ? 'D' : 'F') as 'A' | 'B' | 'C' | 'D' | 'F'
   return {
     id: b.id,
     slug: b.slug,
