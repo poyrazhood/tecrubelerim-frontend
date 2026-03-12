@@ -1,5 +1,9 @@
 ﻿'use client'
-import { useState, useEffect } from 'react'
+// @ts-ignore
+import YetkinlikRadari from '@/components/business/YetkinlikRadari'
+// @ts-ignore
+import VerificationWizard from '@/components/business/VerificationWizard'
+import React, { useState, useEffect } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import {
   Building2, ChevronRight, Check, Loader2, MapPin, Phone, Globe,
@@ -19,6 +23,165 @@ function normalizeRating(raw: number) {
   if (raw <= 500) return raw / 100
   return raw / 1000
 }
+
+function SubscriptionTab({ business }: { business: any }) {
+  const [sub, setSub] = React.useState<any>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [requestSent, setRequestSent] = React.useState<string|null>(null)
+  const [sending, setSending] = React.useState<string|null>(null)
+  const [phone, setPhone] = React.useState('')
+  const [showPhoneFor, setShowPhoneFor] = React.useState<string|null>(null)
+  const [successPlan, setSuccessPlan] = React.useState<string|null>(null)
+  const API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '')
+
+  const PLAN_FEATURES: Record<string, string[]> = {
+    FREE:         [],
+    PROFESSIONAL: ['Gelismis Analitik', 'Dogrulanmis Rozet', 'Hizli Yorum Yanitlama'],
+    PREMIUM:      ['Gelismis Analitik', 'Dogrulanmis Rozet', 'Hizli Yorum Yanitlama', 'Arama Onceligi', 'Rakip Reklamlari Kaldirma', 'One Cikan Listeleme'],
+    ENTERPRISE:   ['Tum Premium Ozellikler', 'Kurumsal API Erisimi', 'White-label Widget', 'Ozel Destek'],
+  }
+  const PLAN_PRICES: Record<string, string> = { FREE: 'Ucretsiz', PROFESSIONAL: '99₺/ay', PREMIUM: '299₺/ay', ENTERPRISE: '999₺/ay' }
+  const PLAN_COLORS: Record<string, string> = {
+    FREE: 'border-white/10 bg-white/[0.02]',
+    PROFESSIONAL: 'border-blue-500/20 bg-blue-500/[0.04]',
+    PREMIUM: 'border-amber-500/20 bg-amber-500/[0.04]',
+    ENTERPRISE: 'border-purple-500/20 bg-purple-500/[0.04]',
+  }
+  const PLAN_TEXT: Record<string, string> = {
+    FREE: 'text-white/40', PROFESSIONAL: 'text-blue-400', PREMIUM: 'text-amber-400', ENTERPRISE: 'text-purple-400'
+  }
+  const PLAN_BTN: Record<string, string> = {
+    PROFESSIONAL: 'bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-blue-500/30',
+    PREMIUM: 'bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500/30',
+    ENTERPRISE: 'bg-purple-500/20 text-purple-400 border-purple-500/30 hover:bg-purple-500/30',
+  }
+
+  React.useEffect(() => {
+    const token = localStorage.getItem('auth_token')
+    fetch(`${API}/api/subscriptions/business/${business.id}`, {
+      headers: { Authorization: 'Bearer ' + token }
+    })
+      .then(r => r.json())
+      .then(d => { setSub(d); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [business.id])
+
+  const handleRequest = async (plan: string) => {
+    if (!phone.trim()) { setShowPhoneFor(plan); return }
+    setSending(plan)
+    const token = localStorage.getItem('auth_token')
+    const res = await fetch(`${API}/api/subscriptions/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ businessId: business.id, planWanted: plan, phone })
+    })
+    const d = await res.json()
+    setSending(null)
+    if (res.ok) { setSuccessPlan(plan); setShowPhoneFor(null); setPhone('') }
+    else if (d.error) { alert(d.error) }
+  }
+
+  const currentPlan = sub?.plan || 'FREE'
+  const endsAt = sub?.endsAt ? new Date(sub.endsAt).toLocaleDateString('tr-TR') : null
+
+  if (loading) return <div className="text-white/30 text-sm text-center py-8">Yukleniyor...</div>
+
+  return (
+    <div className="space-y-4">
+      {/* Basari Animasyonu */}
+      {successPlan && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSuccessPlan(null)}>
+          <div className="bg-[#12121a] border border-emerald-500/20 rounded-3xl p-8 max-w-sm w-full text-center space-y-4 animate-[fadeInScale_0.3s_ease-out]">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-emerald-400">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <div className="font-black text-xl text-white">Talebiniz Alindi!</div>
+            <div className="text-sm text-white/50 leading-relaxed">
+              <span className="text-emerald-400 font-bold">{successPlan}</span> paketi icin talebiniz iletildi.
+              <br /><br />
+              Ekibimiz en kisa surede sizi <span className="text-white/70 font-semibold">telefon</span> ile arayarak bilgi verecektir.
+            </div>
+            <div className="text-xs text-white/25">Kapatmak icin tiklayin</div>
+          </div>
+        </div>
+      )}
+
+      {/* Mevcut Plan */}
+      <div className={`rounded-2xl border p-4 ${PLAN_COLORS[currentPlan]}`}>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className={`text-lg font-black ${PLAN_TEXT[currentPlan]}`}>{currentPlan}</div>
+            <div className="text-xs text-white/40 mt-0.5">{PLAN_PRICES[currentPlan]}</div>
+          </div>
+          {endsAt && currentPlan !== 'FREE' && (
+            <div className="text-right">
+              <div className="text-[11px] text-white/30">Bitis tarihi</div>
+              <div className="text-xs text-white/50 font-bold">{endsAt}</div>
+            </div>
+          )}
+        </div>
+        {PLAN_FEATURES[currentPlan].length > 0 ? (
+          <div className="space-y-1.5">
+            {PLAN_FEATURES[currentPlan].map((f: string) => (
+              <div key={f} className="flex items-center gap-2 text-xs text-white/50">
+                <div className="w-1 h-1 rounded-full bg-current shrink-0" />
+                {f}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-xs text-white/30">Temel ozellikler aktif</div>
+        )}
+      </div>
+
+      {/* Diger Planlar */}
+      <div className="text-xs text-white/30 font-bold uppercase tracking-wider px-1">Planlari Karsilastir</div>
+      {['PROFESSIONAL','PREMIUM','ENTERPRISE'].filter(p => p !== currentPlan).map(plan => (
+        <div key={plan} className={`rounded-2xl border p-4 ${PLAN_COLORS[plan]} transition-all`}>
+          <div className="flex items-center justify-between mb-2">
+            <div className={`font-black text-sm ${PLAN_TEXT[plan]}`}>{plan}</div>
+            <div className={`text-sm font-bold ${PLAN_TEXT[plan]}`}>{PLAN_PRICES[plan]}</div>
+          </div>
+          <div className="space-y-1 mb-4">
+            {PLAN_FEATURES[plan].map((f: string) => (
+              <div key={f} className="flex items-center gap-2 text-xs text-white/40">
+                <div className="w-1 h-1 rounded-full bg-current shrink-0" />
+                {f}
+              </div>
+            ))}
+          </div>
+          {showPhoneFor === plan ? (
+            <div className="space-y-2">
+              <input value={phone} onChange={e => setPhone(e.target.value)}
+                placeholder="Telefon numaraniz (ornek: 0555 123 45 67)"
+                className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-indigo-500/40" />
+              <div className="flex gap-2">
+                <button onClick={() => handleRequest(plan)} disabled={sending === plan || !phone.trim()}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${PLAN_BTN[plan]} disabled:opacity-40`}>
+                  {sending === plan ? (
+                    <><svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 2a10 10 0 0 1 10 10" /></svg>Gonderiliyor...</>
+                  ) : 'Talep Gonder'}
+                </button>
+                <button onClick={() => { setShowPhoneFor(null); setPhone('') }}
+                  className="px-3 py-2.5 rounded-xl bg-white/[0.05] text-white/40 text-xs hover:bg-white/[0.08] transition-all">
+                  Iptal
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => setShowPhoneFor(plan)}
+              className={`w-full py-2.5 rounded-xl text-xs font-bold border transition-all ${PLAN_BTN[plan]}`}>
+              Bu Pakete Gec — Beni Arayin
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 
 function AnalyticsTab({ business }: { business: any }) {
   const [data, setData] = useState<any>(null)
@@ -91,6 +254,7 @@ function AnalyticsTab({ business }: { business: any }) {
     })
     doc.save(`${business.name}-rapor.pdf`)
   }
+
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-white/40" /></div>
   if (!data) return <div className="text-center py-12 text-white/40 text-sm">Veri yuklenemedi.</div>
@@ -181,6 +345,64 @@ function AnalyticsTab({ business }: { business: any }) {
         </div>
       </div>
 
+
+      {/* Sentiment Analizi */}
+      {data.sentiment && (() => {
+        const dist = data.sentiment.distribution
+        const total = (dist.pozitif || 0) + (dist.notr || 0) + (dist.negatif || 0)
+        const poz = total > 0 ? Math.round((dist.pozitif || 0) / total * 100) : 0
+        const notr = total > 0 ? Math.round((dist.notr || 0) / total * 100) : 0
+        const neg = total > 0 ? Math.round((dist.negatif || 0) / total * 100) : 0
+        return (
+          <div className="p-4 rounded-2xl bg-surface-1 border border-white/[0.07]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-xs font-bold text-white/70">Duygu Analizi</div>
+              <div className="text-[10px] text-white/30">{total} yorum analiz edildi</div>
+            </div>
+            <div className="h-3 rounded-full overflow-hidden flex mb-4 gap-0.5">
+              {poz > 0 && <div className="bg-emerald-500 rounded-full transition-all" style={{width: poz + '%'}} />}
+              {notr > 0 && <div className="bg-amber-500/70 rounded-full transition-all" style={{width: notr + '%'}} />}
+              {neg > 0 && <div className="bg-red-500/70 rounded-full transition-all" style={{width: neg + '%'}} />}
+            </div>
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
+                <div>
+                  <div className="text-sm font-bold text-white">{poz}%</div>
+                  <div className="text-[10px] text-white/30">Pozitif</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-500/70 flex-shrink-0" />
+                <div>
+                  <div className="text-sm font-bold text-white">{notr}%</div>
+                  <div className="text-[10px] text-white/30">Nötr</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-red-500/70 flex-shrink-0" />
+                <div>
+                  <div className="text-sm font-bold text-white">{neg}%</div>
+                  <div className="text-[10px] text-white/30">Negatif</div>
+                </div>
+              </div>
+            </div>
+            {data.sentiment.topKeywords?.length > 0 && (
+              <div className="pt-3 border-t border-white/[0.05]">
+                <div className="text-[10px] font-semibold text-white/40 mb-2 uppercase tracking-wider">Öne Çıkan Kelimeler</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {data.sentiment.topKeywords.map((k: any) => (
+                    <span key={k.word} className="text-[10px] px-2.5 py-1 rounded-full bg-white/[0.05] text-white/60 border border-white/[0.08] hover:bg-white/[0.08] transition-all">
+                      {k.word}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })()}
+
       {/* Rakip karsilastirma */}
       {data.competitors?.length > 1 && (
         <div className="p-4 rounded-2xl bg-surface-1 border border-white/[0.07]">
@@ -252,6 +474,84 @@ function AnalyticsTab({ business }: { business: any }) {
         </div>
       )}
 
+
+      {/* Yetkinlik Radari - sadece oto servis icin */}
+      {business.category?.slug?.includes('oto') && (
+        <div className="space-y-3 mt-4">
+          <YetkinlikRadari businessId={business.id} businessName={business.name} />
+          <AutoServiceManualForm businessId={business.id} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+
+function AutoServiceManualForm({ businessId }: { businessId: string }) {
+  const [form, setForm] = useState({ ustaSicili: '', liftSayisi: '', garantiSuresiAy: '', scoreEkipman: '', scoreTecrube: '', sertifikalar: '', uzmanlikAlanlari: '' })
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/api$/, '')
+  const getToken = () => localStorage.getItem('token') || ''
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const body: any = {}
+      if (form.ustaSicili) body.ustaSicili = parseInt(form.ustaSicili)
+      if (form.liftSayisi) body.liftSayisi = parseInt(form.liftSayisi)
+      if (form.garantiSuresiAy) body.garantiSuresiAy = parseInt(form.garantiSuresiAy)
+      if (form.scoreEkipman) body.scoreEkipman = parseFloat(form.scoreEkipman)
+      if (form.scoreTecrube) body.scoreTecrube = parseFloat(form.scoreTecrube)
+      if (form.sertifikalar) body.sertifikalar = form.sertifikalar.split(',').map((s: string) => s.trim()).filter(Boolean)
+      if (form.uzmanlikAlanlari) body.uzmanlikAlanlari = form.uzmanlikAlanlari.split(',').map((s: string) => s.trim()).filter(Boolean)
+      await fetch(`${API}/api/auto-service/${businessId}/manual`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+        body: JSON.stringify(body)
+      })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/[0.07]">
+      <div className="text-xs font-bold text-white/70 mb-3">Yetkinlik Bilgilerini Guncelle</div>
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        {[
+          { key: 'ustaSicili', label: 'Deneyim (Yil)', placeholder: '12' },
+          { key: 'liftSayisi', label: 'Lift Sayisi', placeholder: '3' },
+          { key: 'garantiSuresiAy', label: 'Garanti (Ay)', placeholder: '6' },
+          { key: 'scoreEkipman', label: 'Ekipman Skoru (0-100)', placeholder: '78' },
+          { key: 'scoreTecrube', label: 'Tecrube Skoru (0-100)', placeholder: '85' },
+        ].map(({ key, label, placeholder }) => (
+          <div key={key}>
+            <div className="text-[10px] text-white/40 mb-1">{label}</div>
+            <input type="number" placeholder={placeholder} value={(form as any)[key]}
+              onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+              className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-white/20 focus:outline-none focus:border-indigo-500/50" />
+          </div>
+        ))}
+      </div>
+      <div className="space-y-2 mb-3">
+        <div>
+          <div className="text-[10px] text-white/40 mb-1">Sertifikalar (virgille ayirin)</div>
+          <input type="text" placeholder="Bosch Servis, ASE Sertifikali" value={form.sertifikalar}
+            onChange={e => setForm(f => ({ ...f, sertifikalar: e.target.value }))}
+            className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-white/20 focus:outline-none focus:border-indigo-500/50" />
+        </div>
+        <div>
+          <div className="text-[10px] text-white/40 mb-1">Uzmanlik Alanlari (virgille ayirin)</div>
+          <input type="text" placeholder="Motor, Fren, Elektrik" value={form.uzmanlikAlanlari}
+            onChange={e => setForm(f => ({ ...f, uzmanlikAlanlari: e.target.value }))}
+            className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-white/20 focus:outline-none focus:border-indigo-500/50" />
+        </div>
+      </div>
+      <button onClick={handleSave} disabled={saving}
+        className="w-full py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 text-white text-xs font-bold transition-all">
+        {saving ? 'Kaydediliyor...' : saved ? 'Kaydedildi!' : 'Kaydet'}
+      </button>
     </div>
   )
 }
@@ -262,6 +562,8 @@ function ReviewsTab({ business }: { business: any }) {
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [replyText, setReplyText] = useState('')
   const [replySaving, setReplySaving] = useState(false)
+  const [aiLoading, setAiLoading] = useState<string | null>(null)
+  const [aiDraftCount, setAiDraftCount] = useState<Record<string,number>>({})
 
   useEffect(() => {
     fetch(`${API}/api/businesses/${business.id}/reviews?limit=50`)
@@ -285,6 +587,23 @@ function ReviewsTab({ business }: { business: any }) {
       setReplyText('')
     }
     setReplySaving(false)
+  }
+
+  const getAIDraft = async (reviewId: string) => {
+    if ((aiDraftCount[reviewId] || 0) >= 3) return
+    setAiDraftCount(prev => ({ ...prev, [reviewId]: (prev[reviewId] || 0) + 1 }))
+    setAiLoading(reviewId)
+    const token = getToken()
+    try {
+      const res = await fetch(`${API}/api/reviews/${reviewId}/ai-draft`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: '{}'
+      })
+      const data = await res.json()
+      if (data.draft) setReplyText(data.draft)
+    } catch {}
+    setAiLoading(null)
   }
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-white/30" /></div>
@@ -328,6 +647,7 @@ function ReviewsTab({ business }: { business: any }) {
                 placeholder="Müşterinize yanıt yazın..."
                 className="w-full bg-surface-1 border border-indigo-500/30 rounded-xl px-3 py-2 text-sm text-white outline-none resize-none focus:border-indigo-500/60 placeholder-white/20 mb-2" />
               <div className="flex gap-2">
+                <button onClick={() => getAIDraft(r.id)} disabled={!!aiLoading} className="px-3 py-1.5 rounded-lg bg-violet-500/15 text-violet-400 border border-violet-500/20 text-xs font-bold disabled:opacity-40 hover:bg-violet-500/25 transition-all flex items-center gap-1">{aiLoading === r.id ? <Loader2 size={11} className="animate-spin" /> : <span>✨</span>} {aiDraftCount[r.id] ? `Yanıtı Değiştir (${3 - (aiDraftCount[r.id] || 0)} hak)` : 'Asistanla Yanıtla'}</button>
                 <button onClick={() => saveReply(r.id)} disabled={replySaving || !replyText.trim()}
                   className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-indigo-500 text-white text-xs font-bold disabled:opacity-50">
                   {replySaving ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />} Yanıtla
@@ -363,7 +683,7 @@ export default function SahipPaneliPage() {
   const [claiming, setClaiming] = useState<string | null>(null)
   const [claimMsg, setClaimMsg] = useState<string | null>(null)
   const [photoUploading, setPhotoUploading] = useState(false)
-  const [activeTab, setActiveTab] = useState<'overview'|'edit'|'reviews'|'analytics'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview'|'edit'|'reviews'|'analytics'|'subscription'>('overview')
 
   useEffect(() => {
     const token = getToken()
@@ -480,7 +800,7 @@ export default function SahipPaneliPage() {
 
           {/* Tabs */}
           <div className="flex border-b border-white/[0.07] px-4 mt-2">
-            {([['overview','Genel Bakış'],['edit','Bilgileri Düzenle'],['reviews','Yorumlar'],['analytics','Analitik']] as const).map(([key, label]) => (
+            {([['overview','Genel Bakis'],['edit','Bilgileri Duzenle'],['reviews','Yorumlar'],['analytics','Analitik'],['subscription','Paketim']] as const).map(([key, label]) => (
               <button key={key} onClick={() => setActiveTab(key)}
                 className={cn('py-3 px-4 text-xs font-bold border-b-2 transition-colors',
                   activeTab === key ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-white/40 hover:text-white/60'
@@ -542,6 +862,12 @@ export default function SahipPaneliPage() {
               </div>
             )}
 
+            {/* Verification Tab - Overview icinde */}
+            {activeTab === 'overview' && selected && (
+              <div className="mt-3">
+                <VerificationWizard business={selected} />
+              </div>
+            )}
             {/* Edit Tab */}
             {activeTab === 'edit' && (
               <div>
@@ -609,6 +935,9 @@ export default function SahipPaneliPage() {
             {/* Analytics Tab */}
             {activeTab === 'analytics' && (
               <AnalyticsTab business={selected} />
+            )}
+            {activeTab === 'subscription' && (
+              <SubscriptionTab business={selected} />
             )}
           </div>
         </div>

@@ -32,6 +32,263 @@ const REASON_COLOR: Record<string, string> = {
   OTHER: 'bg-white/[0.06] text-white/40'
 }
 
+function UpgradeRequestsSection({ apiBase }: { apiBase: string }) {
+  const [requests, setRequests] = React.useState<any[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [statusFilter, setStatusFilter] = React.useState('PENDING')
+  const [updating, setUpdating] = React.useState<string|null>(null)
+
+  const STATUS_COLORS: Record<string,string> = {
+    PENDING: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+    CONTACTED: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+    COMPLETED: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+    REJECTED: 'text-red-400 bg-red-500/10 border-red-500/20',
+  }
+  const PLAN_COLORS: Record<string,string> = {
+    FREE: 'text-white/40', PROFESSIONAL: 'text-blue-400', PREMIUM: 'text-amber-400', ENTERPRISE: 'text-purple-400'
+  }
+
+  const load = async () => {
+    setLoading(true)
+    const token = localStorage.getItem('auth_token')
+    const res = await fetch(`${apiBase}/api/subscriptions/admin/requests?status=${statusFilter}`, {
+      headers: { Authorization: `Bearer ${token}`, 'x-admin-secret': 'tecrube_admin_2026' }
+    })
+    const d = await res.json()
+    setRequests(d.requests || [])
+    setLoading(false)
+  }
+
+  React.useEffect(() => { load() }, [statusFilter])
+
+  const handleStatus = async (id: string, status: string) => {
+    setUpdating(id)
+    const token = localStorage.getItem('auth_token')
+    await fetch(`${apiBase}/api/subscriptions/admin/requests/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'x-admin-secret': 'tecrube_admin_2026' },
+      body: JSON.stringify({ status })
+    })
+    setUpdating(null)
+    load()
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        {['PENDING','CONTACTED','COMPLETED','REJECTED'].map(s => (
+          <button key={s} onClick={() => setStatusFilter(s)}
+            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${statusFilter === s ? STATUS_COLORS[s] + ' border' : 'text-white/30 hover:text-white bg-white/[0.03]'}`}>
+            {s === 'PENDING' ? 'Bekleyen' : s === 'CONTACTED' ? 'Aranıldı' : s === 'COMPLETED' ? 'Tamamlandi' : 'Reddedildi'}
+          </button>
+        ))}
+      </div>
+      {loading ? (
+        <div className="text-white/25 text-xs text-center py-4">Yukleniyor...</div>
+      ) : requests.length === 0 ? (
+        <div className="text-white/25 text-xs text-center py-4">Talep yok</div>
+      ) : requests.map((req: any) => (
+        <div key={req.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 space-y-2">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <div className="font-bold text-sm text-white">{req.businessName}</div>
+              <div className="text-xs text-white/40 mt-0.5">{req.fullName || req.username} · {req.email}</div>
+              {req.phone && <div className="text-xs text-indigo-300 mt-0.5 font-bold">📞 {req.phone}</div>}
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${PLAN_COLORS[req.planWanted]}`}>{req.planWanted}</span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${STATUS_COLORS[req.status]}`}>{req.status}</span>
+            </div>
+          </div>
+          {req.note && <div className="text-[11px] text-white/30 italic bg-white/[0.02] rounded-lg px-2 py-1">{req.note}</div>}
+          <div className="text-[10px] text-white/20">{new Date(req.createdAt).toLocaleString('tr-TR')}</div>
+          {req.status === 'PENDING' && (
+            <div className="flex gap-1.5 pt-1">
+              <button onClick={() => handleStatus(req.id, 'CONTACTED')} disabled={updating === req.id}
+                className="flex-1 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 text-[11px] font-bold border border-blue-500/20 hover:bg-blue-500/20 disabled:opacity-40 transition-all">
+                Arandı ✓
+              </button>
+              <button onClick={() => handleStatus(req.id, 'COMPLETED')} disabled={updating === req.id}
+                className="flex-1 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-[11px] font-bold border border-emerald-500/20 hover:bg-emerald-500/20 disabled:opacity-40 transition-all">
+                Tamamlandi ✓
+              </button>
+              <button onClick={() => handleStatus(req.id, 'REJECTED')} disabled={updating === req.id}
+                className="flex-1 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-[11px] font-bold border border-red-500/20 hover:bg-red-500/15 disabled:opacity-40 transition-all">
+                Reddet
+              </button>
+            </div>
+          )}
+          {req.status === 'CONTACTED' && (
+            <button onClick={() => handleStatus(req.id, 'COMPLETED')} disabled={updating === req.id}
+              className="w-full py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-[11px] font-bold border border-emerald-500/20 hover:bg-emerald-500/20 disabled:opacity-40 transition-all">
+              Tamamlandi olarak isaretle
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function SubscriptionsTab({ apiBase }: { apiBase: string }) {
+  const [subs, setSubs] = React.useState<any[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [planFilter, setPlanFilter] = React.useState('ALL')
+  const [search, setSearch] = React.useState('')
+  const [upgradeModal, setUpgradeModal] = React.useState<any>(null)
+  const [selectedPlan, setSelectedPlan] = React.useState('PROFESSIONAL')
+  const [notes, setNotes] = React.useState('')
+  const [saving, setSaving] = React.useState(false)
+
+  const PLANS = ['FREE','PROFESSIONAL','PREMIUM','ENTERPRISE']
+  const PLAN_COLORS: Record<string,string> = {
+    FREE: 'text-white/40 bg-white/[0.05] border-white/10',
+    PROFESSIONAL: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+    PREMIUM: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+    ENTERPRISE: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
+  }
+  const PLAN_PRICES: Record<string,string> = { FREE:'0₺', PROFESSIONAL:'99₺/ay', PREMIUM:'299₺/ay', ENTERPRISE:'999₺/ay' }
+
+  const load = async () => {
+    setLoading(true)
+    const token = localStorage.getItem('auth_token')
+    const planQ = planFilter !== 'ALL' ? `&plan=${planFilter}` : ''
+    const res = await fetch(`${apiBase}/api/subscriptions/admin/list?status=ACTIVE${planQ}`, {
+      headers: { Authorization: `Bearer ${token}`, 'x-admin-secret': 'tecrube_admin_2026' }
+    })
+    const d = await res.json()
+    setSubs(d.subs || [])
+    setLoading(false)
+  }
+
+  React.useEffect(() => { load() }, [planFilter])
+
+  const handleUpgrade = async () => {
+    if (!upgradeModal) return
+    setSaving(true)
+    const token = localStorage.getItem('auth_token')
+    await fetch(`${apiBase}/api/subscriptions/business/${upgradeModal.id}/upgrade`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'x-admin-secret': 'tecrube_admin_2026' },
+      body: JSON.stringify({ plan: selectedPlan, notes })
+    })
+    setSaving(false)
+    setUpgradeModal(null)
+    setNotes('')
+    load()
+  }
+
+  const handleCancel = async (businessId: string) => {
+    const token = localStorage.getItem('auth_token')
+    await fetch(`${apiBase}/api/subscriptions/business/${businessId}/cancel`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'x-admin-secret': 'tecrube_admin_2026' }
+    })
+    load()
+  }
+
+  const filtered = subs.filter(s => !search || s.business?.name?.toLowerCase().includes(search.toLowerCase()))
+
+  return (
+    <div className="space-y-4">
+      {/* Filtreler */}
+      <div className="flex gap-2 flex-wrap">
+        {['ALL',...PLANS].map(p => (
+          <button key={p} onClick={() => setPlanFilter(p)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${planFilter === p ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-white/40 hover:text-white bg-white/[0.03]'}`}>
+            {p === 'ALL' ? 'Tumu' : p}
+          </button>
+        ))}
+      </div>
+
+      {/* Arama + Yeni Abonelik */}
+      <div className="flex gap-2">
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Isletme ara..."
+          className="flex-1 bg-white/[0.04] border border-white/[0.07] rounded-xl px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-indigo-500/40" />
+        <button onClick={() => setUpgradeModal({ id: '', name: 'Yeni' })}
+          className="px-4 py-2 rounded-xl bg-indigo-500 text-white text-xs font-bold hover:bg-indigo-600 transition-all">
+          + Abonelik Ekle
+        </button>
+      </div>
+
+      {/* Liste */}
+      {loading ? (
+        <div className="text-white/30 text-sm text-center py-8">Yukleniyor...</div>
+      ) : filtered.length === 0 ? (
+        <div className="text-white/30 text-sm text-center py-8">Abonelik bulunamadi</div>
+      ) : filtered.map((sub: any) => (
+        <div key={sub.id} className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 flex items-center justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="font-bold text-sm text-white truncate">{sub.business?.name}</div>
+            <div className="text-xs text-white/40 mt-0.5">{sub.business?.city} · {new Date(sub.endsAt).toLocaleDateString('tr-TR')} tarihine kadar</div>
+            {sub.notes && <div className="text-[11px] text-white/25 mt-1 italic">{sub.notes}</div>}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border ${PLAN_COLORS[sub.plan]}`}>{sub.plan}</span>
+            <span className="text-xs text-white/30">{PLAN_PRICES[sub.plan]}</span>
+            <button onClick={() => { setUpgradeModal(sub.business); setSelectedPlan(sub.plan) }}
+              className="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 text-[11px] font-bold border border-indigo-500/20 hover:bg-indigo-500/20 transition-all">
+              Duzenle
+            </button>
+            <button onClick={() => handleCancel(sub.businessId)}
+              className="px-2.5 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-[11px] font-bold border border-red-500/20 hover:bg-red-500/15 transition-all">
+              Iptal
+            </button>
+          </div>
+        </div>
+      ))}
+
+      {/* Upgrade Modal */}
+      {upgradeModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#12121a] border border-white/[0.1] rounded-2xl p-6 w-full max-w-md space-y-4">
+            <div className="font-black text-white">Plan Ata / Guncelle</div>
+            <div>
+              <label className="text-xs text-white/40 mb-1 block">Isletme ID</label>
+              <input value={upgradeModal.id || ''} onChange={e => setUpgradeModal((m: any) => ({...m, id: e.target.value}))}
+                placeholder="Business ID girin"
+                className="w-full bg-white/[0.04] border border-white/[0.07] rounded-xl px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-indigo-500/40" />
+            </div>
+            <div>
+              <label className="text-xs text-white/40 mb-2 block">Plan Sec</label>
+              <div className="grid grid-cols-2 gap-2">
+                {PLANS.map(p => (
+                  <button key={p} onClick={() => setSelectedPlan(p)}
+                    className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${selectedPlan === p ? PLAN_COLORS[p] : 'text-white/30 bg-white/[0.03] border-white/[0.07]'}`}>
+                    <div>{p}</div>
+                    <div className="text-[10px] font-normal opacity-70 mt-0.5">{PLAN_PRICES[p]}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-white/40 mb-1 block">Not (opsiyonel)</label>
+              <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Odeme referansi, aciklama..."
+                className="w-full bg-white/[0.04] border border-white/[0.07] rounded-xl px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-indigo-500/40" />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button onClick={handleUpgrade} disabled={saving || !upgradeModal.id}
+                className="flex-1 py-2.5 rounded-xl bg-indigo-500 text-white text-sm font-bold hover:bg-indigo-600 disabled:opacity-40 transition-all">
+                {saving ? 'Kaydediliyor...' : 'Kaydet'}
+              </button>
+              <button onClick={() => { setUpgradeModal(null); setNotes('') }}
+                className="px-4 py-2.5 rounded-xl bg-white/[0.06] text-white/50 text-sm hover:bg-white/[0.1] transition-all">
+                Iptal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Yukseltme Talepleri */}
+      <div className="mt-6">
+        <div className="text-xs text-white/30 font-bold uppercase tracking-wider px-1 mb-3">Yukseltme Talepleri</div>
+        <UpgradeRequestsSection apiBase={apiBase} />
+      </div>
+    </div>
+  )
+}
+
 function MuhtarTab({ apiBase }: { apiBase: string }) {
   const [apps, setApps] = React.useState<any[]>([])
   const [loading, setLoading] = React.useState(true)
@@ -43,7 +300,7 @@ function MuhtarTab({ apiBase }: { apiBase: string }) {
     setLoading(true)
     const token = localStorage.getItem('auth_token')
     const res = await fetch(`${apiBase}/api/muhtar/admin/list?status=${statusFilter}`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}`, 'x-admin-secret': 'tecrube_admin_2026' }
     })
     const d = await res.json()
     setApps(d.apps || [])
@@ -57,7 +314,7 @@ function MuhtarTab({ apiBase }: { apiBase: string }) {
     const token = localStorage.getItem('auth_token')
     await fetch(`${apiBase}/api/muhtar/admin/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'x-admin-secret': 'tecrube_admin_2026' },
       body: JSON.stringify({ action, adminNote: adminNote[id] || '' })
     })
     setActionLoading(null)
@@ -180,7 +437,7 @@ function SiteSettingsTab({ apiBase }: { apiBase: string }) {
 }
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<'stats'|'reports'|'flagged'|'claims'|'businesses'|'users'|'reviews'|'settings'|'muhtar'>('stats')
+  const [tab, setTab] = useState<'stats'|'reports'|'flagged'|'claims'|'businesses'|'users'|'reviews'|'settings'|'muhtar'|'subscriptions'>('stats')
   const [stats, setStats] = useState<any>(null)
   const [modStats, setModStats] = useState<any>(null)
   const [data, setData] = useState<any[]>([])
@@ -275,8 +532,9 @@ export default function AdminPage() {
     { key: 'businesses', label: 'İşletmeler',      icon: Building2 },
     { key: 'users',      label: 'Kullanıcılar',    icon: Users },
     { key: 'reviews',    label: 'Tüm Yorumlar',    icon: MessageSquare },
+    { key: 'subscriptions', label: 'Abonelikler', icon: Star },
     { key: 'muhtar',    label: 'Muhtar Basvurulari', icon: Shield },
-    { key: 'settings',   label: 'Site Ayarlari',    icon: Settings },
+
   ] as const
 
   const totalPages = Math.ceil(total / 20)
@@ -733,6 +991,9 @@ export default function AdminPage() {
 
 
           {/* ── SITE SETTINGS ── */}
+          {tab === 'subscriptions' && (
+            <SubscriptionsTab apiBase={API} />
+          )}
           {tab === 'muhtar' && (
             <MuhtarTab apiBase={API} />
           )}

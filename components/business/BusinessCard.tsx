@@ -1,9 +1,8 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
-import { MapPin, Clock, Wifi, Zap, ChevronRight, Heart } from 'lucide-react'
+import { MapPin, Clock, Zap, ChevronRight, Heart, BadgeCheck, CircleDashed } from 'lucide-react'
 import { TrustScoreRing } from '@/components/ui/TrustScoreRing'
-import { TrustStack } from '@/components/ui/TrustStack'
 import { cn, getTrustColor } from '@/lib/utils'
 import type { Business } from '@/types'
 
@@ -41,6 +40,18 @@ export function BusinessCard({ business, showSemanticMatch }: BusinessCardProps)
             <span className="text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm bg-black/50 text-white border border-white/20">
               {business.category}
             </span>
+            {(business.subscriptionPlan === 'PREMIUM' || business.subscriptionPlan === 'ENTERPRISE') && (
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-500/30 text-amber-200 border border-amber-500/40 backdrop-blur-sm flex items-center gap-1">
+                <Zap size={9} className="fill-amber-200" />
+                {business.subscriptionPlan === 'ENTERPRISE' ? 'Kurumsal' : 'Öne Çıkan'}
+              </span>
+            )}
+            {business.subscriptionPlan === 'PROFESSIONAL' && (
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-500/30 text-blue-200 border border-blue-500/40 backdrop-blur-sm flex items-center gap-1">
+                <Zap size={9} />
+                Pro
+              </span>
+            )}
             {business.hasGonulAlma && (
               <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-pink-500/30 text-pink-200 border border-pink-500/40 backdrop-blur-sm flex items-center gap-1">
                 <Heart size={9} className="fill-pink-200" />
@@ -108,9 +119,21 @@ export function BusinessCard({ business, showSemanticMatch }: BusinessCardProps)
             </div>
           )}
 
-          {/* Trust stack + review count */}
+          {/* Verified badge + review count */}
           <div className="flex items-center justify-between pt-3 border-t border-black/[0.06] dark:border-white/[0.05]">
-            <TrustStack stack={business.trustStack} compact />
+            <div className="flex items-center gap-2">
+              {business.isVerified ? (
+                <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  <BadgeCheck size={11} />
+                  Doğrulandı
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/5 text-white/30 border border-white/10">
+                  <CircleDashed size={11} />
+                  Doğrulanmadı
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-white/40">
               <span>{(business.reviewCount || 0).toLocaleString('tr-TR')} yorum</span>
               <ChevronRight size={14} className="text-gray-300 dark:text-white/20 group-hover:text-indigo-400 transition-colors" />

@@ -57,13 +57,13 @@ function mapBusiness(b: any): Business {
     isOpen:       true,
     image:        coverImage,
     reviewCount:  b.totalReviews ?? 0,
-    culturalTags: (b.attributes?.about?.['Özellikler'] ?? []).slice(0, 3),
+    culturalTags: (b.attributes?.about?.['Özellikler'] ?? []).slice(0, 3).map((t: string) => t.replace(/^[\uE000-\uF8FF\u{E0000}-\u{FFFFF}]/u, '').trim()),
     badges:       [],
+    subscriptionPlan: b.subscriptionPlan ?? 'FREE',
+    aiSummary:    { atmosphere: '', price: '', bestTime: '', highlights: [] },
     aiSummary:    { atmosphere: '', price: '', bestTime: '', highlights: [] },
   }
 }
-
-// ─── Ana bileşen ───────────────────────────────────────────────────────────────
 
 export default function KesfetPage() {
   const [query, setQuery]                   = useState('')

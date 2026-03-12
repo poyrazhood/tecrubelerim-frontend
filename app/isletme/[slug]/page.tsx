@@ -11,6 +11,7 @@ import {
   MessageSquare, CheckCircle, AlertCircle, ChevronDown, Building2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import YetkinlikRadari from '@/components/business/YetkinlikRadari'
 import Link from 'next/link'
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '')
@@ -428,7 +429,41 @@ export default function BusinessPage() {
               </div>
               <div className="flex items-center gap-1.5 text-xs text-white/50"><MapPin size={11} className="text-indigo-400" /><span>{[business.district, business.city].filter(Boolean).join(', ')}</span></div>
             </div>
-            <TrustScoreRing score={trustScore} size="md" showBreakdown={false} />
+            <div className="flex flex-col items-center gap-1.5">
+              <TrustScoreRing score={trustScore} size="md" showBreakdown={false} />
+              {business.isVerified && (
+                <div className="relative group cursor-default">
+                  <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
+                    <circle cx="11" cy="11" r="11" fill="#4ade80" fillOpacity="0.15"/>
+                    <circle cx="11" cy="11" r="10" stroke="#4ade80" strokeOpacity="0.4" strokeWidth="1.5"/>
+                    <path d="M6.5 11.5L9.5 14.5L15.5 8.5" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50"
+                    style={{background:'rgba(10,20,10,0.95)',border:'1px solid rgba(74,222,128,0.3)',color:'#4ade80',boxShadow:'0 4px 20px rgba(0,0,0,0.5)'}}>
+                    ✓ Dogrulanmis Isletme
+                  </div>
+                </div>
+              )}
+            </div>
+
+              {/* Dogrulama rozeti - Twitter tiki gibi */}
+              {business.isVerified && (
+                <div className="flex flex-col items-center gap-1 mt-1">
+                  <div className="relative group">
+                    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                      <circle cx="11" cy="11" r="11" fill="#4ade80" fillOpacity="0.15"/>
+                      <circle cx="11" cy="11" r="10" stroke="#4ade80" strokeOpacity="0.3" strokeWidth="1"/>
+                      <path d="M6.5 11.5L9.5 14.5L15.5 8.5" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50"
+                      style={{background: 'rgba(15,20,15,0.95)', border: '1px solid rgba(74,222,128,0.3)', color: '#4ade80', boxShadow: '0 4px 20px rgba(0,0,0,0.5)'}}>
+                      ✓ Dogrulanmis Isletme
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0" style={{borderLeft: '4px solid transparent', borderRight: '4px solid transparent', borderTop: '4px solid rgba(74,222,128,0.3)'}} />
+                    </div>
+                  </div>
+                </div>
+              )}
           </div>
 
           <div className="flex items-center gap-3 mb-4 flex-wrap">
@@ -553,6 +588,9 @@ export default function BusinessPage() {
 
           {activeTab === 'bilgiler' && (
             <div className="space-y-3">
+              {business.category?.slug?.includes('oto') && (
+                <YetkinlikRadari businessId={business.id} businessName={business.name} />
+              )}
               <div className="bg-surface-1 border border-white/[0.06] rounded-2xl overflow-hidden">
                 <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 hover:bg-white/[0.03] transition-colors group">
                   <div className="flex items-start gap-3">

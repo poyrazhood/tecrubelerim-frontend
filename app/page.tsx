@@ -54,7 +54,7 @@ function mapBusiness(b: any): Business {
     isOpen:       b.isOpen ?? true,
     image:        coverImage,
     reviewCount:  b.totalReviews ?? 0,
-    culturalTags: (b.attributes?.about?.['Özellikler'] ?? []).slice(0, 3),
+    culturalTags: (b.attributes?.about?.['Özellikler'] ?? []).slice(0, 3).map((t: string) => t.replace(/^[\uE000-\uF8FF\u{E0000}-\u{FFFFF}]/u, '').trim()),
     badges:       b.badges ?? [],
     aiSummary:    { atmosphere: '', price: '', bestTime: '', highlights: [] },
   }

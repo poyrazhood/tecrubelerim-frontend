@@ -1,4 +1,4 @@
-export interface TrustBreakdown {
+﻿export interface TrustBreakdown {
   reviewDepth: number
   recencyTrend: number
   verifiedRatio: number
@@ -40,6 +40,7 @@ export interface Business {
   semanticMatch?: number
   culturalTags: string[]
   badges: string[]
+  subscriptionPlan?: 'FREE' | 'PROFESSIONAL' | 'PREMIUM' | 'ENTERPRISE'
   aiSummary: {
     atmosphere: string
     price: string
