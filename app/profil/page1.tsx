@@ -119,29 +119,6 @@ export default function ProfilPage() {
   const [savedLoading, setSavedLoading] = useState(false)
   const [savedLoaded, setSavedLoaded] = useState(false)
 
-  const [pointLogs, setPointLogs] = useState<any[]>([])
-  const [pointLogsLoading, setPointLogsLoading] = useState(false)
-  const [pointLogsLoaded, setPointLogsLoaded] = useState(false)
-
-  const loadPointLogs = useCallback(async () => {
-    if (pointLogsLoaded) return
-    setPointLogsLoading(true)
-    try {
-      const token = getToken()
-      const res = await fetch(`${API_BASE}/api/market/points/log?limit=10`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setPointLogs(data.logs || [])
-      }
-    } catch {}
-    finally {
-      setPointLogsLoading(false)
-      setPointLogsLoaded(true)
-    }
-  }, [pointLogsLoaded])
-
   useEffect(() => {
     if (user) setBio((user as any).bio || '')
   }, [user])
@@ -187,8 +164,7 @@ export default function ProfilPage() {
   useEffect(() => {
     if (activeTab === 0) loadMyReviews()
     if (activeTab === 1) loadSavedBusinesses()
-    if (activeTab === 2) loadPointLogs()
-  }, [activeTab, loadMyReviews, loadSavedBusinesses, loadPointLogs])
+  }, [activeTab, loadMyReviews, loadSavedBusinesses])
 
   const handleSaveBio = async () => {
     setBioSaving(true)
@@ -482,192 +458,114 @@ export default function ProfilPage() {
             </div>
           )}
 
-          {activeTab === 2 && (() => {
-            // Seviye sistemi
-            const totalEarned = (user as any).totalEarnedPoints ?? 0
-            const currentPts  = (user as any).currentPoints ?? 0
-            const LEVELS = [
-              { name: 'Acemi Kaşif',    min: 0,    max: 100,  color: '#94A3B8', icon: '🌱' },
-              { name: 'Mahalle Sakini', min: 100,  max: 300,  color: '#60A5FA', icon: '🏘️' },
-              { name: 'Deneyim Ustası', min: 300,  max: 700,  color: '#818CF8', icon: '⭐' },
-              { name: 'Güvenilir Ses',  min: 700,  max: 1500, color: '#34D399', icon: '🎖️' },
-              { name: 'Mahalle Muhtarı',min: 1500, max: 3000, color: '#F59E0B', icon: '👑' },
-              { name: 'Efsane Kaşif',   min: 3000, max: 99999,color: '#F43F5E', icon: '🏆' },
-            ]
-            const lvl      = LEVELS.findLast(l => totalEarned >= l.min) ?? LEVELS[0]
-            const nextLvl  = LEVELS[LEVELS.indexOf(lvl) + 1]
-            const progress = nextLvl ? Math.round(((totalEarned - lvl.min) / (nextLvl.min - lvl.min)) * 100) : 100
-            const toNext   = nextLvl ? nextLvl.min - totalEarned : 0
+          {activeTab === 2 && (
+            <div className="space-y-4">
 
-            const REASON_ICON: Record<string, string> = {
-              REVIEW_WRITTEN: '💬', HELPFUL_VOTE: '👍', PHOTO_UPLOAD: '📸',
-              BUSINESS_ADDED: '🏢', PURCHASE: '🛍️',
-            }
-            const REASON_LABEL: Record<string, string> = {
-              REVIEW_WRITTEN: 'Yorum Yazıldı', HELPFUL_VOTE: 'Faydalı Oy Alındı',
-              PHOTO_UPLOAD: 'Fotoğraf Yüklendi', BUSINESS_ADDED: 'İşletme Eklendi',
-              PURCHASE: 'Ödül Satın Alındı',
-            }
-
-            return (
-              <div className="space-y-4">
-
-                {/* Seviye Kartı */}
-                <div className="rounded-2xl border p-4 relative overflow-hidden"
-                  style={{ borderColor: lvl.color + '40', background: `linear-gradient(135deg, ${lvl.color}10, transparent)` }}>
-                  <div className="absolute top-0 right-0 w-28 h-28 rounded-full blur-2xl pointer-events-none"
-                    style={{ background: lvl.color + '15' }} />
-                  <div className="relative">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
-                        style={{ background: lvl.color + '20' }}>
-                        {lvl.icon}
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-xs text-white/40 mb-0.5">Mevcut Seviye</div>
-                        <div className="font-black text-base text-white">{lvl.name}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-black" style={{ color: lvl.color }}>{currentPts.toLocaleString('tr-TR')}</div>
-                        <div className="text-[10px] text-white/30">Kullanılabilir TP</div>
-                      </div>
+              {/* Tecrübe Pazarı Kartı */}
+              <div className="rounded-2xl border border-indigo-500/25 bg-gradient-to-br from-indigo-950/60 to-purple-950/40 p-4 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute -bottom-4 -left-4 w-20 h-20 bg-purple-500/10 rounded-full blur-xl pointer-events-none" />
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <ShoppingBag size={15} className="text-indigo-400" />
+                      <span className="font-bold text-sm text-white">Tecrübe Pazarı</span>
+                      <span className="text-[9px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded-full border border-indigo-500/20 font-medium">Yakında</span>
                     </div>
+                  </div>
 
-                    {/* İlerleme çubuğu */}
-                    {nextLvl && (
-                      <div>
-                        <div className="flex justify-between text-xs mb-1.5">
-                          <span className="text-white/40">{lvl.name}</span>
-                          <span className="text-white/40">{nextLvl.name}</span>
-                        </div>
-                        <div className="h-2.5 rounded-full bg-white/[0.06] overflow-hidden">
-                          <div className="h-full rounded-full transition-all duration-700"
-                            style={{ width: `${progress}%`, background: lvl.color }} />
-                        </div>
-                        <div className="flex justify-between text-[10px] mt-1.5">
-                          <span style={{ color: lvl.color }}>{totalEarned.toLocaleString('tr-TR')} TP</span>
-                          <span className="text-white/30">{toNext.toLocaleString('tr-TR')} TP daha → {nextLvl.icon}</span>
-                        </div>
-                      </div>
-                    )}
-                    {!nextLvl && (
-                      <div className="text-center text-xs text-amber-400 font-bold py-1">
-                        🏆 Maksimum seviyeye ulaştınız!
-                      </div>
-                    )}
+                  {/* Puan göstergesi */}
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.04] border border-white/[0.06] mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                      <Zap size={18} className="text-amber-400" />
+                    </div>
+                    <div>
+                      <div className="text-xs text-white/40">Toplam Puanın</div>
+                      <div className="text-xl font-black text-amber-400">{(user.trustScore ?? 0)} <span className="text-xs font-normal text-white/30">TP</span></div>
+                    </div>
                   </div>
-                </div>
 
-                {/* Puan Özeti */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 text-center">
-                    <div className="text-2xl font-black text-amber-400">{currentPts.toLocaleString('tr-TR')}</div>
-                    <div className="text-[10px] text-white/40 mt-0.5">Harcayabileceğin TP</div>
-                  </div>
-                  <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-4 text-center">
-                    <div className="text-2xl font-black text-indigo-400">{totalEarned.toLocaleString('tr-TR')}</div>
-                    <div className="text-[10px] text-white/40 mt-0.5">Toplam Kazanılan TP</div>
-                  </div>
-                </div>
-
-                {/* Puan Kazanma Rehberi */}
-                <div className="rounded-2xl border border-white/[0.07] bg-surface-2 p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Zap size={14} className="text-amber-400" />
-                    <span className="text-sm font-bold text-white">Puan Kazan</span>
-                  </div>
-                  <div className="space-y-2">
-                    {[
-                      { icon: '💬', label: 'Yorum Yaz', desc: 'Günde max 3', pts: '+20 TP', color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
-                      { icon: '🏢', label: 'İşletme Ekle', desc: 'Günde max 1', pts: '+50 TP', color: 'text-purple-400', bg: 'bg-purple-500/10' },
-                      { icon: '📸', label: 'Fotoğraf Yükle', desc: 'Günde max 3', pts: '+5 TP',  color: 'text-blue-400',   bg: 'bg-blue-500/10' },
-                      { icon: '👍', label: 'Faydalı Oy Al', desc: 'Günde max 10', pts: '+5 TP', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-                    ].map(({ icon, label, desc, pts, color, bg }) => (
-                      <div key={label} className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.04]">
-                        <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center text-base', bg)}>{icon}</div>
-                        <div className="flex-1">
-                          <div className="text-xs font-semibold text-white">{label}</div>
-                          <div className="text-[10px] text-white/30">{desc}</div>
+                  {/* Kazanma yolları */}
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2 text-white/50">
+                        <div className="w-5 h-5 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+                          <MessageSquare size={10} className="text-indigo-400" />
                         </div>
-                        <div className={cn('text-xs font-black', color)}>{pts}</div>
+                        Yorum Yaz
                       </div>
-                    ))}
+                      <span className="text-emerald-400 font-bold">+20 TP</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2 text-white/50">
+                        <div className="w-5 h-5 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                          <Building2 size={10} className="text-purple-400" />
+                        </div>
+                        İşletme Ekle
+                      </div>
+                      <span className="text-emerald-400 font-bold">+50 TP</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2 text-white/50">
+                        <div className="w-5 h-5 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                          <Gift size={10} className="text-amber-400" />
+                        </div>
+                        Faydalı Oy Al
+                      </div>
+                      <span className="text-emerald-400 font-bold">+5 TP</span>
+                    </div>
                   </div>
+
                   <Link href="/tecrube-pazari">
-                    <button className="w-full mt-3 py-2 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/30 transition-all">
-                      Tecrübe Pazarı'na Git →
+                    <button className="w-full py-2 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/30 transition-all">
+                      Pazarı Keşfet →
                     </button>
                   </Link>
                 </div>
-
-                {/* Puan Geçmişi */}
-                <div className="rounded-2xl border border-white/[0.07] bg-surface-2 p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <TrendingUp size={14} className="text-primary" />
-                    <span className="text-sm font-bold text-white">Puan Geçmişi</span>
-                  </div>
-                  {pointLogsLoading ? (
-                    <div className="space-y-2">
-                      {[1,2,3].map(i => (
-                        <div key={i} className="h-12 rounded-xl bg-white/[0.04] animate-pulse" />
-                      ))}
-                    </div>
-                  ) : pointLogs.length === 0 ? (
-                    <div className="text-center py-6 text-white/30 text-xs">
-                      <Zap size={24} className="mx-auto mb-2 opacity-20" />
-                      Henüz puan kazanımın yok.<br />
-                      <span className="text-indigo-400">Yorum yaz, işletme ekle, puan kazan!</span>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {pointLogs.map((log: any) => (
-                        <div key={log.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.04]">
-                          <div className="w-8 h-8 rounded-xl bg-white/[0.06] flex items-center justify-center text-base flex-shrink-0">
-                            {REASON_ICON[log.reason] ?? '⚡'}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs font-semibold text-white truncate">
-                              {REASON_LABEL[log.reason] ?? log.description ?? log.reason}
-                            </div>
-                            <div className="text-[10px] text-white/30">
-                              {new Date(log.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                          </div>
-                          <div className={cn('text-sm font-black flex-shrink-0', log.points > 0 ? 'text-emerald-400' : 'text-red-400')}>
-                            {log.points > 0 ? '+' : ''}{log.points} TP
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* TrustScore */}
-                <div className="rounded-2xl border border-white/[0.07] bg-surface-2 p-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Shield size={15} className="text-emerald-400" />
-                    <span className="text-sm font-bold text-white">TrustScore Detayı</span>
-                  </div>
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-20 h-20 rounded-full flex items-center justify-center"
-                      style={{ background: `conic-gradient(#22C55E ${Math.min((user.trustScore ?? 0) / 5, 100) * 3.6}deg, #1F1F24 ${Math.min((user.trustScore ?? 0) / 5, 100) * 3.6}deg)` }}>
-                      <div className="w-14 h-14 rounded-full bg-surface-2 flex items-center justify-center">
-                        <span className="text-lg font-black text-emerald-400">{user.trustScore}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-white mb-1">{trustLevelLabel.label}</div>
-                      <div className="text-xs text-white/40">Seviye: {user.trustLevel}</div>
-                    </div>
-                  </div>
-                  <ActivityBar label="Yorum Sayısı" value={Math.min((user.totalReviews ?? 0), 100)} color="#818CF8" />
-                  <ActivityBar label="Faydalı Oy Oranı" value={(user.totalReviews ?? 0) > 0 ? Math.round(((user.helpfulVotes ?? 0) / (user.totalReviews ?? 0)) * 100) : 0} color="#34D399" />
-                  <ActivityBar label="TrustScore" value={Math.round(((user.trustScore ?? 0) / 500) * 100)} color="#F59E0B" />
-                </div>
-
               </div>
-            )
-          })()}
+
+              <div className="rounded-2xl border border-white/[0.07] bg-surface-2 p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Shield size={15} className="text-emerald-400" />
+                  <span className="text-sm font-bold text-white">TrustScore Detayi</span>
+                </div>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-20 h-20 rounded-full flex items-center justify-center"
+                    style={{ background: `conic-gradient(#22C55E ${Math.min((user.trustScore ?? 0) / 5, 100) * 3.6}deg, #1F1F24 ${Math.min((user.trustScore ?? 0) / 5, 100) * 3.6}deg)` }}>
+                    <div className="w-14 h-14 rounded-full bg-surface-2 flex items-center justify-center">
+                      <span className="text-lg font-black text-emerald-400">{user.trustScore}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-white mb-1">{trustLevelLabel.label}</div>
+                    <div className="text-xs text-white/40">Seviye: {user.trustLevel}</div>
+                  </div>
+                </div>
+                <ActivityBar label="Yorum Sayisi" value={Math.min((user.totalReviews ?? 0), 100)} color="#818CF8" />
+                <ActivityBar label="Faydali Oy Orani" value={(user.totalReviews ?? 0) > 0 ? Math.round(((user.helpfulVotes ?? 0) / (user.totalReviews ?? 0)) * 100) : 0} color="#34D399" />
+                <ActivityBar label="TrustScore" value={Math.round(((user.trustScore ?? 0) / 500) * 100)} color="#F59E0B" />
+              </div>
+              <div className="rounded-2xl border border-white/[0.07] bg-surface-2 p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp size={15} className="text-primary" />
+                  <span className="text-sm font-bold text-white">Ozet</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'Dogrulanmis Yorum', value: (user as any).verifiedReviews ?? 0, color: 'text-primary' },
+                    { label: 'Profil Goruntulenme', value: (user as any).profileViews ?? 0, color: 'text-primary' },
+                    { label: 'Faydali Oy', value: (user.helpfulVotes ?? 0), color: 'text-emerald-400' },
+                    { label: 'Faydali Oran', value: (user.totalReviews ?? 0) > 0 ? `%${Math.round(((user.helpfulVotes ?? 0) / (user.totalReviews ?? 1)) * 100)}` : '%0', color: 'text-amber-400' },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} className="bg-white/[0.03] rounded-xl p-3">
+                      <div className="text-xs text-white/40 mb-1">{label}</div>
+                      <div className={cn('text-lg font-black', color)}>{value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {activeTab === 3 && (
             <div className="space-y-2">

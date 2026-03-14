@@ -4,7 +4,7 @@ import {
   Building2, Users, MessageSquare, CheckCircle, XCircle, Loader2,
   Search, Ban, ChevronLeft, ChevronRight, Star, AlertTriangle,
   Trash2, Eye, Shield, Flag, Clock, Filter, RefreshCw
-, Settings } from 'lucide-react'
+, Settings, ShoppingBag, Gift, Plus, Image, ToggleLeft, ToggleRight, Edit2, Package } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -126,6 +126,236 @@ function UpgradeRequestsSection({ apiBase }: { apiBase: string }) {
           )}
         </div>
       ))}
+    </div>
+  )
+}
+
+// ─── Market Tab ───────────────────────────────────────────────────────────────
+function MarketTab({ apiBase }: { apiBase: string }) {
+  const [items, setItems] = React.useState<any[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [saving, setSaving] = React.useState(false)
+  const [editingItem, setEditingItem] = React.useState<any>(null)
+  const [showForm, setShowForm] = React.useState(false)
+  const [form, setForm] = React.useState({
+    name: '', description: '', pointCost: 100, category: 'BADGE',
+    imageUrl: '', stock: -1, isActive: true
+  })
+
+  const CATEGORIES = [
+    { key: 'BADGE', label: 'Rozet' },
+    { key: 'COUPON', label: 'Kupon / İndirim' },
+    { key: 'FEATURE', label: 'Özellik' },
+    { key: 'DONATION', label: 'Bağış' },
+  ]
+  const CAT_COLORS: Record<string, string> = {
+    BADGE: 'bg-indigo-500/15 text-indigo-400',
+    COUPON: 'bg-emerald-500/15 text-emerald-400',
+    FEATURE: 'bg-amber-500/15 text-amber-400',
+    DONATION: 'bg-pink-500/15 text-pink-400',
+  }
+
+  const load = async () => {
+    setLoading(true)
+    try {
+      const r = await fetch(`${apiBase}/api/admin/market-items`, { headers: getH() })
+      const d = await r.json()
+      setItems(Array.isArray(d) ? d : (d.items || []))
+    } catch { setItems([]) }
+    setLoading(false)
+  }
+
+  React.useEffect(() => { load() }, [])
+
+  const resetForm = () => setForm({ name: '', description: '', pointCost: 100, category: 'BADGE', imageUrl: '', stock: -1, isActive: true })
+
+  const openNew = () => { resetForm(); setEditingItem(null); setShowForm(true) }
+  const openEdit = (item: any) => {
+    setForm({ name: item.name, description: item.description || '', pointCost: item.pointCost, category: item.category, imageUrl: item.imageUrl || '', stock: item.stock ?? -1, isActive: item.isActive })
+    setEditingItem(item)
+    setShowForm(true)
+  }
+
+  const save = async () => {
+    if (!form.name || !form.pointCost) return
+    setSaving(true)
+    try {
+      const url = editingItem ? `${apiBase}/api/admin/market-items/${editingItem.id}` : `${apiBase}/api/admin/market-items`
+      const method = editingItem ? 'PUT' : 'POST'
+      await fetch(url, { method, headers: getH(), body: JSON.stringify(form) })
+      await load()
+      setShowForm(false)
+      resetForm()
+    } catch(e) { console.error(e) }
+    setSaving(false)
+  }
+
+  const del = async (id: string) => {
+    if (!confirm('Bu ürünü silmek istediğinizden emin misiniz?')) return
+    try {
+      await fetch(`${apiBase}/api/admin/market-items/${id}`, { method: 'DELETE', headers: getH() })
+      await load()
+    } catch(e) { console.error(e) }
+  }
+
+  const toggleActive = async (item: any) => {
+    try {
+      await fetch(`${apiBase}/api/admin/market-items/${item.id}`, {
+        method: 'PUT', headers: getH(),
+        body: JSON.stringify({ ...item, isActive: !item.isActive })
+      })
+      await load()
+    } catch(e) { console.error(e) }
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-black">Tecrübe Pazarı</h2>
+          <p className="text-sm text-white/40 mt-1">Kullanıcıların TP harcayarak alabileceği ödülleri yönetin</p>
+        </div>
+        <button onClick={openNew} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-sm font-semibold hover:bg-indigo-500/30 transition-all">
+          <Plus size={15} /> Yeni Ürün
+        </button>
+      </div>
+
+      {/* Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#13131f] border border-white/[0.1] rounded-2xl p-6 w-full max-w-md">
+            <h3 className="font-bold text-lg mb-5">{editingItem ? 'Ürünü Düzenle' : 'Yeni Ürün Ekle'}</h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-white/40 mb-1.5 block">Ürün Adı *</label>
+                <input value={form.name} onChange={e => setForm(p => ({...p, name: e.target.value}))}
+                  className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-indigo-500/50"
+                  placeholder="Örn: Altın Rozet" />
+              </div>
+
+              <div>
+                <label className="text-xs text-white/40 mb-1.5 block">Açıklama</label>
+                <textarea value={form.description} onChange={e => setForm(p => ({...p, description: e.target.value}))}
+                  rows={2} className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-indigo-500/50 resize-none"
+                  placeholder="Ürün açıklaması..." />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-white/40 mb-1.5 block">Puan Maliyeti (TP) *</label>
+                  <input type="number" value={form.pointCost} onChange={e => setForm(p => ({...p, pointCost: parseInt(e.target.value) || 0}))}
+                    className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-indigo-500/50" />
+                </div>
+                <div>
+                  <label className="text-xs text-white/40 mb-1.5 block">Stok (-1 = sınırsız)</label>
+                  <input type="number" value={form.stock} onChange={e => setForm(p => ({...p, stock: parseInt(e.target.value)}))}
+                    className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-indigo-500/50" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-white/40 mb-1.5 block">Kategori</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {CATEGORIES.map(c => (
+                    <button key={c.key} onClick={() => setForm(p => ({...p, category: c.key}))}
+                      className={cn('px-3 py-2 rounded-xl text-xs font-medium border transition-all',
+                        form.category === c.key ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300' : 'bg-white/[0.03] border-white/[0.08] text-white/40 hover:text-white/70'
+                      )}>
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-white/40 mb-1.5 block">Görsel URL</label>
+                <input value={form.imageUrl} onChange={e => setForm(p => ({...p, imageUrl: e.target.value}))}
+                  className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-indigo-500/50"
+                  placeholder="https://..." />
+              </div>
+
+              <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <span className="text-sm text-white/60">Aktif</span>
+                <button onClick={() => setForm(p => ({...p, isActive: !p.isActive}))}
+                  className={cn('w-10 h-6 rounded-full transition-all relative', form.isActive ? 'bg-indigo-500' : 'bg-white/[0.1]')}>
+                  <span className={cn('absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all', form.isActive ? 'left-4' : 'left-0.5')} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-5">
+              <button onClick={save} disabled={saving || !form.name}
+                className="flex-1 py-2.5 rounded-xl bg-indigo-500 text-white text-sm font-bold disabled:opacity-40 hover:bg-indigo-600 transition-colors flex items-center justify-center gap-2">
+                {saving ? <Loader2 size={14} className="animate-spin" /> : null}
+                {editingItem ? 'Güncelle' : 'Ekle'}
+              </button>
+              <button onClick={() => setShowForm(false)} className="px-4 py-2.5 rounded-xl bg-white/[0.06] text-white/50 text-sm font-medium hover:bg-white/[0.1]">
+                İptal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ürün listesi */}
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-white/30" /></div>
+      ) : items.length === 0 ? (
+        <div className="text-center py-16 border border-dashed border-white/[0.1] rounded-2xl">
+          <Package size={40} className="mx-auto mb-3 text-white/20" />
+          <div className="text-white/40 text-sm mb-1">Henüz ürün yok</div>
+          <div className="text-white/25 text-xs mb-4">İlk ödülü ekleyin</div>
+          <button onClick={openNew} className="px-4 py-2 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-sm font-medium">
+            Ürün Ekle
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {items.map((item: any) => (
+            <div key={item.id} className={cn('rounded-2xl border p-4 transition-all', item.isActive ? 'border-white/[0.08] bg-white/[0.02]' : 'border-white/[0.04] bg-white/[0.01] opacity-60')}>
+              <div className="flex items-start gap-3">
+                {item.imageUrl ? (
+                  <img src={item.imageUrl} alt={item.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                    <Gift size={20} className="text-indigo-400" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-bold text-sm text-white truncate">{item.name}</span>
+                    <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0', CAT_COLORS[item.category] || 'bg-white/10 text-white/40')}>
+                      {CATEGORIES.find(c => c.key === item.category)?.label}
+                    </span>
+                  </div>
+                  {item.description && <p className="text-xs text-white/40 mb-2 truncate">{item.description}</p>}
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-black text-amber-400">{item.pointCost} TP</span>
+                    <span className="text-xs text-white/30">{item.stock === -1 ? 'Sınırsız stok' : `${item.stock} adet`}</span>
+                    <span className="text-xs text-white/30">{item.totalRedeemed || 0} kez alındı</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/[0.05]">
+                <button onClick={() => toggleActive(item)}
+                  className={cn('flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all',
+                    item.isActive ? 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25' : 'bg-white/[0.05] text-white/30 hover:bg-white/[0.1]'
+                  )}>
+                  {item.isActive ? <ToggleRight size={12} /> : <ToggleLeft size={12} />}
+                  {item.isActive ? 'Aktif' : 'Pasif'}
+                </button>
+                <button onClick={() => openEdit(item)} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white/[0.05] text-white/50 hover:bg-white/[0.1] hover:text-white transition-all">
+                  <Edit2 size={12} /> Düzenle
+                </button>
+                <button onClick={() => del(item.id)} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all ml-auto">
+                  <Trash2 size={12} /> Sil
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -592,7 +822,7 @@ function SiteSettingsTab({ apiBase }: { apiBase: string }) {
 }
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<'stats'|'reports'|'flagged'|'claims'|'businesses'|'users'|'reviews'|'settings'|'muhtar'|'subscriptions'|'pending'|'theme'>('stats')
+  const [tab, setTab] = useState<'stats'|'reports'|'flagged'|'claims'|'businesses'|'users'|'reviews'|'settings'|'muhtar'|'subscriptions'|'pending'|'theme'|'market'>('stats')
   const [stats, setStats] = useState<any>(null)
   const [modStats, setModStats] = useState<any>(null)
   const [pendingBizCount, setPendingBizCount] = React.useState(0)
@@ -697,6 +927,7 @@ export default function AdminPage() {
     { key: 'muhtar',    label: 'Muhtar Basvurulari', icon: Shield, badge: muhtarPending },
     { key: 'pending',    label: 'Bekleyen Ä°ÅŸletmeler', icon: Clock,   badge: pendingBizCount },
     { key: 'theme',      label: 'Tema ve Renk',        icon: Settings },
+    { key: 'market',     label: 'Tecrübe Pazarı',      icon: ShoppingBag },
 
   ] as const
 
@@ -1164,6 +1395,9 @@ export default function AdminPage() {
           )}
           {tab === 'settings' && (
             <SiteSettingsTab apiBase={API} />
+          )}
+          {tab === 'market' && (
+            <MarketTab apiBase={API} />
           )}
         </div>
       </div>

@@ -6,7 +6,7 @@ import { SearchBar } from '@/components/search/SearchBar'
 import { BusinessCard } from '@/components/business/BusinessCard'
 import { MuhtarLeaderboard } from '@/components/feed/MuhtarLeaderboard'
 import { SkeletonReviewCard, SkeletonBusinessCard } from '@/components/ui/SkeletonCard'
-import { MapPin, Sparkles, TrendingUp, Star, ThumbsUp, Share2, ExternalLink } from 'lucide-react'
+import { MapPin, Sparkles, TrendingUp, Star, ThumbsUp, Share2, ExternalLink, ShoppingBag, Zap, Gift } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import type { Business, MuhtarUser, TrustScore, TrustStack } from '@/types'
@@ -357,8 +357,45 @@ export default function HomePage() {
             {/* Google Yorumları Feed */}
             {externalReviews.length > 0 ? (
               <div className="stagger-children">
-                {externalReviews.map((review: any) => (
-                  <ExternalReviewCard key={review.id} review={review} />
+                {externalReviews.map((review: any, index: number) => (
+                  <>
+                    <ExternalReviewCard key={review.id} review={review} />
+                    {index === 2 && (
+                      <div key="pazar-banner" className="my-3 lg:hidden rounded-2xl border border-indigo-500/25 bg-gradient-to-br from-indigo-950/60 to-purple-950/40 p-4 relative overflow-hidden">
+                        {/* Dekorasyon */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+                        <div className="absolute -bottom-4 -left-4 w-20 h-20 bg-purple-500/10 rounded-full blur-xl pointer-events-none" />
+
+                        <div className="relative flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0">
+                            <ShoppingBag size={18} className="text-indigo-400" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-bold text-sm text-white">Tecrübe Pazarı</span>
+                              <span className="text-[9px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded-full border border-indigo-500/20 font-medium">Yakında</span>
+                            </div>
+                            <p className="text-xs text-white/40 mb-3">Yorum yaz, puan kazan — rozetler ve ayrıcalıklarla ödüllendir</p>
+                            <div className="flex items-center gap-2 mb-3">
+                              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06]">
+                                <Zap size={10} className="text-amber-400" />
+                                <span className="text-[10px] text-white/60">+20 TP / yorum</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06]">
+                                <Gift size={10} className="text-emerald-400" />
+                                <span className="text-[10px] text-white/60">Özel rozetler</span>
+                              </div>
+                            </div>
+                            <Link href="/tecrube-pazari">
+                              <button className="px-4 py-1.5 rounded-xl bg-indigo-500/25 border border-indigo-500/35 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/35 transition-all">
+                                Keşfet →
+                              </button>
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 ))}
               </div>
             ) : (
