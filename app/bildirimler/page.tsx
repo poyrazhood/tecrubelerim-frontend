@@ -162,7 +162,7 @@ export default function BildirimlerPage() {
 
   const getToken = () =>
     typeof window !== 'undefined'
-      ? (localStorage.getItem('token') || sessionStorage.getItem('token'))
+      ? (localStorage.getItem('auth_token'))
       : null
 
   const fetchNotifs = async () => {

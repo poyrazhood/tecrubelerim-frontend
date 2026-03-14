@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -481,15 +481,36 @@ export default function BusinessPage() {
 
           {features.length > 0 && (
             <div className="mb-4">
-              <div className="flex flex-wrap gap-1.5">
-                {(showAllFeatures ? features : features.slice(0, 6)).map((f: string, i: number) => (
-                  <span key={i} className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-white/[0.06] text-white/55 border border-white/[0.08]">{f}</span>
-                ))}
+              <p className="text-[10px] font-bold text-white/30 tracking-widest uppercase mb-2.5 px-0.5">
+                Özellikler
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {(showAllFeatures ? features : features.slice(0, 8)).map((f: string, i: number) => {
+                  const palettes = [
+                    { bg: 'bg-indigo-500/10', border: 'border-indigo-500/25', text: 'text-indigo-300', icon: 'text-indigo-400', iconBg: 'bg-indigo-500/20' },
+                    { bg: 'bg-emerald-500/10', border: 'border-emerald-500/25', text: 'text-emerald-300', icon: 'text-emerald-400', iconBg: 'bg-emerald-500/20' },
+                    { bg: 'bg-purple-500/10', border: 'border-purple-500/25', text: 'text-purple-300', icon: 'text-purple-400', iconBg: 'bg-purple-500/20' },
+                    { bg: 'bg-amber-500/10', border: 'border-amber-500/25', text: 'text-amber-300', icon: 'text-amber-400', iconBg: 'bg-amber-500/20' },
+                    { bg: 'bg-sky-500/10', border: 'border-sky-500/25', text: 'text-sky-300', icon: 'text-sky-400', iconBg: 'bg-sky-500/20' },
+                    { bg: 'bg-pink-500/10', border: 'border-pink-500/25', text: 'text-pink-300', icon: 'text-pink-400', iconBg: 'bg-pink-500/20' },
+                    { bg: 'bg-teal-500/10', border: 'border-teal-500/25', text: 'text-teal-300', icon: 'text-teal-400', iconBg: 'bg-teal-500/20' },
+                    { bg: 'bg-orange-500/10', border: 'border-orange-500/25', text: 'text-orange-300', icon: 'text-orange-400', iconBg: 'bg-orange-500/20' },
+                  ]
+                  const icons = ['✓', '◉', '✦', '▶', '■', '◎', '♥', '◆']
+                  const p = palettes[i % palettes.length]
+                  const ic = icons[i % icons.length]
+                  return (
+                    <div key={i} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${p.bg} border ${p.border}`}>
+                      <span className={`text-[10px] font-black ${p.icon}`}>{ic}</span>
+                      <span className={`text-[11px] font-semibold ${p.text}`}>{f}</span>
+                    </div>
+                  )
+                })}
               </div>
-              {features.length > 6 && (
+              {features.length > 8 && (
                 <button onClick={() => setShowAllFeatures(!showAllFeatures)} className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 mt-2 transition-colors">
                   <ChevronDown size={13} className={cn('transition-transform', showAllFeatures && 'rotate-180')} />
-                  {showAllFeatures ? 'Daha az' : `+${features.length - 6} daha`}
+                  {showAllFeatures ? 'Daha az' : `+${features.length - 8} daha`}
                 </button>
               )}
             </div>
@@ -507,37 +528,24 @@ export default function BusinessPage() {
             </a>
           )}
 
-          <div className="grid grid-cols-4 gap-2 mb-5">
-            <Link href={`/yorum-yaz?businessId=${business.id}&businessName=${encodeURIComponent(business.name)}`}
-              className="col-span-2 flex items-center justify-center gap-2 py-3 rounded-2xl bg-indigo-500 hover:bg-indigo-400 transition-colors text-white font-bold text-sm">
-              <Star size={14} className="fill-white" />Yorum Yaz
-            </Link>
-            <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
-              className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-2xl bg-white/[0.05] border border-white/[0.08] text-white/60 hover:bg-white/[0.09] transition-colors">
-              <Navigation size={15} /><span className="text-[10px] font-medium">Yol Tarifi</span>
+          <div className="grid grid-cols-2 gap-2 mb-5">
+            <a href={business.phoneNumber ? `tel:${business.phoneNumber}` : '#'}
+              className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 transition-all text-white font-bold text-sm shadow-lg shadow-emerald-500/25">
+              <Phone size={15} /> Ara
             </a>
-            <button onClick={handleSave} disabled={saveLoading}
-              className={cn('flex flex-col items-center justify-center gap-1 py-2.5 rounded-2xl border transition-all', saved ? 'bg-indigo-500/15 border-indigo-500/30 text-indigo-400' : 'bg-white/[0.05] border-white/[0.08] text-white/60 hover:bg-white/[0.09]')}>
-              {saved ? <BookmarkCheck size={15} /> : <Bookmark size={15} />}
-              <span className="text-[10px] font-medium">{saved ? 'Kaydedildi' : 'Kaydet'}</span>
-            </button>
+            <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-sky-500 hover:bg-sky-400 active:scale-95 transition-all text-white font-bold text-sm shadow-lg shadow-sky-500/25">
+              <Navigation size={15} /> Yol Tarifi
+            </a>
+            <a href={business.website ?? '#'} target={business.website ? '_blank' : '_self'} rel="noopener noreferrer"
+              className={`flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm transition-all active:scale-95 ${business.website ? 'bg-purple-500 hover:bg-purple-400 text-white shadow-lg shadow-purple-500/25' : 'bg-white/[0.06] border border-white/[0.08] text-white/30 cursor-not-allowed'}`}>
+              <Globe size={15} /> Web Sitesi
+            </a>
+            <Link href={`/yorum-yaz?businessId=${business.id}&businessName=${encodeURIComponent(business.name)}`}
+              className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-indigo-500 hover:bg-indigo-400 active:scale-95 transition-all text-white font-bold text-sm shadow-lg shadow-indigo-500/25">
+              <Star size={15} className="fill-white" /> Yorum Yaz
+            </Link>
           </div>
-
-          {(business.phoneNumber || business.website) && (
-            <div className="flex gap-2 mb-5">
-              {business.phoneNumber && (
-                <a href={`tel:${business.phoneNumber}`} className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-medium hover:bg-emerald-500/15 transition-colors">
-                  <Phone size={13} />{business.phoneNumber}
-                </a>
-              )}
-              {business.website && (
-                <a href={business.website} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-white/[0.05] text-white/60 border border-white/[0.08] text-xs font-medium hover:bg-white/[0.09] transition-colors">
-                  <Globe size={13} />Website
-                </a>
-              )}
-            </div>
-          )}
-
           <div className="flex gap-1 bg-surface-2 p-1 rounded-xl border border-white/[0.06] mb-5">
             {([
               { key: 'yorumlar', label: `Yorumlar (${totalReviewCount})` },
@@ -591,10 +599,10 @@ export default function BusinessPage() {
               {business.category?.slug?.includes('oto') && (
                 <YetkinlikRadari businessId={business.id} businessName={business.name} />
               )}
-              <div className="bg-surface-1 border border-white/[0.06] rounded-2xl overflow-hidden">
-                <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 hover:bg-white/[0.03] transition-colors group">
+              <div className="bg-surface-1 border border-white/[0.07] rounded-2xl overflow-hidden shadow-sm">
+                <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between px-4 py-3.5 hover:bg-white/[0.03] transition-colors group">
                   <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-indigo-500/15 flex items-center justify-center flex-shrink-0"><MapPin size={15} className="text-indigo-400" /></div>
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-500/25 flex items-center justify-center flex-shrink-0"><MapPin size={16} className="text-indigo-400" /></div>
                     <div>
                       <p className="text-xs text-white/40 font-medium mb-0.5">Adres</p>
                       <p className="text-sm text-white">{business.address}</p>
@@ -611,8 +619,8 @@ export default function BusinessPage() {
                 )}
                 {business.website && (
                   <a href={business.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3 border-t border-white/[0.05] hover:bg-white/[0.03] transition-colors">
-                    <div className="w-9 h-9 rounded-xl bg-blue-500/15 flex items-center justify-center flex-shrink-0"><Globe size={15} className="text-blue-400" /></div>
-                    <div className="flex-1 min-w-0"><p className="text-xs text-white/40 font-medium mb-0.5">Website</p><p className="text-sm text-blue-400 truncate">{business.website.replace(/^https?:\/\//, '')}</p></div>
+                    <div className="w-10 h-10 rounded-2xl bg-purple-500/20 border border-purple-500/25 flex items-center justify-center flex-shrink-0"><Globe size={16} className="text-purple-400" /></div>
+                    <div className="flex-1 min-w-0"><p className="text-xs text-white/40 font-medium mb-0.5">Website</p><p className="text-sm font-semibold text-purple-400 truncate">{business.website.replace(/^https?:\/\//, '')}</p></div>
                     <ExternalLink size={12} className="text-white/20 flex-shrink-0" />
                   </a>
                 )}
@@ -672,4 +680,4 @@ export default function BusinessPage() {
       </div>
     </AppLayout>
   )
-}
+}

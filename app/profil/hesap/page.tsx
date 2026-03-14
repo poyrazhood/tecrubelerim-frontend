@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import React, { useState } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
@@ -49,13 +49,13 @@ export default function HesapPage() {
       })
       if (!res.ok) { const e = await res.json().catch(() => ({})); setError(e.error || 'Hata.') }
       else { setSaved(true); setTimeout(() => setSaved(false), 2000) }
-    } catch { setError('BaÄŸlantÄ± hatasÄ±.') }
+    } catch { setError('Bağlantı hatası.') }
     finally { setSaving(false) }
   }
 
   const handleChangePassword = async () => {
-    if (!currentPass || !newPass) { setPassError('TÃ¼m alanlarÄ± doldurun.'); return }
-    if (newPass.length < 8) { setPassError('Åifre en az 8 karakter olmalÄ±.'); return }
+    if (!currentPass || !newPass) { setPassError('Tüm alanları doldurun.'); return }
+    if (newPass.length < 8) { setPassError('Şifre en az 8 karakter olmalı.'); return }
     setPassSaving(true); setPassError(''); setPassSaved(false)
     try {
       const res = await fetch(`${API_BASE}/api/auth/password`, {
@@ -65,7 +65,7 @@ export default function HesapPage() {
       })
       if (!res.ok) { const e = await res.json().catch(() => ({})); setPassError(e.error || 'Hata.') }
       else { setPassSaved(true); setCurrentPass(''); setNewPass(''); setTimeout(() => setPassSaved(false), 2000) }
-    } catch { setPassError('BaÄŸlantÄ± hatasÄ±.') }
+    } catch { setPassError('Bağlantı hatası.') }
     finally { setPassSaving(false) }
   }
 
@@ -86,10 +86,10 @@ export default function HesapPage() {
           <div className="rounded-2xl border border-white/[0.07] bg-surface-2 p-4">
             <h2 className="text-sm font-bold text-white mb-4">Profil Bilgileri</h2>
 
-            <Field label="KullanÄ±cÄ± AdÄ±" icon={User}>
+            <Field label="Kullanıcı Adı" icon={User}>
               <div className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-3 py-2.5 text-sm text-white/40">
                 @{user.username}
-                <span className="text-xs text-white/25 ml-2">(deÄŸiÅŸtirilemez)</span>
+                <span className="text-xs text-white/25 ml-2">(değiştirilemez)</span>
               </div>
             </Field>
 
@@ -97,7 +97,7 @@ export default function HesapPage() {
               <input
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
-                placeholder="AdÄ±nÄ±z SoyadÄ±nÄ±z"
+                placeholder="Adınız Soyadınız"
                 className="w-full bg-surface border border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-indigo-500/50 placeholder-white/20 transition-colors"
               />
             </Field>
@@ -105,7 +105,7 @@ export default function HesapPage() {
             <Field label="E-posta" icon={Mail}>
               <div className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-3 py-2.5 text-sm text-white/40">
                 {user.email}
-                {(user as any).emailVerified && <span className="ml-2 text-xs text-emerald-400">âœ“ DoÄŸrulandÄ±</span>}
+                {(user as any).emailVerified && <span className="ml-2 text-xs text-emerald-400">âœ“ Doğrulandı</span>}
               </div>
             </Field>
 
@@ -128,21 +128,21 @@ export default function HesapPage() {
                 saved ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-indigo-500 text-white hover:bg-indigo-600'
               )}
             >
-              {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <><Check size={14} />Kaydedildi</> : 'DeÄŸiÅŸiklikleri Kaydet'}
+              {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <><Check size={14} />Kaydedildi</> : 'Değişiklikleri Kaydet'}
             </button>
           </div>
 
-          {/* Åifre DeÄŸiÅŸtir */}
+          {/* Şifre Değiştir */}
           <div className="rounded-2xl border border-white/[0.07] bg-surface-2 p-4">
-            <h2 className="text-sm font-bold text-white mb-4">Åifre DeÄŸiÅŸtir</h2>
+            <h2 className="text-sm font-bold text-white mb-4">Şifre Değiştir</h2>
 
-            <Field label="Mevcut Åifre" icon={Lock}>
+            <Field label="Mevcut Şifre" icon={Lock}>
               <div className="relative">
                 <input
                   type={showPass ? 'text' : 'password'}
                   value={currentPass}
                   onChange={e => setCurrentPass(e.target.value)}
-                  placeholder="Mevcut ÅŸifreniz"
+                  placeholder="Mevcut şifreniz"
                   className="w-full bg-surface border border-white/[0.08] rounded-xl px-3 py-2.5 pr-10 text-sm text-white outline-none focus:border-indigo-500/50 placeholder-white/20 transition-colors"
                 />
                 <button onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60">
@@ -151,7 +151,7 @@ export default function HesapPage() {
               </div>
             </Field>
 
-            <Field label="Yeni Åifre" icon={Lock}>
+            <Field label="Yeni Şifre" icon={Lock}>
               <input
                 type={showPass ? 'text' : 'password'}
                 value={newPass}
@@ -171,7 +171,7 @@ export default function HesapPage() {
                 passSaved ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-white/[0.07] text-white hover:bg-white/[0.12] border border-white/[0.09]'
               )}
             >
-              {passSaving ? <Loader2 size={14} className="animate-spin" /> : passSaved ? <><Check size={14} />Åifre DeÄŸiÅŸtirildi</> : 'Åifreyi DeÄŸiÅŸtir'}
+              {passSaving ? <Loader2 size={14} className="animate-spin" /> : passSaved ? <><Check size={14} />Şifre Değiştirildi</> : 'Şifreyi Değiştir'}
             </button>
           </div>
         </div>

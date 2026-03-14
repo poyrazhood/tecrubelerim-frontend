@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { Smartphone, CreditCard, Camera } from 'lucide-react'
 import type { TrustStack as TrustStackType } from '@/types'

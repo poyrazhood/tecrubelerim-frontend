@@ -36,6 +36,8 @@ export interface Business {
   hours: string
   isOpen: boolean
   image: string
+  latitude?: number
+  longitude?: number
   reviewCount: number
   semanticMatch?: number
   culturalTags: string[]

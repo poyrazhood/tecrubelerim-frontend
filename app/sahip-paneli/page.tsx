@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 // @ts-ignore
 import YetkinlikRadari from '@/components/business/YetkinlikRadari'
 // @ts-ignore
@@ -233,7 +233,7 @@ function AnalyticsTab({ business }: { business: any }) {
     doc.text('Genel Ozet', 20, 44)
     doc.setFontSize(11)
     doc.text(`Toplam Goruntulenme: ${d?.totalViews ?? 0}`, 20, 54)
-    doc.text(`Toplam Yorum: ${d?.totalReviews ?? 0}`, 20, 62)
+    doc.text(`Toplam Yorum: ${(c.totalReviews ?? 0) + (c._count?.externalReviews ?? 0)}${d?.totalReviews ?? 0}`, 20, 62)
     doc.text(`Ortalama Puan: ${d?.averageRating?.toFixed(1) ?? 0}`, 20, 70)
     doc.text(`Sehir Sirasi: #${d?.cityRank ?? '-'}`, 20, 78)
     doc.setFontSize(13)
@@ -249,7 +249,7 @@ function AnalyticsTab({ business }: { business: any }) {
     doc.setFontSize(10)
     y += 20
     data?.competitors?.forEach((c: any, i: number) => {
-      doc.text(`${i+1}. ${c.name}${c.isSelf ? ' (siz)' : ''} — Puan: ${c.averageRating?.toFixed(1)}, Yorum: ${c.totalReviews}`, 25, y)
+      doc.text(`${i+1}. ${c.name}${c.isSelf ? ' (siz)' : ''} — Puan: ${c.averageRating?.toFixed(1)}, Yorum: ${(c.totalReviews ?? 0) + (c._count?.externalReviews ?? 0)}${c.totalReviews}`, 25, y)
       y += 8
     })
     doc.save(`${business.name}-rapor.pdf`)

@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import type { Business, MuhtarUser, TrustScore, TrustStack } from '@/types'
 
-const TABS = ['Tümü', 'Yakınımda', 'Muhtarlar', 'Kategoriler']
+const TABS = ['Tümü', 'Yakınımda', 'Muhtarlar', 'Trend']
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
 // ─── Mapper'lar ────────────────────────────────────────────────────────────────
@@ -167,14 +167,27 @@ function ExternalReviewCard({ review }: { review: any }) {
           href={`/isletme/${biz.slug}`}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-white/40 hover:bg-white/5 hover:text-white/70 transition-all"
         >
-
-          <MapPin size={13} />
-          İşletmeye Git
+          <Star size={12} />
+          <span>İşletmeye Git</span>
         </Link>
+
+        {review.sourceUrl && (
+          <a href={review.sourceUrl} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-white/30 hover:bg-white/5 hover:text-white/50 transition-all">
+            <ExternalLink size={12} />
+          </a>
+        )}
+
+        <button className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-white/30 hover:bg-white/5 hover:text-white/50 transition-all">
+          <Share2 size={12} />
+        </button>
       </div>
     </article>
   )
 }
+
+// ─── Scroll reveal ─────────────────────────────────────────────────────────────
+
 function useScrollReveal() {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -205,9 +218,8 @@ export default function HomePage() {
   const [activeTab, setActiveTab]     = useState(0)
   const [loading, setLoading]         = useState(true)
   const [mounted, setMounted]         = useState(false)
-  const [locationName, setLocationName] = useState(typeof window !== 'undefined' && localStorage.getItem('userCity') ? localStorage.getItem('userCity')! : 'Türkiye')
-  const [businesses, setBusinesses]   = useState<Business[]>([])
   const [externalReviews, setExternalReviews] = useState<any[]>([])
+  const [businesses, setBusinesses]   = useState<Business[]>([])
   const [muhtarlar, setMuhtarlar]     = useState<MuhtarUser[]>([])
   const [page, setPage]               = useState(1)
   const [hasMore, setHasMore]         = useState(true)
@@ -277,7 +289,7 @@ export default function HomePage() {
         <div className={cn('flex items-center gap-2 mb-4 transition-all duration-500', mounted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2')}>
           <div className="flex items-center gap-1.5 text-sm text-white/60">
             <MapPin size={13} className="text-indigo-400" />
-            <span className="font-medium">{locationName}</span>
+            <span className="font-medium">Türkiye</span>
           </div>
           <span className="text-white/20">·</span>
           <span className="text-xs text-white/40">
@@ -297,7 +309,7 @@ export default function HomePage() {
               className={cn('flex-1 text-xs font-semibold py-2 px-3 rounded-lg transition-all btn-press',
                 i === activeTab ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-white/40 hover:text-white/70'
               )}>
-              {tab === 'Muhtarlar' ? <Link href="/muhtarlar" className="block w-full">{tab}</Link> : tab === 'Kategoriler' ? <Link href="/kategoriler" className="block w-full">{tab}</Link> : tab}
+              {tab === 'Muhtarlar' ? <Link href="/muhtarlar" className="block w-full">{tab}</Link> : tab}
             </button>
           ))}
         </div>

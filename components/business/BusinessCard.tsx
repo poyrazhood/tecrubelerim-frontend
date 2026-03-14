@@ -1,9 +1,7 @@
 ﻿'use client'
-
 import Link from 'next/link'
-import { MapPin, Clock, Zap, ChevronRight, Heart, BadgeCheck, CircleDashed } from 'lucide-react'
-import { TrustScoreRing } from '@/components/ui/TrustScoreRing'
-import { cn, getTrustColor } from '@/lib/utils'
+import { MapPin, Star, MessageSquare, BadgeCheck, Zap } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import type { Business } from '@/types'
 
 interface BusinessCardProps {
@@ -11,134 +9,91 @@ interface BusinessCardProps {
   showSemanticMatch?: boolean
 }
 
-export function BusinessCard({ business, showSemanticMatch }: BusinessCardProps) {
+export function BusinessCard({ business }: BusinessCardProps) {
+  const rating = business.rating || 0
+  const reviewCount = business.reviewCount || 0
+
   return (
     <Link href={`/isletme/${business.slug}`}>
-      <article className="card-interactive group relative rounded-2xl overflow-hidden border mb-3
+      <article className="group flex gap-3 p-3 rounded-2xl border mb-2
         bg-white dark:bg-surface-1
-        border-black/[0.08] dark:border-white/[0.06]
-        shadow-sm dark:shadow-none"
-      >
-        {/* Image */}
-        <div className="relative h-44 overflow-hidden bg-black/[0.04] dark:bg-white/[0.04]">
+        border-black/[0.06] dark:border-white/[0.06]
+        hover:border-indigo-500/30 hover:bg-indigo-500/[0.03]
+        transition-all duration-200">
+
+        {/* Sol: Kucuk resim */}
+        <div className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-white/[0.04]">
           {business.image ? (
             <img
               src={business.image}
               alt={business.name}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" referrerPolicy="no-referrer"
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <span className="text-4xl opacity-20">🏢</span>
+              <span className="text-2xl opacity-15">🏢</span>
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-
-          {/* Top badges */}
-          <div className="absolute top-3 left-3 flex items-center gap-2">
-            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm bg-black/50 text-white border border-white/20">
-              {business.category}
-            </span>
-            {(business.subscriptionPlan === 'PREMIUM' || business.subscriptionPlan === 'ENTERPRISE') && (
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-500/30 text-amber-200 border border-amber-500/40 backdrop-blur-sm flex items-center gap-1">
-                <Zap size={9} className="fill-amber-200" />
-                {business.subscriptionPlan === 'ENTERPRISE' ? 'Kurumsal' : 'Öne Çıkan'}
-              </span>
-            )}
-            {business.subscriptionPlan === 'PROFESSIONAL' && (
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-500/30 text-blue-200 border border-blue-500/40 backdrop-blur-sm flex items-center gap-1">
-                <Zap size={9} />
-                Pro
-              </span>
-            )}
-            {business.hasGonulAlma && (
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-pink-500/30 text-pink-200 border border-pink-500/40 backdrop-blur-sm flex items-center gap-1">
-                <Heart size={9} className="fill-pink-200" />
-                Gönül Alma
-              </span>
-            )}
-          </div>
-
-          {/* Open/closed */}
-          <div className="absolute top-3 right-3">
+          {/* Acik/Kapali badge */}
+          {business.isOpen !== undefined && (
             <span className={cn(
-              'text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm',
-              business.isOpen
-                ? 'bg-emerald-500/25 text-emerald-200 border border-emerald-500/40'
-                : 'bg-red-500/25 text-red-200 border border-red-500/40'
+              'absolute bottom-1 left-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full',
+              business.isOpen ? 'bg-emerald-500 text-white' : 'bg-red-500/80 text-white'
             )}>
               {business.isOpen ? 'Açık' : 'Kapalı'}
             </span>
-          </div>
-
-          {showSemanticMatch && business.semanticMatch && (
-            <div className="absolute bottom-3 left-3 text-[11px] font-bold px-2.5 py-1 rounded-full bg-indigo-500/30 text-indigo-200 border border-indigo-500/40 backdrop-blur-sm">
-              %{business.semanticMatch} eşleşme
-            </div>
           )}
         </div>
 
-        {/* Content */}
-        <div className="p-4">
-          <div className="flex items-start justify-between gap-3 mb-3">
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-base leading-tight mb-1 truncate text-gray-900 dark:text-white">
-                {business.name}
-              </h3>
-              <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-white/50">
-                <MapPin size={11} />
-                <span>{business.district}, {business.city}</span>
-                <span className="text-gray-300 dark:text-white/20">·</span>
-                <span>{business.priceRange}</span>
-                {business.hours && (
-                  <>
-                    <span className="text-gray-300 dark:text-white/20">·</span>
-                    <Clock size={11} />
-                    <span>{business.hours}</span>
-                  </>
+        {/* Sag: Bilgiler */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              {/* Isim + dogrulama */}
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-sm font-bold text-white truncate">{business.name}</h3>
+                {business.isVerified && <BadgeCheck size={13} className="text-indigo-400 flex-shrink-0" />}
+                {(business.subscriptionPlan === 'PREMIUM' || business.subscriptionPlan === 'ENTERPRISE') && (
+                  <Zap size={11} className="text-amber-400 flex-shrink-0" />
                 )}
               </div>
+
+              {/* Konum */}
+              <div className="flex items-center gap-1 mt-0.5">
+                <MapPin size={10} className="text-white/30 flex-shrink-0" />
+                <span className="text-[11px] text-white/40 truncate">
+                  {[business.district, business.city].filter(Boolean).join(', ')}
+                </span>
+              </div>
+
+              {/* Kategori */}
+              <span className="text-[10px] text-white/30 mt-0.5 block truncate">{typeof business.category === "string" ? business.category : (business.category as any)?.name ?? "Genel"}</span>
             </div>
-            <TrustScoreRing score={business.trustScore} size="sm" showBreakdown={false} />
+
+            {/* Puan */}
+            {rating > 0 && (
+              <div className="flex-shrink-0 flex flex-col items-end">
+                <div className="flex items-center gap-1">
+                  <Star size={11} className="text-amber-400 fill-amber-400" />
+                  <span className="text-sm font-bold text-white">{rating.toFixed(1)}</span>
+                </div>
+                <span className="text-[10px] text-white/30">{reviewCount} yorum</span>
+              </div>
+            )}
           </div>
 
-          {/* Cultural tags */}
-          {business.culturalTags?.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {business.culturalTags.slice(0, 3).map((tag) => (
-                <span
-                  key={tag}
-                  className="text-[10px] font-medium px-2 py-0.5 rounded-full
-                    bg-amber-50 text-amber-700 border border-amber-200
-                    dark:bg-amber-500/10 dark:text-amber-400/80 dark:border-amber-500/20"
-                >
-                  {tag}
+          {/* Alt: Ozellikler */}
+          {business.attributes && business.attributes.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {business.attributes.slice(0, 3).map((attr: string, i: number) => (
+                <span key={i} className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.05] text-white/40 border border-white/[0.06]">
+                  {attr}
                 </span>
               ))}
             </div>
           )}
-
-          {/* Verified badge + review count */}
-          <div className="flex items-center justify-between pt-3 border-t border-black/[0.06] dark:border-white/[0.05]">
-            <div className="flex items-center gap-2">
-              {business.isVerified ? (
-                <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                  <BadgeCheck size={11} />
-                  Doğrulandı
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/5 text-white/30 border border-white/10">
-                  <CircleDashed size={11} />
-                  Doğrulanmadı
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-white/40">
-              <span>{(business.reviewCount || 0).toLocaleString('tr-TR')} yorum</span>
-              <ChevronRight size={14} className="text-gray-300 dark:text-white/20 group-hover:text-indigo-400 transition-colors" />
-            </div>
-          </div>
         </div>
       </article>
     </Link>

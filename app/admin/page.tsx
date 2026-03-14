@@ -21,7 +21,7 @@ function normalizeRating(raw: number) {
 
 const REASON_LABEL: Record<string, string> = {
   SPAM: 'Spam', INAPPROPRIATE: 'Uygunsuz', FAKE_REVIEW: 'Sahte Yorum',
-  HARASSMENT: 'Taciz', COPYRIGHT: 'Telif Hakkı', OTHER: 'Diğer'
+  HARASSMENT: 'Taciz', COPYRIGHT: 'Telif HakkÄ±', OTHER: 'DiÄŸer'
 }
 const REASON_COLOR: Record<string, string> = {
   SPAM: 'bg-orange-500/15 text-orange-400',
@@ -79,7 +79,7 @@ function UpgradeRequestsSection({ apiBase }: { apiBase: string }) {
         {['PENDING','CONTACTED','COMPLETED','REJECTED'].map(s => (
           <button key={s} onClick={() => setStatusFilter(s)}
             className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${statusFilter === s ? STATUS_COLORS[s] + ' border' : 'text-white/30 hover:text-white bg-white/[0.03]'}`}>
-            {s === 'PENDING' ? 'Bekleyen' : s === 'CONTACTED' ? 'Aranıldı' : s === 'COMPLETED' ? 'Tamamlandi' : 'Reddedildi'}
+            {s === 'PENDING' ? 'Bekleyen' : s === 'CONTACTED' ? 'AranÄ±ldÄ±' : s === 'COMPLETED' ? 'Tamamlandi' : 'Reddedildi'}
           </button>
         ))}
       </div>
@@ -92,8 +92,8 @@ function UpgradeRequestsSection({ apiBase }: { apiBase: string }) {
           <div className="flex items-start justify-between gap-2">
             <div>
               <div className="font-bold text-sm text-white">{req.businessName}</div>
-              <div className="text-xs text-white/40 mt-0.5">{req.fullName || req.username} · {req.email}</div>
-              {req.phone && <div className="text-xs text-indigo-300 mt-0.5 font-bold">📞 {req.phone}</div>}
+              <div className="text-xs text-white/40 mt-0.5">{req.fullName || req.username} Â· {req.email}</div>
+              {req.phone && <div className="text-xs text-indigo-300 mt-0.5 font-bold">ğŸ“ {req.phone}</div>}
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${PLAN_COLORS[req.planWanted]}`}>{req.planWanted}</span>
@@ -106,11 +106,11 @@ function UpgradeRequestsSection({ apiBase }: { apiBase: string }) {
             <div className="flex gap-1.5 pt-1">
               <button onClick={() => handleStatus(req.id, 'CONTACTED')} disabled={updating === req.id}
                 className="flex-1 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 text-[11px] font-bold border border-blue-500/20 hover:bg-blue-500/20 disabled:opacity-40 transition-all">
-                Arandı ✓
+                ArandÄ± âœ“
               </button>
               <button onClick={() => handleStatus(req.id, 'COMPLETED')} disabled={updating === req.id}
                 className="flex-1 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-[11px] font-bold border border-emerald-500/20 hover:bg-emerald-500/20 disabled:opacity-40 transition-all">
-                Tamamlandi ✓
+                Tamamlandi âœ“
               </button>
               <button onClick={() => handleStatus(req.id, 'REJECTED')} disabled={updating === req.id}
                 className="flex-1 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-[11px] font-bold border border-red-500/20 hover:bg-red-500/15 disabled:opacity-40 transition-all">
@@ -147,7 +147,7 @@ function SubscriptionsTab({ apiBase }: { apiBase: string }) {
     PREMIUM: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
     ENTERPRISE: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
   }
-  const PLAN_PRICES: Record<string,string> = { FREE:'0₺', PROFESSIONAL:'99₺/ay', PREMIUM:'299₺/ay', ENTERPRISE:'999₺/ay' }
+  const PLAN_PRICES: Record<string,string> = { FREE:'0â‚º', PROFESSIONAL:'99â‚º/ay', PREMIUM:'299â‚º/ay', ENTERPRISE:'999â‚º/ay' }
 
   const load = async () => {
     setLoading(true)
@@ -220,7 +220,7 @@ function SubscriptionsTab({ apiBase }: { apiBase: string }) {
         <div key={sub.id} className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 flex items-center justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="font-bold text-sm text-white truncate">{sub.business?.name}</div>
-            <div className="text-xs text-white/40 mt-0.5">{sub.business?.city} · {new Date(sub.endsAt).toLocaleDateString('tr-TR')} tarihine kadar</div>
+            <div className="text-xs text-white/40 mt-0.5">{sub.business?.city} Â· {new Date(sub.endsAt).toLocaleDateString('tr-TR')} tarihine kadar</div>
             {sub.notes && <div className="text-[11px] text-white/25 mt-1 italic">{sub.notes}</div>}
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -289,6 +289,161 @@ function SubscriptionsTab({ apiBase }: { apiBase: string }) {
   )
 }
 
+
+
+function PendingBusinessSection({ apiBase }: { apiBase: string }) {
+  const [businesses, setBusinesses] = React.useState<any[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [acting, setActing] = React.useState<string|null>(null)
+
+  const load = async () => {
+    setLoading(true)
+    const r = await fetch(`${apiBase}/businesses/pending?secret=tecrube_admin_2026`)
+    const d = await r.json()
+    setBusinesses(d.businesses || [])
+    setLoading(false)
+  }
+
+  React.useEffect(() => { load() }, [])
+
+  async function approve(id: string) {
+    setActing(id)
+    await fetch(`${apiBase}/businesses/${id}/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: 'tecrube_admin_2026' })
+    })
+    await load()
+    setActing(null)
+  }
+
+  async function reject(id: string) {
+    setActing(id)
+    await fetch(`${apiBase}/businesses/${id}/reject`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: 'tecrube_admin_2026' })
+    })
+    await load()
+    setActing(null)
+  }
+
+  if (loading) return <div className="p-6 text-white/40 text-sm">YÃ¼kleniyor...</div>
+
+  return (
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-lg font-black text-white">Bekleyen Ä°ÅŸletmeler</h2>
+          <p className="text-sm text-white/40">{businesses.length} iÅŸletme onay bekliyor</p>
+        </div>
+        <button onClick={load} className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center text-white/40 hover:text-white transition-colors">
+          <RefreshCw size={14} />
+        </button>
+      </div>
+      {businesses.length === 0 ? (
+        <div className="text-center py-12 text-white/25">
+          <CheckCircle size={32} className="mx-auto mb-3 opacity-30" />
+          <p>Bekleyen iÅŸletme yok</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {businesses.map(biz => (
+            <div key={biz.id} className="p-4 rounded-2xl border border-white/[0.07] bg-white/[0.02]">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-white text-sm">{biz.name}</div>
+                  <div className="text-xs text-white/40 mt-0.5">
+                    {biz.category?.name} Â· {biz.city} {biz.district && `/ ${biz.district}`}
+                  </div>
+                  <div className="text-xs text-white/30 mt-0.5">{biz.address}</div>
+                  {biz.owner && <div className="text-xs text-indigo-400 mt-1">@{biz.owner.username}</div>}
+                  <div className="text-[10px] text-white/20 mt-1">{new Date(biz.createdAt).toLocaleDateString('tr-TR')}</div>
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  <button onClick={() => approve(biz.id)} disabled={acting === biz.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-xs font-bold hover:bg-emerald-500/25 transition-all disabled:opacity-50">
+                    <CheckCircle size={12} /> Onayla
+                  </button>
+                  <button onClick={() => reject(biz.id)} disabled={acting === biz.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/15 text-red-400 border border-red-500/25 text-xs font-bold hover:bg-red-500/25 transition-all disabled:opacity-50">
+                    <XCircle size={12} /> Reddet
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+function ThemeSection() {
+  const [active, setActive] = useState(() => {
+    if (typeof window === 'undefined') return 'indigo'
+    return localStorage.getItem('app_theme') || 'indigo'
+  })
+  const [saved, setSaved] = useState(false)
+  const THEMES = [
+    { id:'indigo', label:'Indigo (Mevcut)', primary:'#6366F1', colors:['#6366F1','#818CF8','#4F46E5','#3730A3'], bg:'#0f0f1a' },
+    { id:'emerald', label:'Emerald Green',  primary:'#10B981', colors:['#10B981','#34D399','#059669','#047857'], bg:'#0a1410' },
+    { id:'amber',   label:'Amber',          primary:'#F59E0B', colors:['#F59E0B','#FBBF24','#D97706','#92400E'], bg:'#140f00' },
+    { id:'rose',    label:'Rose',           primary:'#F43F5E', colors:['#F43F5E','#FB7185','#E11D48','#9F1239'], bg:'#140008' },
+  ]
+  function apply(id: string) {
+    setActive(id)
+    const th = THEMES.find(x => x.id === id)
+    if (!th) return
+    document.documentElement.setAttribute('data-theme', id)
+    localStorage.setItem('app_theme', id)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+  return (
+    <div className="p-6 max-w-3xl">
+      <div className="mb-6">
+        <h2 className="text-lg font-black text-white mb-1">Tema ve Renk AyarlarÄ±</h2>
+        <p className="text-sm text-white/40">UygulamanÄ±n ana renk temasÄ±nÄ± seÃ§in</p>
+      </div>
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        {THEMES.map((th, idx) => (
+          <button key={th.id} onClick={() => apply(th.id)}
+            className={`relative p-4 rounded-2xl border-2 transition-all text-left ${active === th.id ? 'border-white/30 bg-white/[0.07]' : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05]'}`}>
+            {active === th.id && (
+              <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
+                <CheckCircle size={12} className="text-white" />
+              </div>
+            )}
+            <div className="rounded-xl p-3 mb-3 border border-white/[0.08]" style={{ background: th.bg }}>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: th.primary }}>
+                  <Star size={10} className="text-white fill-white" />
+                </div>
+                <span className="text-xs font-black text-white">TecrÃ¼belerim</span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded font-bold ml-1" style={{ background: th.primary + '33', border: '1px solid ' + th.primary + '55', color: th.primary }}>BETA</span>
+              </div>
+              <div className="h-5 rounded-lg mb-1.5 bg-white/[0.06] border border-white/[0.05] flex items-center px-2">
+                <span className="text-[9px] text-white/25">Kafe ara...</span>
+              </div>
+              <div className="text-[9px] text-white/30 mb-1.5">Navigasyon rengi</div>
+              <div className="flex gap-1">
+                {th.colors.map((c, i) => <div key={i} className="w-4 h-4 rounded-full border border-white/10" style={{ background: c }} />)}
+              </div>
+            </div>
+            <div className="text-xs font-bold" style={{ color: active === th.id ? th.primary : 'rgba(255,255,255,0.6)' }}>
+              {idx + 1} â€” {th.label}
+            </div>
+          </button>
+        ))}
+      </div>
+      {saved && (
+        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 text-sm font-medium">
+          <CheckCircle size={14} /> Tema uygulandÄ±!
+        </div>
+      )}
+    </div>
+  )
+}
 function MuhtarTab({ apiBase }: { apiBase: string }) {
   const [apps, setApps] = React.useState<any[]>([])
   const [loading, setLoading] = React.useState(true)
@@ -340,7 +495,7 @@ function MuhtarTab({ apiBase }: { apiBase: string }) {
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="font-bold text-sm text-white">{app.user?.fullName || app.user?.username}</div>
-              <div className="text-xs text-white/40 mt-0.5">{app.user?.totalReviews} yorum · TrustScore: {app.user?.trustScore} · {app.user?.trustLevel}</div>
+              <div className="text-xs text-white/40 mt-0.5">{app.user?.totalReviews} yorum Â· TrustScore: {app.user?.trustScore} Â· {app.user?.trustLevel}</div>
               <div className="text-xs text-indigo-300 mt-1">{app.neighborhood}, {app.district} / {app.city}</div>
             </div>
             <div className={`text-[10px] font-bold px-2 py-1 rounded-lg ${app.status === 'PENDING' ? 'bg-amber-500/15 text-amber-400' : app.status === 'APPROVED' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}`}>
@@ -422,7 +577,7 @@ function SiteSettingsTab({ apiBase }: { apiBase: string }) {
             <h3 className="font-bold text-sm text-white">{label}</h3>
             <button onClick={() => save(key)} disabled={saving === key}
               className="px-4 py-1.5 rounded-xl bg-indigo-500 text-white text-xs font-bold hover:bg-indigo-600 disabled:opacity-40 transition-all flex items-center gap-1.5">
-              {saving === key ? <Loader2 size={12} className="animate-spin" /> : saved === key ? '✓ Kaydedildi' : 'Kaydet'}
+              {saving === key ? <Loader2 size={12} className="animate-spin" /> : saved === key ? 'âœ“ Kaydedildi' : 'Kaydet'}
             </button>
           </div>
           <textarea value={values[key] || ''}
@@ -437,9 +592,11 @@ function SiteSettingsTab({ apiBase }: { apiBase: string }) {
 }
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<'stats'|'reports'|'flagged'|'claims'|'businesses'|'users'|'reviews'|'settings'|'muhtar'|'subscriptions'>('stats')
+  const [tab, setTab] = useState<'stats'|'reports'|'flagged'|'claims'|'businesses'|'users'|'reviews'|'settings'|'muhtar'|'subscriptions'|'pending'|'theme'>('stats')
   const [stats, setStats] = useState<any>(null)
   const [modStats, setModStats] = useState<any>(null)
+  const [pendingBizCount, setPendingBizCount] = React.useState(0)
+  const [muhtarPending, setMuhtarPending] = React.useState(0)
   const [data, setData] = useState<any[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -450,6 +607,10 @@ export default function AdminPage() {
   const [reportFilter, setReportFilter] = useState('PENDING')
 
   const loadStats = () => {
+    fetch(`${API}/api/businesses/pending?secret=tecrube_admin_2026`)
+      .then(r=>r.json()).then(d=>setPendingBizCount((d.businesses||[]).length)).catch(()=>{});
+    fetch(`${API}/api/muhtar/admin/list?status=PENDING`, { headers: getH() })
+      .then(r=>r.json()).then(d=>setMuhtarPending((d.applications||[]).length)).catch(()=>{});
     fetch(`${API}/api/admin/stats`, { headers: getH() }).then(r => r.json()).then(setStats).catch(() => {})
     fetch(`${API}/api/admin/moderation-stats`, { headers: getH() }).then(r => r.json()).then(setModStats).catch(() => {})
   }
@@ -515,7 +676,7 @@ export default function AdminPage() {
   }
 
   const deleteReview = async (id: string) => {
-    if (!confirm('Bu yorumu kalıcı olarak silmek istediğinizden emin misiniz?')) return
+    if (!confirm('Bu yorumu kalÄ±cÄ± olarak silmek istediÄŸinizden emin misiniz?')) return
     setActionLoading(id)
     try {
       await fetch(`${API}/api/admin/reviews/${id}`, { method: 'DELETE', headers: getH() })
@@ -525,15 +686,17 @@ export default function AdminPage() {
   }
 
   const tabs = [
-    { key: 'stats',      label: 'Genel Bakış',    icon: Star },
-    { key: 'reports',    label: 'Şikayetler',      icon: Flag,       badge: modStats?.pendingReports },
-    { key: 'flagged',    label: 'Şüpheli Yorumlar',icon: Shield,     badge: modStats?.flaggedReviews },
+    { key: 'stats',      label: 'Genel BakÄ±ÅŸ',    icon: Star },
+    { key: 'reports',    label: 'Åikayetler',      icon: Flag,       badge: modStats?.pendingReports },
+    { key: 'flagged',    label: 'ÅÃ¼pheli Yorumlar',icon: Shield,     badge: modStats?.flaggedReviews },
     { key: 'claims',     label: 'Sahiplik Talepleri', icon: CheckCircle, badge: modStats?.pendingClaims },
-    { key: 'businesses', label: 'İşletmeler',      icon: Building2 },
-    { key: 'users',      label: 'Kullanıcılar',    icon: Users },
-    { key: 'reviews',    label: 'Tüm Yorumlar',    icon: MessageSquare },
-    { key: 'subscriptions', label: 'Abonelikler', icon: Star },
-    { key: 'muhtar',    label: 'Muhtar Basvurulari', icon: Shield },
+    { key: 'businesses', label: 'Ä°ÅŸletmeler',      icon: Building2, badge: stats?.businesses },
+    { key: 'users',      label: 'KullanÄ±cÄ±lar',    icon: Users, badge: stats?.users },
+    { key: 'reviews',    label: 'TÃ¼m Yorumlar',    icon: MessageSquare, badge: stats?.reviews },
+    { key: 'subscriptions', label: 'Abonelikler', icon: Star, badge: stats?.activeSubscriptions },
+    { key: 'muhtar',    label: 'Muhtar Basvurulari', icon: Shield, badge: muhtarPending },
+    { key: 'pending',    label: 'Bekleyen Ä°ÅŸletmeler', icon: Clock,   badge: pendingBizCount },
+    { key: 'theme',      label: 'Tema ve Renk',        icon: Settings },
 
   ] as const
 
@@ -551,7 +714,7 @@ export default function AdminPage() {
           <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/20 font-bold">BETA</span>
         </div>
         <div className="flex items-center gap-3">
-          {stats && <span className="text-xs text-white/30">{stats.users?.toLocaleString()} kullanıcı · {stats.businesses?.toLocaleString()} işletme</span>}
+          {stats && <span className="text-xs text-white/30">{stats.users?.toLocaleString()} kullanÄ±cÄ± Â· {stats.businesses?.toLocaleString()} iÅŸletme</span>}
           <button onClick={loadStats} className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center text-white/40 hover:text-white transition-colors">
             <RefreshCw size={14} />
           </button>
@@ -568,7 +731,7 @@ export default function AdminPage() {
               )}>
               <Icon size={15} />
               <span className="flex-1 text-left">{label}</span>
-              {badge > 0 && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-red-500 text-white min-w-[18px] text-center">{badge}</span>}
+              {badge > 0 && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-red-500 text-white min-w-[18px] text-center animate-pulse">{badge > 99 ? '99+' : badge}</span>}
             </button>
           ))}
         </div>
@@ -576,14 +739,14 @@ export default function AdminPage() {
         {/* Content */}
         <div className="flex-1 p-6 max-w-5xl overflow-auto">
 
-          {/* ── STATS ── */}
+          {/* â”€â”€ STATS â”€â”€ */}
           {tab === 'stats' && stats && (
             <div>
-              <h2 className="text-xl font-black mb-5">Genel Bakış</h2>
+              <h2 className="text-xl font-black mb-5">Genel BakÄ±ÅŸ</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 {[
-                  { label: 'Kullanıcılar', value: stats.users, color: 'text-indigo-400', bg: 'bg-indigo-500/10 border-indigo-500/20' },
-                  { label: 'İşletmeler',   value: stats.businesses, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
+                  { label: 'KullanÄ±cÄ±lar', value: stats.users, color: 'text-indigo-400', bg: 'bg-indigo-500/10 border-indigo-500/20' },
+                  { label: 'Ä°ÅŸletmeler',   value: stats.businesses, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
                   { label: 'Yorumlar',     value: stats.reviews, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
                   { label: 'Bekleyen Talep', value: stats.pendingClaims, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
                 ].map(({ label, value, color, bg }) => (
@@ -594,14 +757,14 @@ export default function AdminPage() {
                 ))}
               </div>
 
-              {/* Moderasyon özeti */}
+              {/* Moderasyon Ã¶zeti */}
               {modStats && (
                 <div>
                   <div className="text-xs font-bold text-white/40 uppercase tracking-wider mb-3">Moderasyon Durumu</div>
                   <div className="grid grid-cols-3 gap-3 mb-5">
                     {[
-                      { label: 'Bekleyen Şikayet', value: modStats.pendingReports, color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20', tab: 'reports' },
-                      { label: 'Şüpheli Yorum',    value: modStats.flaggedReviews, color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20', tab: 'flagged' },
+                      { label: 'Bekleyen Åikayet', value: modStats.pendingReports, color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20', tab: 'reports' },
+                      { label: 'ÅÃ¼pheli Yorum',    value: modStats.flaggedReviews, color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20', tab: 'flagged' },
                       { label: 'Bekleyen Sahiplik', value: modStats.pendingClaims, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20', tab: 'claims' },
                     ].map(({ label, value, color, bg, tab: t }) => (
                       <button key={label} onClick={() => setTab(t as any)}
@@ -617,24 +780,24 @@ export default function AdminPage() {
               {(modStats?.pendingReports > 0 || modStats?.flaggedReviews > 0 || modStats?.pendingClaims > 0) && (
                 <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm font-bold">
                   <AlertTriangle size={15} />
-                  Dikkat gerektiren {(modStats.pendingReports || 0) + (modStats.flaggedReviews || 0) + (modStats.pendingClaims || 0)} öğe var
+                  Dikkat gerektiren {(modStats.pendingReports || 0) + (modStats.flaggedReviews || 0) + (modStats.pendingClaims || 0)} Ã¶ÄŸe var
                 </div>
               )}
             </div>
           )}
 
-          {/* ── REPORTS ── */}
+          {/* â”€â”€ REPORTS â”€â”€ */}
           {tab === 'reports' && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-black">Kullanıcı Şikayetleri</h2>
+                <h2 className="text-xl font-black">KullanÄ±cÄ± Åikayetleri</h2>
                 <div className="flex gap-1">
                   {['PENDING','REVIEWING','RESOLVED','DISMISSED','ALL'].map(f => (
                     <button key={f} onClick={() => setReportFilter(f)}
                       className={cn('px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors',
                         reportFilter === f ? 'bg-indigo-500 text-white' : 'bg-white/[0.05] text-white/40 hover:text-white'
                       )}>
-                      {f === 'PENDING' ? 'Bekleyen' : f === 'REVIEWING' ? 'İnceleniyor' : f === 'RESOLVED' ? 'Çözüldü' : f === 'DISMISSED' ? 'Reddedildi' : 'Tümü'}
+                      {f === 'PENDING' ? 'Bekleyen' : f === 'REVIEWING' ? 'Ä°nceleniyor' : f === 'RESOLVED' ? 'Ã‡Ã¶zÃ¼ldÃ¼' : f === 'DISMISSED' ? 'Reddedildi' : 'TÃ¼mÃ¼'}
                     </button>
                   ))}
                 </div>
@@ -662,7 +825,7 @@ export default function AdminPage() {
                             <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 mb-2">
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="text-xs text-white/50">@{r.reportedReview.user?.username}</span>
-                                <span className="text-white/20">→</span>
+                                <span className="text-white/20">â†’</span>
                                 <Link href={`/isletme/${r.reportedReview.business?.slug}`} target="_blank"
                                   className="text-xs text-indigo-400 hover:underline">{r.reportedReview.business?.name}</Link>
                                 <div className="flex gap-0.5 ml-auto">
@@ -679,11 +842,11 @@ export default function AdminPage() {
                           )}
 
                           {r.reportedUser && (
-                            <div className="text-xs text-white/40 mb-1">Şikayet edilen kullanıcı: <span className="text-white/60 font-bold">@{r.reportedUser.username}</span></div>
+                            <div className="text-xs text-white/40 mb-1">Åikayet edilen kullanÄ±cÄ±: <span className="text-white/60 font-bold">@{r.reportedUser.username}</span></div>
                           )}
 
                           <div className="text-xs text-white/30">
-                            Şikayet eden: <span className="text-white/50">@{r.reporter?.username}</span>
+                            Åikayet eden: <span className="text-white/50">@{r.reporter?.username}</span>
                             {r.description && <span className="ml-2 italic">"{r.description}"</span>}
                           </div>
                         </div>
@@ -693,12 +856,12 @@ export default function AdminPage() {
                             {r.status === 'PENDING' && (
                               <button onClick={() => reportAction(r.id, 'reviewing')} disabled={actionLoading === r.id}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/15 text-blue-400 border border-blue-500/20 text-xs font-bold hover:bg-blue-500/25 transition-colors disabled:opacity-50">
-                                <Clock size={10} /> İncele
+                                <Clock size={10} /> Ä°ncele
                               </button>
                             )}
                             <button onClick={() => reportAction(r.id, 'resolve')} disabled={actionLoading === r.id}
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 text-xs font-bold hover:bg-emerald-500/25 transition-colors disabled:opacity-50">
-                              {actionLoading === r.id ? <Loader2 size={10} className="animate-spin" /> : <CheckCircle size={10} />} Çözüldü
+                              {actionLoading === r.id ? <Loader2 size={10} className="animate-spin" /> : <CheckCircle size={10} />} Ã‡Ã¶zÃ¼ldÃ¼
                             </button>
                             <button onClick={() => reportAction(r.id, 'dismiss')} disabled={actionLoading === r.id}
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] text-white/40 text-xs font-bold hover:bg-white/[0.08] transition-colors disabled:opacity-50">
@@ -712,7 +875,7 @@ export default function AdminPage() {
                   {data.length === 0 && !loading && (
                     <div className="text-center py-16">
                       <Shield size={32} className="mx-auto mb-3 text-white/10" />
-                      <div className="text-white/25 text-sm">Bekleyen şikayet yok</div>
+                      <div className="text-white/25 text-sm">Bekleyen ÅŸikayet yok</div>
                     </div>
                   )}
                 </div>
@@ -720,10 +883,10 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* ── FLAGGED REVIEWS ── */}
+          {/* â”€â”€ FLAGGED REVIEWS â”€â”€ */}
           {tab === 'flagged' && (
             <div>
-              <h2 className="text-xl font-black mb-4">Şüpheli & Raporlanan Yorumlar</h2>
+              <h2 className="text-xl font-black mb-4">ÅÃ¼pheli & Raporlanan Yorumlar</h2>
               {loading ? <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-white/30" /></div> : (
                 <div className="space-y-3">
                   {data.map((r: any) => (
@@ -732,7 +895,7 @@ export default function AdminPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap mb-2">
                             <span className="text-xs font-bold text-white">@{r.user?.username}</span>
-                            <span className="text-white/25 text-xs">→</span>
+                            <span className="text-white/25 text-xs">â†’</span>
                             <Link href={`/isletme/${r.business?.slug}`} target="_blank" className="text-xs text-indigo-400 hover:underline">{r.business?.name}</Link>
                             <div className="flex gap-0.5 ml-1">
                               {[1,2,3,4,5].map(s => <Star key={s} size={9} className={s <= r.rating ? 'text-amber-400 fill-amber-400' : 'text-white/10'} />)}
@@ -771,7 +934,7 @@ export default function AdminPage() {
                           ) : (
                             <button onClick={() => flagAction(r.id, false, true)} disabled={actionLoading === r.id}
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 text-xs font-bold hover:bg-emerald-500/25 transition-colors disabled:opacity-50">
-                              {actionLoading === r.id ? <Loader2 size={10} className="animate-spin" /> : <CheckCircle size={10} />} Yayınla
+                              {actionLoading === r.id ? <Loader2 size={10} className="animate-spin" /> : <CheckCircle size={10} />} YayÄ±nla
                             </button>
                           )}
                           <button onClick={() => deleteReview(r.id)} disabled={actionLoading === r.id}
@@ -785,7 +948,7 @@ export default function AdminPage() {
                   {data.length === 0 && !loading && (
                     <div className="text-center py-16">
                       <Shield size={32} className="mx-auto mb-3 text-white/10" />
-                      <div className="text-white/25 text-sm">Şüpheli yorum yok</div>
+                      <div className="text-white/25 text-sm">ÅÃ¼pheli yorum yok</div>
                     </div>
                   )}
                 </div>
@@ -793,7 +956,7 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* ── CLAIMS ── */}
+          {/* â”€â”€ CLAIMS â”€â”€ */}
           {tab === 'claims' && (
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -804,7 +967,7 @@ export default function AdminPage() {
                       className={cn('px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors',
                         claimFilter === f ? 'bg-indigo-500 text-white' : 'bg-white/[0.05] text-white/40 hover:text-white'
                       )}>
-                      {f === 'PENDING' ? 'Bekleyen' : f === 'CLAIMED' ? 'Onaylı' : f === 'UNCLAIMED' ? 'Reddedildi' : 'Tümü'}
+                      {f === 'PENDING' ? 'Bekleyen' : f === 'CLAIMED' ? 'OnaylÄ±' : f === 'UNCLAIMED' ? 'Reddedildi' : 'TÃ¼mÃ¼'}
                     </button>
                   ))}
                 </div>
@@ -847,17 +1010,17 @@ export default function AdminPage() {
                       </div>
                     </div>
                   ))}
-                  {data.length === 0 && !loading && <div className="text-center py-12 text-white/25 text-sm">Talep bulunamadı</div>}
+                  {data.length === 0 && !loading && <div className="text-center py-12 text-white/25 text-sm">Talep bulunamadÄ±</div>}
                 </div>
               )}
             </div>
           )}
 
-          {/* ── BUSINESSES ── */}
+          {/* â”€â”€ BUSINESSES â”€â”€ */}
           {tab === 'businesses' && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-black">İşletmeler <span className="text-white/30 font-normal text-base">({total.toLocaleString()})</span></h2>
+                <h2 className="text-xl font-black">Ä°ÅŸletmeler <span className="text-white/30 font-normal text-base">({total.toLocaleString()})</span></h2>
                 <div className="flex items-center gap-2 bg-[#111118] border border-white/[0.08] rounded-xl px-3 py-2">
                   <Search size={13} className="text-white/30" />
                   <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} placeholder="Ara..." className="bg-transparent text-sm text-white outline-none w-40 placeholder-white/20" />
@@ -870,7 +1033,7 @@ export default function AdminPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-bold text-white truncate">{b.name}</span>
-                          {b.isVerified && <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">✓ Doğrulandı</span>}
+                          {b.isVerified && <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">âœ“ DoÄŸrulandÄ±</span>}
                           <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full',
                             b.claimStatus === 'CLAIMED' ? 'bg-emerald-500/10 text-emerald-400' :
                             b.claimStatus === 'PENDING' ? 'bg-amber-500/10 text-amber-400' : 'bg-white/[0.05] text-white/30'
@@ -894,14 +1057,14 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* ── USERS ── */}
+          {/* â”€â”€ USERS â”€â”€ */}
           {tab === 'users' && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-black">Kullanıcılar <span className="text-white/30 font-normal text-base">({total.toLocaleString()})</span></h2>
+                <h2 className="text-xl font-black">KullanÄ±cÄ±lar <span className="text-white/30 font-normal text-base">({total.toLocaleString()})</span></h2>
                 <div className="flex items-center gap-2 bg-[#111118] border border-white/[0.08] rounded-xl px-3 py-2">
                   <Search size={13} className="text-white/30" />
-                  <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} placeholder="Kullanıcı ara..." className="bg-transparent text-sm text-white outline-none w-40 placeholder-white/20" />
+                  <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} placeholder="KullanÄ±cÄ± ara..." className="bg-transparent text-sm text-white outline-none w-40 placeholder-white/20" />
                 </div>
               </div>
               {loading ? <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-white/30" /></div> : (
@@ -914,7 +1077,7 @@ export default function AdminPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-bold text-white">@{u.username}</span>
-                          {u.isBanned && <span className="text-[10px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded-full font-bold">Banlı</span>}
+                          {u.isBanned && <span className="text-[10px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded-full font-bold">BanlÄ±</span>}
                           <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-bold',
                             u.trustLevel === 'HIGHLY_TRUSTED' || u.trustLevel === 'VERIFIED' ? 'bg-emerald-500/10 text-emerald-400' :
                             u.trustLevel === 'TRUSTED' ? 'bg-blue-500/10 text-blue-400' : 'bg-white/[0.05] text-white/30'
@@ -931,7 +1094,7 @@ export default function AdminPage() {
                           u.isBanned ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
                         )}>
                         {actionLoading === u.id ? <Loader2 size={11} className="animate-spin" /> : <Ban size={11} />}
-                        {u.isBanned ? 'Banı Kaldır' : 'Banla'}
+                        {u.isBanned ? 'BanÄ± KaldÄ±r' : 'Banla'}
                       </button>
                     </div>
                   ))}
@@ -940,10 +1103,10 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* ── ALL REVIEWS ── */}
+          {/* â”€â”€ ALL REVIEWS â”€â”€ */}
           {tab === 'reviews' && (
             <div>
-              <h2 className="text-xl font-black mb-4">Tüm Yorumlar <span className="text-white/30 font-normal text-base">({total.toLocaleString()})</span></h2>
+              <h2 className="text-xl font-black mb-4">TÃ¼m Yorumlar <span className="text-white/30 font-normal text-base">({total.toLocaleString()})</span></h2>
               {loading ? <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-white/30" /></div> : (
                 <div className="space-y-3">
                   {data.map((r: any) => (
@@ -952,7 +1115,7 @@ export default function AdminPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className="text-xs font-bold text-white">@{r.user?.username}</span>
-                            <span className="text-white/25">→</span>
+                            <span className="text-white/25">â†’</span>
                             <Link href={`/isletme/${r.business?.slug}`} target="_blank" className="text-xs text-indigo-400 hover:underline">{r.business?.name}</Link>
                             <div className="flex gap-0.5 ml-auto">
                               {[1,2,3,4,5].map(s => <Star key={s} size={10} className={s <= (r.rating ?? 0) ? 'text-amber-400 fill-amber-400' : 'text-white/15'} />)}
@@ -979,9 +1142,9 @@ export default function AdminPage() {
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/[0.06]">
               <button onClick={() => setPage(p => Math.max(1, p-1))} disabled={page === 1 || loading}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.05] text-white/50 text-sm disabled:opacity-30 hover:text-white transition-colors">
-                <ChevronLeft size={14} /> Önceki
+                <ChevronLeft size={14} /> Ã–nceki
               </button>
-              <span className="text-xs text-white/30">{page} / {totalPages} · {total} öğe</span>
+              <span className="text-xs text-white/30">{page} / {totalPages} Â· {total} Ã¶ÄŸe</span>
               <button onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page === totalPages || loading}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.05] text-white/50 text-sm disabled:opacity-30 hover:text-white transition-colors">
                 Sonraki <ChevronRight size={14} />
@@ -990,11 +1153,13 @@ export default function AdminPage() {
           )}
 
 
-          {/* ── SITE SETTINGS ── */}
+          {/* â”€â”€ SITE SETTINGS â”€â”€ */}
           {tab === 'subscriptions' && (
             <SubscriptionsTab apiBase={API} />
           )}
-          {tab === 'muhtar' && (
+          {tab === 'pending' && <PendingBusinessSection apiBase={`${API}/api`} />}
+              {tab === 'theme' && <ThemeSection />}
+              {tab === 'muhtar' && (
             <MuhtarTab apiBase={API} />
           )}
           {tab === 'settings' && (

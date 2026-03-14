@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import {
   Settings, TrendingUp, Camera, Edit3, ChevronRight,
@@ -25,7 +25,7 @@ function StatCard({ label, value, color = 'white' }: { label: string; value: str
       <div className={cn(
         'text-xl font-black',
         color === 'emerald' ? 'text-emerald-400' :
-        color === 'indigo'  ? 'text-indigo-400'  : 'text-white'
+        color === 'indigo' || color === 'primary' ? 'text-primary' : 'text-white'
       )}>
         {typeof value === 'number' ? value.toLocaleString('tr-TR') : value}
       </div>
@@ -109,6 +109,9 @@ export default function ProfilPage() {
   const [editSaving, setEditSaving] = useState(false)
   const [deletingReview, setDeletingReview] = useState<string | null>(null)
   const [reviewsLoading, setReviewsLoading] = useState(false)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+  const [avatarProgress, setAvatarProgress] = useState(0)
   const [reviewsLoaded, setReviewsLoaded] = useState(false)
 
   const [savedBusinesses, setSavedBusinesses] = useState<any[]>([])
@@ -199,37 +202,55 @@ export default function ProfilPage() {
     SILVER:   { bg: 'bg-slate-400/10',  text: 'text-slate-300',  border: 'border-slate-400/25',  label: 'Gümüş' },
     GOLD:     { bg: 'bg-amber-500/10',  text: 'text-amber-400',  border: 'border-amber-500/25',  label: 'Altın' },
     PLATINUM: { bg: 'bg-cyan-400/10',   text: 'text-cyan-300',   border: 'border-cyan-400/25',   label: 'Platin' },
-  } as any)[user.badgeLevel] || null
+  } as any)[user.badgeLevel ?? ""] || null
 
   const trustLevelLabel = ({
     NEWCOMER:      { label: 'Yeni Üye',      color: 'text-white/50' },
     DEVELOPING:    { label: 'Gelişiyor',      color: 'text-blue-400' },
     TRUSTED:       { label: 'Güvenilir',      color: 'text-emerald-400' },
-    HIGHLY_TRUSTED:{ label: 'Çok Güvenilir', color: 'text-indigo-400' },
-    VERIFIED:      { label: 'Doğrulanmış',    color: 'text-purple-400' },
-  } as any)[user.trustLevel] || { label: user.trustLevel, color: 'text-white/50' }
+    HIGHLY_TRUSTED:{ label: 'Çok Güvenilir', color: 'text-primary' },
+    VERIFIED:      { label: 'Doğrulanmış',    color: 'text-primary' },
+  } as any)[user.trustLevel ?? ""] || { label: user.trustLevel, color: 'text-white/50' }
 
-  const joinDate = new Date(user.createdAt).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })
+  const joinDate = new Date(user.createdAt ?? Date.now()).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })
 
   return (
     <AppLayout>
       <div className="pb-4">
         <div className="relative">
-          <div className="h-32 bg-gradient-to-br from-indigo-900/60 via-purple-900/40 to-surface-1 relative overflow-hidden">
-            <div className="absolute inset-0 opacity-30" style={{
-              backgroundImage: 'radial-gradient(circle at 30% 50%, rgba(99,102,241,0.4) 0%, transparent 60%), radial-gradient(circle at 80% 20%, rgba(168,85,247,0.3) 0%, transparent 50%)'
-            }} />
+          <div className="h-32 relative overflow-hidden">
+            {user.avatarUrl ? (
+              <>
+                <img src={user.avatarUrl} alt="" className="absolute inset-0 w-full h-full object-cover scale-110" style={{filter: 'blur(20px)', transform: 'scale(1.2)'}} />
+                <div className="absolute inset-0 bg-black/40" />
+              </>
+            ) : (
+              <>
+                <div className="absolute inset-0 bg-gradient-to-br from-surface-2 via-surface-1 to-surface-1" />
+                <div className="absolute inset-0 opacity-30" style={{
+                  backgroundImage: 'radial-gradient(circle at 30% 50%, rgba(99,102,241,0.4) 0%, transparent 60%), radial-gradient(circle at 80% 20%, rgba(168,85,247,0.3) 0%, transparent 50%)'
+                }} />
+              </>
+            )}
           </div>
           <button className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/30 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white/70 hover:text-white transition-colors">
             <Settings size={15} />
           </button>
           <div className="absolute -bottom-12 left-4">
             <div className="relative">
+              {avatarUploading && (
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/75 rounded-2xl">
+                  <div className="flex gap-0.5 mb-1">
+                    {[1,2,3,4,5].map(s => <span key={s} style={{fontSize:16, color: s <= Math.ceil(avatarProgress/20) ? "#FBBF24" : "rgba(255,255,255,0.15)", transition:"color 0.15s"}}>★</span>)}
+                  </div>
+                  <span className="text-white text-[11px] font-bold mt-0.5">{avatarProgress}%</span>
+                </div>
+              )}
               {user.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.fullName || user.username}
                   className="w-24 h-24 rounded-2xl object-cover border-4 border-surface shadow-2xl" />
               ) : (
-                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 border-4 border-surface shadow-2xl flex items-center justify-center text-2xl font-black text-white">
+                <div className="w-24 h-24 rounded-2xl border-4 border-surface shadow-2xl flex items-center justify-center text-2xl font-black text-white">
                   {initials}
                 </div>
               )}
@@ -238,24 +259,21 @@ export default function ProfilPage() {
                   {badgeColor.label[0]}
                 </div>
               )}
-              <input type="file" accept="image/*" id="avatar-upload" className="hidden" onChange={async (e) => {
+              <input type="file" accept="image/*" ref={avatarInputRef} className="hidden" onChange={async (e) => {
                 const f = e.target.files?.[0]
                 if (!f) return
+                setAvatarUploading(true); setAvatarProgress(0)
+                const interval = setInterval(() => setAvatarProgress(p => p >= 90 ? (clearInterval(interval), 90) : p + 5), 200)
                 const fd = new FormData()
                 fd.append("file", f)
-                const token = localStorage.getItem("token") || sessionStorage.getItem("token")
-                const res = await fetch(`${API_BASE}/api/upload/avatar`, {
-                  method: "POST",
-                  headers: token ? { Authorization: `Bearer ${token}` } : {},
-                  body: fd,
-                })
-                if (res.ok) {
-                  const d = await res.json()
-                  window.location.reload()
-                }
+                const token = localStorage.getItem("auth_token")
+                const res = await fetch(`${API_BASE}/api/upload/avatar`, { method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {}, body: fd })
+                clearInterval(interval)
+                if (res.ok) { setAvatarProgress(100); setTimeout(() => { setAvatarUploading(false); window.location.reload() }, 700) }
+                else { setAvatarUploading(false); setAvatarProgress(0) }
               }} />
-              <button onClick={() => document.getElementById("avatar-upload")?.click()}
-                className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center border-2 border-surface hover:bg-indigo-600 transition-colors">
+              <button onClick={() => avatarInputRef.current?.click()}
+                className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center border-2 border-surface transition-colors bg-indigo-500">
                 <Camera size={12} className="text-white" />
               </button>
             </div>
@@ -282,7 +300,7 @@ export default function ProfilPage() {
           </div>
 
           <div className="flex items-center gap-1.5 text-xs text-white/40 mb-3">
-            <MapPin size={11} className="text-indigo-400" />
+            <MapPin size={11} className="text-primary" />
             <span className={trustLevelLabel.color + ' font-semibold'}>{trustLevelLabel.label}</span>
             <span className="text-white/20">·</span>
             <span>Üye: {joinDate}</span>
@@ -292,10 +310,10 @@ export default function ProfilPage() {
             <div className="mb-3">
               <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={2}
                 placeholder="Kendinizi tanıtın..." maxLength={200}
-                className="w-full bg-surface-2 border border-indigo-500/40 rounded-xl p-3 text-sm text-white outline-none resize-none placeholder-white/20" />
+                className="w-full bg-surface-2 border border-primary-soft rounded-xl p-3 text-sm text-white outline-none resize-none placeholder-white/20" />
               <div className="flex items-center gap-2 mt-2">
                 <button onClick={handleSaveBio} disabled={bioSaving}
-                  className="px-4 py-1.5 rounded-lg bg-indigo-500 text-white text-xs font-bold hover:bg-indigo-600 transition-colors disabled:opacity-50 flex items-center gap-1.5">
+                  className="px-4 py-1.5 rounded-lg text-white hover:opacity-90 transition-colors disabled:opacity-50 flex items-center gap-1.5">
                   {bioSaving && <Loader2 size={11} className="animate-spin" />}Kaydet
                 </button>
                 <button onClick={() => { setEditMode(false); setBio((user as any).bio || ''); setBioError('') }}
@@ -316,14 +334,14 @@ export default function ProfilPage() {
               <Shield size={11} />TrustScore: {user.trustScore}
             </div>
             {(user as any).emailVerified && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border bg-indigo-500/10 text-indigo-400 border-indigo-500/25 text-xs font-semibold">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border bg-primary/10 text-primary border-primary-soft text-xs font-semibold">
                 Dogrulanmis Uye
               </div>
             )}
           </div>
 
           <div className="flex gap-2 mb-5">
-            <StatCard label="Yorum"   value={user.totalReviews}   color="indigo" />
+            <StatCard label="Yorum"   value={user.totalReviews}   color="primary" />
             <StatCard label="Faydali" value={user.helpfulVotes}   color="emerald" />
             <StatCard label="Takipci" value={user.followersCount} />
             <StatCard label="Takip"   value={user.followingCount} />
@@ -333,7 +351,7 @@ export default function ProfilPage() {
             {TABS.map((tab, i) => (
               <button key={tab} onClick={() => setActiveTab(i)}
                 className={cn('flex-1 text-xs font-semibold py-2 rounded-lg transition-all',
-                  activeTab === i ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-white/40 hover:text-white/70'
+                  activeTab === i ? 'bg-primary-soft text-primary border border-primary-soft' : 'text-white/40 hover:text-white/70'
                 )}>
                 {tab}
               </button>
@@ -348,7 +366,7 @@ export default function ProfilPage() {
                 <div className="text-center py-12">
                   <MessageSquare size={32} className="mx-auto mb-3 text-white/20" />
                   <div className="text-white/40 text-sm mb-1">Henuz yorum yok</div>
-                  <Link href="/yorum-yaz" className="text-indigo-400 text-sm font-medium hover:text-indigo-300">Ilk yorumunu yaz</Link>
+                  <Link href="/yorum-yaz" className="text-primary text-sm font-medium hover:text-primary">Ilk yorumunu yaz</Link>
                 </div>
               ) : myReviews.map((r) => (
                 <div key={r.id} className="bg-surface-1 border border-white/[0.06] rounded-2xl p-4 mb-3">
@@ -362,7 +380,7 @@ export default function ProfilPage() {
                         ))}
                       </div>
                       <textarea value={editContent} onChange={e => setEditContent(e.target.value)} rows={3} maxLength={1000}
-                        className="w-full bg-surface-2 border border-indigo-500/40 rounded-xl p-3 text-sm text-white outline-none resize-none placeholder-white/20 mb-3"
+                        className="w-full bg-surface-2 border border-primary-soft rounded-xl p-3 text-sm text-white outline-none resize-none placeholder-white/20 mb-3"
                         placeholder="Yorumunuzu yazin..." />
                       <div className="flex gap-2">
                         <button onClick={async () => {
@@ -378,7 +396,7 @@ export default function ProfilPage() {
                             setEditingReview(null)
                           }
                           setEditSaving(false)
-                        }} disabled={editSaving} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-indigo-500 text-white text-xs font-bold disabled:opacity-50">
+                        }} disabled={editSaving} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary text-white text-xs font-bold disabled:opacity-50">
                           {editSaving ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />}Kaydet
                         </button>
                         <button onClick={() => setEditingReview(null)} className="px-4 py-1.5 rounded-lg bg-white/[0.05] text-white/50 text-xs font-medium">
@@ -398,7 +416,7 @@ export default function ProfilPage() {
                         </div>
                         <div className="flex gap-1.5 flex-shrink-0">
                           <button onClick={() => { setEditingReview(r.id); setEditContent(r.content); setEditRating(r.rating ?? 5) }}
-                            className="w-8 h-8 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white/40 hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors">
+                            className="w-8 h-8 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white/40 hover:text-primary hover:bg-primary/10 transition-colors">
                             <Pencil size={13} />
                           </button>
                           <button onClick={async () => {
@@ -433,7 +451,7 @@ export default function ProfilPage() {
                 <div className="text-center py-12">
                   <Bookmark size={32} className="mx-auto mb-3 text-white/20" />
                   <div className="text-white/40 text-sm mb-1">Henuz kaydedilen yer yok</div>
-                  <Link href="/kesf" className="text-indigo-400 text-sm font-medium hover:text-indigo-300">Yerleri kesfet</Link>
+                  <Link href="/kesf" className="text-primary text-sm font-medium hover:text-primary">Yerleri kesfet</Link>
                 </div>
               ) : savedBusinesses.map((b) => <BusinessCard key={b.id} business={b} />)}
             </div>
@@ -464,13 +482,13 @@ export default function ProfilPage() {
               </div>
               <div className="rounded-2xl border border-white/[0.07] bg-surface-2 p-4">
                 <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp size={15} className="text-indigo-400" />
+                  <TrendingUp size={15} className="text-primary" />
                   <span className="text-sm font-bold text-white">Ozet</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: 'Dogrulanmis Yorum', value: (user as any).verifiedReviews ?? 0, color: 'text-indigo-400' },
-                    { label: 'Profil Goruntulenme', value: (user as any).profileViews ?? 0, color: 'text-purple-400' },
+                    { label: 'Dogrulanmis Yorum', value: (user as any).verifiedReviews ?? 0, color: 'text-primary' },
+                    { label: 'Profil Goruntulenme', value: (user as any).profileViews ?? 0, color: 'text-primary' },
                     { label: 'Faydali Oy', value: user.helpfulVotes, color: 'text-emerald-400' },
                     { label: 'Faydali Oran', value: user.totalReviews > 0 ? `%${Math.round((user.helpfulVotes / user.totalReviews) * 100)}` : '%0', color: 'text-amber-400' },
                   ].map(({ label, value, color }) => (

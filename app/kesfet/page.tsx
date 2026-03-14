@@ -1,6 +1,7 @@
 ﻿'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { BusinessCard } from '@/components/business/BusinessCard'
 import { SkeletonBusinessCard } from '@/components/ui/SkeletonCard'
@@ -41,7 +42,7 @@ function mapTrustStack(b: any): TrustStack {
 function mapBusiness(b: any): Business {
   const coverImage = b.attributes?.coverPhoto ?? b.attributes?.photos?.[0] ?? `https://picsum.photos/seed/${b.slug}/800/400`
   return {
-    id: b.id, slug: b.slug, name: b.name,
+    id: b.id, slug: b.slug, name: b.name, latitude: b.latitude, longitude: b.longitude,
     category:     b.category?.name ?? 'Genel',
     city:         b.city ?? 'Türkiye',
     district:     b.district ?? '',
@@ -57,22 +58,45 @@ function mapBusiness(b: any): Business {
     isOpen:       true,
     image:        coverImage,
     reviewCount:  b.totalReviews ?? 0,
-    culturalTags: (b.attributes?.about?.['Özellikler'] ?? []).slice(0, 3).map((t: string) => t.replace(/^[\uE000-\uF8FF\u{E0000}-\u{FFFFF}]/u, '').trim()),
+    culturalTags: (b.attributes?.about?.['Özellikler'] ?? []).slice(0, 3).map((t: string) => t.replace(/^[\uE000-\uF8FF]/, '').trim()),
     badges:       [],
     subscriptionPlan: b.subscriptionPlan ?? 'FREE',
-    aiSummary:    { atmosphere: '', price: '', bestTime: '', highlights: [] },
     aiSummary:    { atmosphere: '', price: '', bestTime: '', highlights: [] },
   }
 }
 
-export default function KesfetPage() {
+function KesfetPageInner() {
   const [query, setQuery]                   = useState('')
   const [inputValue, setInputValue]         = useState('')
+  const searchParams = useSearchParams()
   const [selectedCategory, setSelectedCategory] = useState<{ id: string; name: string; slug: string; icon: string | null } | null>(null)
+
+  useEffect(() => {
+    const catSlug = searchParams.get('category')
+    const cityParam = searchParams.get('city') || (typeof window !== 'undefined' ? localStorage.getItem('userCity') : '')
+    if (cityParam) setSelectedCity(cityParam)
+    if (catSlug) {
+      fetch(`${API}/api/categories`).then(r=>r.json()).then(d => {
+        const all = (d.data ?? []).flatMap((c: any) => [c, ...(c.children ?? [])])
+        const found = all.find((c: any) => c.slug === catSlug)
+        if (found) setSelectedCategory({ id: found.id, name: found.name, slug: found.slug, icon: found.icon ?? null })
+      }).catch(()=>{})
+    }
+  }, [searchParams])
   const [selectedCity, setSelectedCity]     = useState('')
   const [selectedGrade, setSelectedGrade]   = useState('Tümü')
-  const [sort, setSort]                     = useState('rating')
+  const [sort, setSort]                     = useState('mostReviewed')
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null)
   const [showFilters, setShowFilters]       = useState(false)
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => {}
+      )
+    }
+  }, [])
 
   const [categories, setCategories]         = useState<any[]>([])
   const [businesses, setBusinesses]         = useState<Business[]>([])
@@ -97,27 +121,38 @@ export default function KesfetPage() {
     setPage(1)
     setBusinesses([])
     fetchBusinesses(1, true)
-  }, [query, selectedCategory, selectedCity, selectedGrade, sort])
+  }, [query, selectedCategory, selectedCity, selectedGrade, sort, userLocation])
 
   async function fetchBusinesses(pageNum: number, reset = false) {
     if (pageNum === 1) setLoading(true)
     else setLoadingMore(true)
 
+    const urlCatSlug = searchParams.get('category')
+    const urlCity = searchParams.get('city') || (typeof window !== 'undefined' ? localStorage.getItem('userCity') ?? '' : '')
     const params = new URLSearchParams({
       page:  String(pageNum),
       limit: '20',
       sort,
       ...(query             && { search: query }),
-      ...(selectedCategory  && { categorySlug: selectedCategory.slug }),
-      ...(selectedCity      && { city: selectedCity }),
+      ...(selectedCategory ? { categorySlug: selectedCategory.slug } : urlCatSlug ? { categorySlug: urlCatSlug } : {}),
+      ...((selectedCity || urlCity) ? { city: selectedCity || urlCity } : {}),
       ...(selectedGrade !== 'Tümü' && { minRating: selectedGrade === 'A' ? '80' : selectedGrade === 'B' ? '60' : '40' }),
-    })
+      ...(userLocation ? { lat: String(userLocation.lat), lng: String(userLocation.lng) } : {}),
 
+    })
     try {
       const res = await fetch(`${API}/businesses?${params}`)
       if (!res.ok) return
       const d = await res.json()
       const list: Business[] = (d.data ?? []).map(mapBusiness)
+      if (userLocation) {
+        list.sort((a: any, b: any) => {
+          if (!a.latitude || !b.latitude) return 0
+          const dA = Math.sqrt(Math.pow((a.latitude - userLocation.lat), 2) + Math.pow((a.longitude - userLocation.lng), 2))
+          const dB = Math.sqrt(Math.pow((b.latitude - userLocation.lat), 2) + Math.pow((b.longitude - userLocation.lng), 2))
+          return dA - dB
+        })
+      }
 
       setBusinesses(prev => reset ? list : [...prev, ...list])
       setTotal(d.pagination?.total ?? 0)
@@ -383,5 +418,12 @@ export default function KesfetPage() {
         )}
       </div>
     </AppLayout>
+  )
+}
+export default function KesfetPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-surface flex items-center justify-center"><div className="text-white/50">Yükleniyor...</div></div>}>
+      <KesfetPageInner />
+    </Suspense>
   )
 }

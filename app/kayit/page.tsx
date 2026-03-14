@@ -1,41 +1,88 @@
 'use client'
-
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, User, Mail, Lock, Eye, EyeOff, ShieldCheck, Check, MapPin } from 'lucide-react'
+import { ChevronLeft, User, Mail, Lock, Eye, EyeOff, ShieldCheck, Check, MapPin, Navigation, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/AuthContext'
 import { ApiError } from '@/lib/api'
 
-const NEIGHBORHOODS = ['Moda', 'Bostancı', 'Kadıköy', 'Beşiktaş', 'Üsküdar', 'Şişli', 'Beyoğlu', 'Diğer']
-const STEPS = ['Bilgiler', 'Mahalle', 'Tamamlandı']
+const ILLER = [
+  'Adana','Adıyaman','Afyonkarahisar','Ağrı','Amasya','Ankara','Antalya','Artvin','Aydın','Balıkesir',
+  'Bilecik','Bingöl','Bitlis','Bolu','Burdur','Bursa','Çanakkale','Çankırı','Çorum','Denizli',
+  'Diyarbakır','Edirne','Elazığ','Erzincan','Erzurum','Eskişehir','Gaziantep','Giresun','Gümüşhane','Hakkari',
+  'Hatay','Isparta','Mersin','İstanbul','İzmir','Kars','Kastamonu','Kayseri','Kırklareli','Kırşehir',
+  'Kocaeli','Konya','Kütahya','Malatya','Manisa','Kahramanmaraş','Mardin','Muğla','Muş','Nevşehir',
+  'Niğde','Ordu','Rize','Sakarya','Samsun','Siirt','Sinop','Sivas','Tekirdağ','Tokat',
+  'Trabzon','Tunceli','Şanlıurfa','Uşak','Van','Yozgat','Zonguldak','Aksaray','Bayburt','Karaman',
+  'Kırıkkale','Batman','Şırnak','Bartın','Ardahan','Iğdır','Yalova','Karabük','Kilis','Osmaniye','Düzce'
+]
+
+const STEPS = ['Bilgiler', 'Konum', 'Tamamlandı']
 
 export default function KayitPage() {
   const router = useRouter()
   const { register } = useAuth()
-
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [locLoading, setLocLoading] = useState(false)
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [showIlDropdown, setShowIlDropdown] = useState(false)
+  const [ilSearch, setIlSearch] = useState('')
   const [form, setForm] = useState({
     fullName: '',
     email: '',
     username: '',
     password: '',
-    neighborhood: '',
-    isMuhtar: false,
+    city: '',
+    lat: null as number | null,
+    lng: null as number | null,
+    locationName: '',
   })
 
-  const update = (field: string, val: string | boolean) =>
-    setForm((f) => ({ ...f, [field]: val }))
+  const update = (field: string, val: any) => setForm(f => ({ ...f, [field]: val }))
+
+  const filteredIller = ILLER.filter(il => il.toLowerCase().includes(ilSearch.toLowerCase()))
+
+  const detectLocation = () => {
+    if (!navigator.geolocation) {
+      setError('Tarayıcınız konum desteklemiyor.')
+      return
+    }
+    setLocLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=tr`)
+          const d = await res.json()
+          const city = d.address?.province ?? d.address?.city ?? d.address?.county ?? ''
+          const district = d.address?.suburb ?? d.address?.town ?? d.address?.district ?? ''
+          setForm(f => ({
+            ...f,
+            lat: latitude,
+            lng: longitude,
+            city: city.replace(' ili', '').replace(' İli', ''),
+            locationName: [district, city].filter(Boolean).join(', '),
+          }))
+        } catch {
+          setForm(f => ({ ...f, lat: latitude, lng: longitude, locationName: `${latitude.toFixed(3)}, ${longitude.toFixed(3)}` }))
+        } finally {
+          setLocLoading(false)
+        }
+      },
+      () => {
+        setLocLoading(false)
+        setError('Konum alınamadı. Lütfen manuel seçin.')
+      },
+      { timeout: 8000 }
+    )
+  }
 
   const handleNext = async () => {
     setError('')
-
     if (step === 0) {
-      // Validasyon
       if (!form.fullName || !form.email || !form.username || !form.password) {
         setError('Tüm alanları doldurun.')
         return
@@ -53,11 +100,10 @@ export default function KayitPage() {
     }
 
     if (step === 1) {
-      if (!form.neighborhood) {
-        setError('Bir mahalle seçin.')
+      if (!form.city && !form.lat) {
+        setError('Lütfen şehrinizi seçin veya konumunuzu paylaşın.')
         return
       }
-      // Gerçek API çağrısı
       setLoading(true)
       try {
         await register({
@@ -66,13 +112,18 @@ export default function KayitPage() {
           password: form.password,
           fullName: form.fullName,
         })
+        // Konum bilgisini localStorage'a kaydet
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('user_city', form.city)
+          if (form.lat && form.lng) {
+            localStorage.setItem('user_lat', String(form.lat))
+            localStorage.setItem('user_lng', String(form.lng))
+          }
+        }
         setStep(2)
       } catch (err) {
-        if (err instanceof ApiError) {
-          setError(err.message)
-        } else {
-          setError('Kayıt sırasında bir hata oluştu.')
-        }
+        if (err instanceof ApiError) setError(err.message)
+        else setError('Kayıt sırasında bir hata oluştu.')
       } finally {
         setLoading(false)
       }
@@ -86,7 +137,6 @@ export default function KayitPage() {
     if (len < 10) return { level: 2, label: 'Orta güçlü şifre', color: 'bg-amber-500' }
     return { level: 3, label: 'Güçlü şifre ✓', color: 'bg-emerald-500' }
   }
-
   const strength = passwordStrength()
 
   return (
@@ -97,10 +147,8 @@ export default function KayitPage() {
         {/* Header */}
         <div className="relative p-4 flex items-center gap-3">
           {step > 0 && step < 2 ? (
-            <button
-              onClick={() => { setStep((s) => s - 1); setError('') }}
-              className="w-9 h-9 rounded-full bg-white/[0.05] flex items-center justify-center border border-white/[0.08] text-white/70 hover:text-white transition-colors"
-            >
+            <button onClick={() => { setStep(s => s - 1); setError('') }}
+              className="w-9 h-9 rounded-full bg-white/[0.05] flex items-center justify-center border border-white/[0.08] text-white/70 hover:text-white transition-colors">
               <ChevronLeft size={18} />
             </button>
           ) : step === 0 ? (
@@ -109,7 +157,6 @@ export default function KayitPage() {
             </Link>
           ) : <div className="w-9" />}
 
-          {/* Step indicator */}
           {step < 2 && (
             <div className="flex items-center gap-2 flex-1 justify-center">
               {STEPS.slice(0, 2).map((s, i) => (
@@ -122,234 +169,205 @@ export default function KayitPage() {
                   )}>
                     {i < step ? <Check size={12} /> : i + 1}
                   </div>
-                  {i < 1 && (
-                    <div className={cn('w-8 h-px transition-all', i < step ? 'bg-emerald-500' : 'bg-white/[0.1]')} />
-                  )}
+                  <span className={cn('text-xs font-medium', i === step ? 'text-white' : 'text-white/30')}>{s}</span>
+                  {i < 1 && <div className="w-6 h-px bg-white/[0.10]" />}
                 </div>
               ))}
             </div>
           )}
-
           <div className="w-9" />
         </div>
 
-        <div className="relative flex-1 px-6 pt-2 pb-8">
+        <div className="relative flex-1 px-5 pb-8">
 
-          {/* Hata mesajı */}
+          {/* STEP 0 — Bilgiler */}
+          {step === 0 && (
+            <div className="animate-fade-in">
+              <div className="mb-7 mt-2">
+                <h1 className="text-2xl font-black text-white mb-1">Hesap Oluştur</h1>
+                <p className="text-sm text-white/40">Tecrübelerini paylaş, güven kazan.</p>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  { field: 'fullName', label: 'Ad Soyad', icon: User, type: 'text', placeholder: 'Adınız Soyadınız' },
+                  { field: 'email',    label: 'E-posta',  icon: Mail, type: 'email', placeholder: 'ornek@mail.com' },
+                  { field: 'username', label: 'Kullanıcı Adı', icon: User, type: 'text', placeholder: 'kullanici_adi' },
+                ].map(({ field, label, icon: Icon, type, placeholder }) => (
+                  <div key={field}>
+                    <label className="text-xs font-bold text-white/50 mb-1.5 block">{label}</label>
+                    <div className="relative">
+                      <Icon size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25" />
+                      <input type={type} placeholder={placeholder} value={(form as any)[field]}
+                        onChange={e => update(field, e.target.value)}
+                        className="w-full bg-surface-2 border border-white/[0.08] rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-indigo-500/50 focus:bg-surface-1 transition-all" />
+                    </div>
+                  </div>
+                ))}
+
+                <div>
+                  <label className="text-xs font-bold text-white/50 mb-1.5 block">Şifre</label>
+                  <div className="relative">
+                    <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25" />
+                    <input type={showPassword ? 'text' : 'password'} placeholder="En az 6 karakter"
+                      value={form.password} onChange={e => update('password', e.target.value)}
+                      className="w-full bg-surface-2 border border-white/[0.08] rounded-xl pl-10 pr-11 py-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-indigo-500/50 transition-all" />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60">
+                      {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
+                  {strength.level > 0 && (
+                    <div className="mt-2 space-y-1">
+                      <div className="flex gap-1">
+                        {[1,2,3].map(l => (
+                          <div key={l} className={cn('h-1 flex-1 rounded-full transition-all', l <= strength.level ? strength.color : 'bg-white/[0.06]')} />
+                        ))}
+                      </div>
+                      <p className="text-[11px] text-white/40">{strength.label}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 1 — Konum */}
+          {step === 1 && (
+            <div className="animate-fade-in">
+              <div className="mb-7 mt-2">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center mb-4">
+                  <MapPin size={22} className="text-indigo-400" />
+                </div>
+                <h1 className="text-2xl font-black text-white mb-1">Konumun Nerede?</h1>
+                <p className="text-sm text-white/40">Yakınındaki işletmeleri görmek için şehrini seçmemiz gerekiyor.</p>
+              </div>
+
+              {/* Konum algıla butonu */}
+              <button onClick={detectLocation} disabled={locLoading}
+                className={cn(
+                  'w-full flex items-center gap-3 p-4 rounded-2xl border transition-all mb-4',
+                  form.lat
+                    ? 'border-emerald-500/30 bg-emerald-500/[0.08]'
+                    : 'border-indigo-500/25 bg-indigo-500/[0.07] hover:bg-indigo-500/[0.12] hover:border-indigo-500/40',
+                  locLoading && 'opacity-60 cursor-wait'
+                )}>
+                <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0',
+                  form.lat ? 'bg-emerald-500/20' : 'bg-indigo-500/20')}>
+                  {locLoading ? (
+                    <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                  ) : form.lat ? (
+                    <Check size={18} className="text-emerald-400" />
+                  ) : (
+                    <Navigation size={18} className="text-indigo-400" />
+                  )}
+                </div>
+                <div className="flex-1 text-left">
+                  <div className={cn('text-sm font-bold', form.lat ? 'text-emerald-400' : 'text-white')}>
+                    {form.lat ? 'Konum Alındı ✓' : 'Konumumu Algıla'}
+                  </div>
+                  <div className="text-xs text-white/35 mt-0.5">
+                    {form.lat ? form.locationName : 'GPS ile otomatik tespit et'}
+                  </div>
+                </div>
+              </button>
+
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-1 h-px bg-white/[0.06]" />
+                <span className="text-xs text-white/25 font-medium">veya</span>
+                <div className="flex-1 h-px bg-white/[0.06]" />
+              </div>
+
+              {/* Şehir dropdown */}
+              <div>
+                <label className="text-xs font-bold text-white/50 mb-1.5 block">Şehir Seç</label>
+                <div className="relative">
+                  <button onClick={() => setShowIlDropdown(!showIlDropdown)}
+                    className={cn(
+                      'w-full flex items-center gap-3 bg-surface-2 border rounded-xl px-4 py-3 text-sm transition-all',
+                      showIlDropdown ? 'border-indigo-500/50' : 'border-white/[0.08]',
+                      form.city ? 'text-white' : 'text-white/25'
+                    )}>
+                    <MapPin size={15} className="text-white/25 flex-shrink-0" />
+                    <span className="flex-1 text-left">{form.city || 'Şehir seçin...'}</span>
+                    <ChevronDown size={14} className={cn('text-white/25 transition-transform', showIlDropdown && 'rotate-180')} />
+                  </button>
+
+                  {showIlDropdown && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a1a2e] border border-white/[0.10] rounded-xl overflow-hidden z-50 shadow-2xl">
+                      <div className="p-2 border-b border-white/[0.07]">
+                        <input autoFocus placeholder="Şehir ara..." value={ilSearch}
+                          onChange={e => setIlSearch(e.target.value)}
+                          className="w-full bg-white/[0.05] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none" />
+                      </div>
+                      <div className="max-h-48 overflow-y-auto">
+                        {filteredIller.map(il => (
+                          <button key={il} onClick={() => { update('city', il); setShowIlDropdown(false); setIlSearch('') }}
+                            className={cn(
+                              'w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-white/[0.05]',
+                              form.city === il ? 'text-indigo-400 font-bold bg-indigo-500/[0.08]' : 'text-white/70'
+                            )}>
+                            {il}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {form.city && !form.lat && (
+                <div className="mt-3 flex items-center gap-2 text-xs text-white/35">
+                  <Check size={11} className="text-emerald-400" />
+                  <span><span className="text-white font-semibold">{form.city}</span> seçildi</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* STEP 2 — Tamamlandı */}
+          {step === 2 && (
+            <div className="animate-fade-in flex flex-col items-center justify-center min-h-[50vh] text-center">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center mb-5">
+                <ShieldCheck size={30} className="text-emerald-400" />
+              </div>
+              <h1 className="text-2xl font-black text-white mb-2">Hoş Geldin! 🎉</h1>
+              <p className="text-sm text-white/45 mb-2">Hesabın oluşturuldu.</p>
+              {form.city && (
+                <p className="text-xs text-indigo-400 mb-7">
+                  <MapPin size={10} className="inline mr-1" />
+                  {form.city} bölgesindeki işletmeleri keşfediyorsun
+                </p>
+              )}
+              <button onClick={() => router.push('/')}
+                className="px-8 py-3 rounded-2xl bg-indigo-500 text-white font-bold text-sm hover:bg-indigo-400 transition-all">
+                Feed'e Git
+              </button>
+            </div>
+          )}
+
+          {/* Hata */}
           {error && (
-            <div className="mb-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+            <div className="mt-4 p-3 rounded-xl bg-red-500/[0.08] border border-red-500/20 text-xs text-red-400">
               {error}
             </div>
           )}
 
-          {/* ─── Step 0: Bilgiler ───────────────────────────────────────────── */}
+          {/* İleri butonu */}
+          {step < 2 && (
+            <button onClick={handleNext} disabled={loading || locLoading}
+              className="w-full mt-6 py-3.5 rounded-2xl bg-indigo-500 text-white font-bold text-sm hover:bg-indigo-400 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+              {loading ? (
+                <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Yükleniyor…</>
+              ) : step === 0 ? 'Devam Et →' : 'Hesap Oluştur'}
+            </button>
+          )}
+
           {step === 0 && (
-            <>
-              <div className="mb-8">
-                <h2 className="text-2xl font-black text-white mb-1">Hesap Oluştur</h2>
-                <p className="text-sm text-white/40">Tecrübelerini mahallende paylaş</p>
-              </div>
-
-              <div className="space-y-3 mb-6">
-                <div>
-                  <label className="block text-xs font-semibold text-white/50 mb-1.5 uppercase tracking-wider">Ad Soyad</label>
-                  <div className="flex items-center gap-3 rounded-xl border border-white/[0.1] bg-surface-2 px-4 py-3 focus-within:border-indigo-500/50 transition-all">
-                    <User size={15} className="text-white/30 shrink-0" />
-                    <input
-                      type="text"
-                      value={form.fullName}
-                      onChange={(e) => update('fullName', e.target.value)}
-                      placeholder="Adınız Soyadınız"
-                      className="flex-1 bg-transparent text-sm text-white placeholder-white/20 outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-white/50 mb-1.5 uppercase tracking-wider">E-posta</label>
-                  <div className="flex items-center gap-3 rounded-xl border border-white/[0.1] bg-surface-2 px-4 py-3 focus-within:border-indigo-500/50 transition-all">
-                    <Mail size={15} className="text-white/30 shrink-0" />
-                    <input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => update('email', e.target.value)}
-                      placeholder="ornek@mail.com"
-                      className="flex-1 bg-transparent text-sm text-white placeholder-white/20 outline-none"
-                      autoComplete="email"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-white/50 mb-1.5 uppercase tracking-wider">Kullanıcı Adı</label>
-                  <div className="flex items-center gap-3 rounded-xl border border-white/[0.1] bg-surface-2 px-4 py-3 focus-within:border-indigo-500/50 transition-all">
-                    <span className="text-white/30 text-sm font-medium shrink-0">@</span>
-                    <input
-                      type="text"
-                      value={form.username}
-                      onChange={(e) => update('username', e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                      placeholder="kullanici_adi"
-                      className="flex-1 bg-transparent text-sm text-white placeholder-white/20 outline-none"
-                      autoComplete="username"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-white/50 mb-1.5 uppercase tracking-wider">Şifre</label>
-                  <div className="flex items-center gap-3 rounded-xl border border-white/[0.1] bg-surface-2 px-4 py-3 focus-within:border-indigo-500/50 transition-all">
-                    <Lock size={15} className="text-white/30 shrink-0" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={form.password}
-                      onChange={(e) => update('password', e.target.value)}
-                      placeholder="En az 6 karakter"
-                      className="flex-1 bg-transparent text-sm text-white placeholder-white/20 outline-none"
-                      autoComplete="new-password"
-                    />
-                    <button onClick={() => setShowPassword(!showPassword)} className="text-white/30 hover:text-white/60 transition-colors">
-                      {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Password strength */}
-              {form.password && (
-                <div className="mb-5">
-                  <div className="flex gap-1 mb-1">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className={cn(
-                        'h-1 flex-1 rounded-full transition-all',
-                        i <= strength.level ? strength.color : 'bg-white/[0.08]'
-                      )} />
-                    ))}
-                  </div>
-                  <p className="text-[10px] text-white/30">{strength.label}</p>
-                </div>
-              )}
-
-              <button
-                onClick={handleNext}
-                disabled={loading || !form.fullName || !form.email || !form.username || !form.password}
-                className={cn(
-                  'w-full py-3.5 rounded-xl font-bold text-sm transition-all',
-                  !form.fullName || !form.email || !form.username || !form.password
-                    ? 'bg-white/[0.07] text-white/30 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 hover:opacity-90 active:scale-[0.98]'
-                )}
-              >
-                Devam Et →
-              </button>
-
-              <p className="text-center text-sm text-white/40 mt-6">
-                Zaten hesabınız var mı?{' '}
-                <Link href="/giris" className="text-indigo-400 font-semibold hover:text-indigo-300">Giriş Yap</Link>
-              </p>
-            </>
-          )}
-
-          {/* ─── Step 1: Mahalle ────────────────────────────────────────────── */}
-          {step === 1 && (
-            <>
-              <div className="mb-8">
-                <h2 className="text-2xl font-black text-white mb-1">Mahalleniz</h2>
-                <p className="text-sm text-white/40">Hangi mahallede yaşıyorsunuz?</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 mb-6">
-                {NEIGHBORHOODS.map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => update('neighborhood', n)}
-                    className={cn(
-                      'p-3 rounded-xl border text-sm font-medium flex items-center gap-2 transition-all',
-                      form.neighborhood === n
-                        ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300'
-                        : 'bg-white/[0.03] border-white/[0.08] text-white/60 hover:bg-white/[0.06]'
-                    )}
-                  >
-                    <MapPin size={13} className={form.neighborhood === n ? 'text-indigo-400' : 'text-white/20'} />
-                    {n}
-                    {form.neighborhood === n && <Check size={12} className="ml-auto text-indigo-400" />}
-                  </button>
-                ))}
-              </div>
-
-              {/* Muhtar option */}
-              <button
-                onClick={() => update('isMuhtar', !form.isMuhtar)}
-                className={cn(
-                  'w-full p-4 rounded-2xl border text-left transition-all mb-6',
-                  form.isMuhtar
-                    ? 'bg-amber-500/15 border-amber-500/40'
-                    : 'bg-white/[0.03] border-white/[0.08] hover:bg-white/[0.05]'
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    'w-10 h-10 rounded-xl flex items-center justify-center text-lg font-black',
-                    form.isMuhtar ? 'bg-amber-500/25 text-amber-400' : 'bg-white/[0.06] text-white/30'
-                  )}>
-                    M
-                  </div>
-                  <div>
-                    <div className="font-bold text-sm text-white">Mahalle Muhtarı Ol</div>
-                    <div className="text-xs text-white/40 mt-0.5">Mahallenin uzman yorumcusu olarak tanın</div>
-                  </div>
-                  <div className={cn(
-                    'ml-auto w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all',
-                    form.isMuhtar ? 'bg-amber-500 border-amber-500' : 'border-white/20'
-                  )}>
-                    {form.isMuhtar && <Check size={11} className="text-black" />}
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={handleNext}
-                disabled={loading || !form.neighborhood}
-                className={cn(
-                  'w-full py-3.5 rounded-xl font-bold text-sm transition-all',
-                  loading || !form.neighborhood
-                    ? 'bg-white/[0.07] text-white/30 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 hover:opacity-90 active:scale-[0.98]'
-                )}
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                    </svg>
-                    Hesap oluşturuluyor...
-                  </span>
-                ) : 'Hesabımı Oluştur →'}
-              </button>
-            </>
-          )}
-
-          {/* ─── Step 2: Tamamlandı ─────────────────────────────────────────── */}
-          {step === 2 && (
-            <div className="flex flex-col items-center justify-center flex-1 text-center py-12">
-              <div className="w-20 h-20 rounded-3xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto mb-6">
-                <ShieldCheck size={36} className="text-emerald-400" />
-              </div>
-              <h2 className="text-2xl font-black text-white mb-2">Hoş Geldin! 🎉</h2>
-              <p className="text-sm text-white/50 mb-2">
-                <span className="text-white font-semibold">@{form.username}</span> hesabın oluşturuldu.
-              </p>
-              <p className="text-xs text-white/30 mb-10">
-                İlk yorumunu yazarak TrustScore kazanmaya başla.
-              </p>
-
-              <button
-                onClick={() => router.push('/')}
-                className="w-full py-3.5 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30 hover:opacity-90 active:scale-[0.98] transition-all"
-              >
-                Ana Sayfaya Git →
-              </button>
-            </div>
+            <p className="text-center text-xs text-white/30 mt-5">
+              Zaten hesabın var mı?{' '}
+              <Link href="/giris" className="text-indigo-400 hover:text-indigo-300 font-semibold">Giriş Yap</Link>
+            </p>
           )}
         </div>
       </div>

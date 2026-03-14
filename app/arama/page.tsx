@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
@@ -57,6 +57,9 @@ interface ApiBusiness {
   address: string
   city: string
   district?: string
+  reason?: string
+  vec_score?: number
+  final_score?: number
   averageRating?: number
   reviewCount?: number
   externalReviewCount?: number
@@ -141,9 +144,19 @@ export default function AramaPage() {
   const [loading, setLoading] = useState(false)
   const [recentSearches, setRecentSearches] = useState<string[]>([])
 
+  const [userLat, setUserLat] = useState<number|null>(null)
+  const [userLng, setUserLng] = useState<number|null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<NodeJS.Timeout>()
 
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => { setUserLat(pos.coords.latitude); setUserLng(pos.coords.longitude) },
+        () => {}
+      )
+    }
+  }, [])
   // Kategorileri çek
   useEffect(() => {
     fetch(`${API}/api/categories`)
@@ -175,6 +188,7 @@ export default function AramaPage() {
     setLoading(true)
     try {
       const params = new URLSearchParams({ q, limit: '20' })
+      if (userLat && userLng) { params.set('userLat', userLat.toString()); params.set('userLng', userLng.toString()) }
       if (cat !== 'Tümü') params.set('category', cat)
       if (sortVal !== 'relevance') params.set('sort', sortVal)
 
@@ -483,7 +497,16 @@ export default function AramaPage() {
                   {tab === 'isletmeler' && (
                     filteredBusinesses.length === 0
                       ? <EmptyResults query={query} onSuggest={handleSearch} />
-                      : filteredBusinesses.map(b => <BusinessCard key={b.id} business={mapBusiness(b)} />)
+                      : filteredBusinesses.map(b => (
+                        <div key={b.id} className="relative">
+                          <BusinessCard business={mapBusiness(b)} />
+                          {b.reason && (
+                            <div className="mx-3 -mt-2 mb-3 px-3 py-1.5 rounded-b-xl bg-indigo-500/[0.07] border border-indigo-500/10 border-t-0">
+                              <span className="text-[11px] text-indigo-400/70">✦ {b.reason}</span>
+                            </div>
+                          )}
+                        </div>
+                      ))
                   )}
 
                   {/* Reviews */}

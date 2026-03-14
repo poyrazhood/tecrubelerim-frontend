@@ -2,10 +2,10 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Search, PlusCircle, Bell, User, Award, LogOut, MapPin, Sparkles, Sun, Moon, Building2 } from 'lucide-react'
+import { Home, Search, PlusCircle, Bell, User, Award, LogOut, MapPin, Sparkles, Sun, Moon, Building2, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/AuthContext'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 const NAV_ITEMS = [
   { href: '/',            icon: Home,       label: 'Ana Sayfa' },
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: '/bildirimler', icon: Bell,       label: 'Bildirimler' },
   { href: '/profil',      icon: User,       label: 'Profil' },
   { href: '/muhtarlar',   icon: Award,      label: 'Muhtarlar' },
+  { href: '/isletme-ekle', icon: Building2,   label: 'İşletme Ekle' },
 ]
 
 const RANK_COLORS: Record<number, string> = {
@@ -46,6 +47,7 @@ function useTheme() {
 // ─── Tema Toggle Butonu ───────────────────────────────────────────────────────
 function ThemeToggle({ className }: { className?: string }) {
   const { theme, toggle } = useTheme()
+
   return (
     <button
       onClick={toggle}
@@ -82,7 +84,7 @@ function UserAvatar({ name, username, avatarUrl, size = 'sm' }: {
     )
   }
   return (
-    <div className={cn(dim, 'rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white flex-shrink-0')}>
+    <div className={cn(dim, 'rounded-full flex items-center justify-center font-bold text-white flex-shrink-0')} style={{background:'var(--primary)'}}>
       {initials}
     </div>
   )
@@ -246,7 +248,37 @@ export function AppLayout({ children, hideBottomNav }: {
       })
       .catch(() => {})
   }, [user])
+  const [scrolled, setScrolled] = useState(false)
+  const [searchFocused, setSearchFocused] = useState(false)
+  const [headerSearchVal, setHeaderSearchVal] = useState('')
+  const [clientMounted, setClientMounted] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const { theme, toggle } = useTheme()
+
+  useEffect(() => {
+    setClientMounted(true)
+      const savedTheme = localStorage.getItem('app_theme') || 'indigo'
+      document.documentElement.setAttribute('data-theme', savedTheme)
+    // rAF ile DOM'un tamamen yüklenmesini bekle
+    const raf = requestAnimationFrame(() => {
+      const el = document.getElementById('main-scroll')
+      const handleScroll = () => {
+        const scrollY = el ? el.scrollTop : window.scrollY
+        setScrolled(scrollY > 60)
+      }
+      el?.addEventListener('scroll', handleScroll, { passive: true })
+      window.addEventListener('scroll', handleScroll, { passive: true })
+      // cleanup için ref'e sakla
+      ;(window as any).__feedScrollCleanup = () => {
+        el?.removeEventListener('scroll', handleScroll)
+        window.removeEventListener('scroll', handleScroll)
+      }
+    })
+    return () => {
+      cancelAnimationFrame(raf)
+      ;(window as any).__feedScrollCleanup?.()
+    }
+  }, [])
 
   const handleLogout = () => {
     logout()
@@ -270,17 +302,35 @@ export function AppLayout({ children, hideBottomNav }: {
 
       {/* ══════ MOBILE ══════ */}
       <div className="lg:hidden flex justify-center">
-        <div className="w-full max-w-[480px] min-h-screen relative border-x border-white/[0.04] flex flex-col">
+        <div className="w-full max-w-[480px] h-screen relative border-x border-white/[0.04] flex flex-col">
 
           <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-white/[0.06] px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                <span className="text-[10px] font-black text-white">T</span>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-md flex-shrink-0" style={{background:'var(--primary)'}}>
+                <Star size={14} className="text-white fill-white" />
               </div>
-              <span className="font-black text-base tracking-tight text-white">Tecrübelerim</span>
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 uppercase tracking-wider">Beta</span>
+              {clientMounted && scrolled ? (
+                searchFocused ? (
+                  <form onSubmit={(e) => { e.preventDefault(); if(headerSearchVal.trim()){ router.push(`/arama?q=${encodeURIComponent(headerSearchVal.trim())}`); setSearchFocused(false); setHeaderSearchVal("") }}} className="flex items-center gap-1.5 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-1 h-8 px-3 rounded-xl bg-white/[0.08] border border-indigo-500/40">
+                      <Search size={12} className="text-indigo-400 flex-shrink-0" />
+                      <input ref={searchInputRef} value={headerSearchVal} onChange={e => setHeaderSearchVal(e.target.value)} placeholder="Ara\u2026" className="bg-transparent outline-none text-white placeholder-white/30 w-full text-xs" autoFocus />
+                    </div>
+                    <button type="button" onClick={() => { setSearchFocused(false); setHeaderSearchVal("") }} className="text-white/40 hover:text-white/70 text-xs px-1 flex-shrink-0">\u2715</button>
+                  </form>
+                ) : (
+                  <button onClick={() => { setSearchFocused(true); setTimeout(() => searchInputRef.current?.focus(), 50) }} className="flex items-center gap-2 flex-1 h-8 px-3 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white/35 text-xs hover:bg-white/[0.09] transition-all min-w-0">
+                    <Search size={12} className="flex-shrink-0" /><span className="truncate">Ara\u2026</span>
+                  </button>
+                )
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  <span className="font-black text-base tracking-tight text-white">Tecrübelerim</span>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider" style={{background:'var(--primary-bg)',color:'var(--primary)',border:'1px solid var(--primary-border)'}}>Beta</span>
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
               <ThemeToggle />
               <Link href="/bildirimler">
                 <button className="relative w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all">
@@ -293,7 +343,7 @@ export function AppLayout({ children, hideBottomNav }: {
             </div>
           </header>
 
-          <main className={`flex-1 ${hideBottomNav ? 'pb-0' : 'pb-24'}`}>{children}</main>
+          <main id="main-scroll" className={`flex-1 min-h-0 overflow-y-auto ${hideBottomNav ? 'pb-0' : 'pb-24'}`}>{children}</main>
 
           {!hideBottomNav && (
             <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 bg-surface/90 backdrop-blur-xl border-t border-white/[0.06] px-2 py-2">
@@ -305,10 +355,10 @@ export function AppLayout({ children, hideBottomNav }: {
                     return (
                       <Link key="sahip-paneli" href="/sahip-paneli" className={cn(
                         'flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all relative',
-                        active ? 'text-indigo-400' : 'text-white/30 hover:text-white/60'
+                        active ? 'text-primary' : 'text-white/30 hover:text-white/60'
                       )}>
                         <div className="relative">
-                          <Building2 size={20} className={active ? 'fill-indigo-400/20' : ''} />
+                          <Building2 size={20} className={active ? 'fill-primary/20' : ''} />
                           {unreadReplies > 0 && <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />}
                         </div>
                         <span className="text-[10px] font-medium">İşletmem</span>
@@ -319,15 +369,15 @@ export function AppLayout({ children, hideBottomNav }: {
                   return (
                     <Link key={href} href={href} className={cn(
                       'flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all',
-                      active ? 'text-indigo-400' : 'text-white/30 hover:text-white/60'
+                      active ? 'text-primary' : 'text-white/30 hover:text-white/60'
                     )}>
                       {href === '/yorum-yaz' ? (
-                        <div className="w-10 h-10 -mt-5 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                        <div className="w-10 h-10 -mt-5 rounded-2xl flex items-center justify-center shadow-lg" style={{background:'var(--primary)'}}>
                           <Icon size={20} className="text-white" />
                         </div>
                       ) : (
                         <>
-                          <Icon size={20} className={active ? 'fill-indigo-400/20' : ''} />
+                          <Icon size={20} className={active ? 'fill-primary/20' : ''} />
                           <span className="text-[10px] font-medium">{label}</span>
                         </>
                       )}
@@ -346,8 +396,8 @@ export function AppLayout({ children, hideBottomNav }: {
         {/* Sol sidebar */}
         <aside className="sticky top-0 h-screen flex flex-col px-3 py-6 border-r border-white/[0.06] overflow-y-auto">
           <Link href="/" className="flex items-center gap-2.5 mb-8 px-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-              <span className="text-sm font-black text-white">T</span>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0" style={{background:'var(--primary)'}}>
+              <Star size={16} className="text-white fill-white" />
             </div>
             <span className="font-black text-lg tracking-tight text-white">Tecrübelerim</span>
           </Link>
@@ -359,15 +409,15 @@ export function AppLayout({ children, hideBottomNav }: {
                 <Link key={href} href={href} className={cn(
                   'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-semibold text-sm',
                   active
-                    ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/25'
+                  ? 'bg-primary-soft text-white border border-primary-soft'
                     : 'text-white/50 hover:text-white hover:bg-white/[0.05]'
                 )}>
                   {href === '/yorum-yaz' ? (
-                    <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background:'var(--primary)'}}>
                       <Icon size={13} className="text-white" />
                     </div>
                   ) : (
-                    <Icon size={18} className={active ? 'text-indigo-400' : 'text-white/40'} />
+                    <Icon size={18} className={active ? 'text-primary' : 'text-white/40'} />
                   )}
                   {label}
                 </Link>
