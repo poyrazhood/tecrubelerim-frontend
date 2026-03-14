@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 // @ts-ignore
 import YetkinlikRadari from '@/components/business/YetkinlikRadari'
 // @ts-ignore
@@ -40,7 +40,7 @@ function SubscriptionTab({ business }: { business: any }) {
     PREMIUM:      ['Gelismis Analitik', 'Dogrulanmis Rozet', 'Hizli Yorum Yanitlama', 'Arama Onceligi', 'Rakip Reklamlari Kaldirma', 'One Cikan Listeleme'],
     ENTERPRISE:   ['Tum Premium Ozellikler', 'Kurumsal API Erisimi', 'White-label Widget', 'Ozel Destek'],
   }
-  const PLAN_PRICES: Record<string, string> = { FREE: 'Ucretsiz', PROFESSIONAL: '99₺/ay', PREMIUM: '299₺/ay', ENTERPRISE: '999₺/ay' }
+  const PLAN_PRICES: Record<string, string> = { FREE: 'Ucretsiz', PROFESSIONAL: '99â‚º/ay', PREMIUM: '299â‚º/ay', ENTERPRISE: '999â‚º/ay' }
   const PLAN_COLORS: Record<string, string> = {
     FREE: 'border-white/10 bg-white/[0.02]',
     PROFESSIONAL: 'border-blue-500/20 bg-blue-500/[0.04]',
@@ -173,7 +173,7 @@ function SubscriptionTab({ business }: { business: any }) {
           ) : (
             <button onClick={() => setShowPhoneFor(plan)}
               className={`w-full py-2.5 rounded-xl text-xs font-bold border transition-all ${PLAN_BTN[plan]}`}>
-              Bu Pakete Gec — Beni Arayin
+              Bu Pakete Gec â€” Beni Arayin
             </button>
           )}
         </div>
@@ -233,7 +233,7 @@ function AnalyticsTab({ business }: { business: any }) {
     doc.text('Genel Ozet', 20, 44)
     doc.setFontSize(11)
     doc.text(`Toplam Goruntulenme: ${d?.totalViews ?? 0}`, 20, 54)
-    doc.text(`Toplam Yorum: ${(c.totalReviews ?? 0) + (c._count?.externalReviews ?? 0)}${d?.totalReviews ?? 0}`, 20, 62)
+    doc.text(`Toplam Yorum: ${(d?.totalReviews ?? 0)}${d?.totalReviews ?? 0}`, 20, 62)
     doc.text(`Ortalama Puan: ${d?.averageRating?.toFixed(1) ?? 0}`, 20, 70)
     doc.text(`Sehir Sirasi: #${d?.cityRank ?? '-'}`, 20, 78)
     doc.setFontSize(13)
@@ -249,7 +249,7 @@ function AnalyticsTab({ business }: { business: any }) {
     doc.setFontSize(10)
     y += 20
     data?.competitors?.forEach((c: any, i: number) => {
-      doc.text(`${i+1}. ${c.name}${c.isSelf ? ' (siz)' : ''} — Puan: ${c.averageRating?.toFixed(1)}, Yorum: ${(c.totalReviews ?? 0) + (c._count?.externalReviews ?? 0)}${c.totalReviews}`, 25, y)
+      doc.text(`${i+1}. ${c.name}${c.isSelf ? ' (siz)' : ''} â€” Puan: ${c.averageRating?.toFixed(1)}, Yorum: ${(c.totalReviews ?? 0) + (c._count?.externalReviews ?? 0)}${c.totalReviews}`, 25, y)
       y += 8
     })
     doc.save(`${business.name}-rapor.pdf`)
@@ -283,13 +283,13 @@ function AnalyticsTab({ business }: { business: any }) {
             <div className={`w-8 h-8 rounded-xl bg-${color}-500/15 flex items-center justify-center mb-2`}>
               <Icon size={15} className={`text-${color}-400`} />
             </div>
-            <div className="text-lg font-bold text-white">{value ?? '—'}</div>
+            <div className="text-lg font-bold text-white">{value ?? 'â€”'}</div>
             <div className="text-[11px] text-white/40 mt-0.5">{label}</div>
           </div>
         ))}
       </div>
 
-      {/* Trend grafigi — toggle */}
+      {/* Trend grafigi â€” toggle */}
       {data.monthlyTrend?.length > 0 && (
         <div className="p-4 rounded-2xl bg-surface-1 border border-white/[0.07]">
           <div className="flex items-center justify-between mb-3">
@@ -376,7 +376,7 @@ function AnalyticsTab({ business }: { business: any }) {
                 <div className="w-2 h-2 rounded-full bg-amber-500/70 flex-shrink-0" />
                 <div>
                   <div className="text-sm font-bold text-white">{notr}%</div>
-                  <div className="text-[10px] text-white/30">Nötr</div>
+                  <div className="text-[10px] text-white/30">NÃ¶tr</div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -389,7 +389,7 @@ function AnalyticsTab({ business }: { business: any }) {
             </div>
             {data.sentiment.topKeywords?.length > 0 && (
               <div className="pt-3 border-t border-white/[0.05]">
-                <div className="text-[10px] font-semibold text-white/40 mb-2 uppercase tracking-wider">Öne Çıkan Kelimeler</div>
+                <div className="text-[10px] font-semibold text-white/40 mb-2 uppercase tracking-wider">Ã–ne Ã‡Ä±kan Kelimeler</div>
                 <div className="flex flex-wrap gap-1.5">
                   {data.sentiment.topKeywords.map((k: any) => (
                     <span key={k.word} className="text-[10px] px-2.5 py-1 rounded-full bg-white/[0.05] text-white/60 border border-white/[0.08] hover:bg-white/[0.08] transition-all">
@@ -414,7 +414,7 @@ function AnalyticsTab({ business }: { business: any }) {
                 <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[10px] text-white/50 font-bold flex-shrink-0">{i + 1}</div>
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-semibold text-white truncate">{c.name} {c.isSelf && <span className="text-indigo-400 text-[10px]">(siz)</span>}</div>
-                  <div className="text-[10px] text-white/40">{c.totalReviews} yorum · {c.totalViews} goruntulenme</div>
+                  <div className="text-[10px] text-white/40">{c.totalReviews} yorum Â· {c.totalViews} goruntulenme</div>
                 </div>
                 <div className="text-sm font-bold text-amber-400">{c.averageRating?.toFixed(1)}</div>
               </div>
@@ -426,7 +426,7 @@ function AnalyticsTab({ business }: { business: any }) {
       {/* Hizli yorum yanitla */}
       {recentReviews.length > 0 && (
         <div className="p-4 rounded-2xl bg-surface-1 border border-white/[0.07]">
-          <div className="text-xs font-bold text-white/70 mb-3">Son Yorumlar — Hizli Yanit</div>
+          <div className="text-xs font-bold text-white/70 mb-3">Son Yorumlar â€” Hizli Yanit</div>
           <div className="space-y-3">
             {recentReviews.map((review: any) => (
               <div key={review.id} className="border-b border-white/[0.05] pb-3 last:border-0 last:pb-0">
@@ -610,7 +610,7 @@ function ReviewsTab({ business }: { business: any }) {
   if (reviews.length === 0) return (
     <div className="text-center py-12">
       <MessageSquare size={32} className="mx-auto mb-3 text-white/20" />
-      <div className="text-white/40 text-sm">Henüz yorum yok</div>
+      <div className="text-white/40 text-sm">HenÃ¼z yorum yok</div>
     </div>
   )
 
@@ -636,7 +636,7 @@ function ReviewsTab({ business }: { business: any }) {
 
           {r.ownerReply && replyingTo !== r.id && (
             <div className="bg-indigo-500/[0.07] border border-indigo-500/20 rounded-xl p-3 mb-2">
-              <div className="text-[10px] font-bold text-indigo-400 mb-1">İşletme Yanıtı</div>
+              <div className="text-[10px] font-bold text-indigo-400 mb-1">Ä°ÅŸletme YanÄ±tÄ±</div>
               <p className="text-xs text-white/60 leading-relaxed">{r.ownerReply}</p>
             </div>
           )}
@@ -644,23 +644,23 @@ function ReviewsTab({ business }: { business: any }) {
           {replyingTo === r.id ? (
             <div>
               <textarea value={replyText} onChange={e => setReplyText(e.target.value)} rows={3}
-                placeholder="Müşterinize yanıt yazın..."
+                placeholder="MÃ¼ÅŸterinize yanÄ±t yazÄ±n..."
                 className="w-full bg-surface-1 border border-indigo-500/30 rounded-xl px-3 py-2 text-sm text-white outline-none resize-none focus:border-indigo-500/60 placeholder-white/20 mb-2" />
               <div className="flex gap-2">
-                <button onClick={() => getAIDraft(r.id)} disabled={!!aiLoading} className="px-3 py-1.5 rounded-lg bg-violet-500/15 text-violet-400 border border-violet-500/20 text-xs font-bold disabled:opacity-40 hover:bg-violet-500/25 transition-all flex items-center gap-1">{aiLoading === r.id ? <Loader2 size={11} className="animate-spin" /> : <span>✨</span>} {aiDraftCount[r.id] ? `Yanıtı Değiştir (${3 - (aiDraftCount[r.id] || 0)} hak)` : 'Asistanla Yanıtla'}</button>
+                <button onClick={() => getAIDraft(r.id)} disabled={!!aiLoading} className="px-3 py-1.5 rounded-lg bg-violet-500/15 text-violet-400 border border-violet-500/20 text-xs font-bold disabled:opacity-40 hover:bg-violet-500/25 transition-all flex items-center gap-1">{aiLoading === r.id ? <Loader2 size={11} className="animate-spin" /> : <span>âœ¨</span>} {aiDraftCount[r.id] ? `YanÄ±tÄ± DeÄŸiÅŸtir (${3 - (aiDraftCount[r.id] || 0)} hak)` : 'Asistanla YanÄ±tla'}</button>
                 <button onClick={() => saveReply(r.id)} disabled={replySaving || !replyText.trim()}
                   className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-indigo-500 text-white text-xs font-bold disabled:opacity-50">
-                  {replySaving ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />} Yanıtla
+                  {replySaving ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />} YanÄ±tla
                 </button>
                 <button onClick={() => { setReplyingTo(null); setReplyText('') }}
-                  className="px-4 py-1.5 rounded-lg bg-white/[0.05] text-white/40 text-xs">İptal</button>
+                  className="px-4 py-1.5 rounded-lg bg-white/[0.05] text-white/40 text-xs">Ä°ptal</button>
               </div>
             </div>
           ) : (
             <button onClick={() => { setReplyingTo(r.id); setReplyText(r.ownerReply || '') }}
               className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
               <MessageSquare size={11} />
-              {r.ownerReply ? 'Yanıtı Düzenle' : 'Yanıtla'}
+              {r.ownerReply ? 'YanÄ±tÄ± DÃ¼zenle' : 'YanÄ±tla'}
             </button>
           )}
         </div>
@@ -702,19 +702,19 @@ export default function SahipPaneliPage() {
     const d = await r.json()
     const results = Array.isArray(d) ? d : Array.isArray(d.data) ? d.data : Array.isArray(d.businesses) ? d.businesses : []
     setClaimResults(results)
-    if (results.length === 0) setClaimMsg('Sonuç bulunamadı.')
+    if (results.length === 0) setClaimMsg('SonuÃ§ bulunamadÄ±.')
     setClaimSearching(false)
   }
 
   const handleClaim = async (b: any) => {
     const token = getToken()
-    if (!token) { setClaimMsg('Sahiplik talebi için giriş yapmanız gerekiyor.'); return }
+    if (!token) { setClaimMsg('Sahiplik talebi iÃ§in giriÅŸ yapmanÄ±z gerekiyor.'); return }
     setClaiming(b.id); setClaimMsg(null)
     const res = await fetch(`${API}/api/businesses/${b.id}/claim`, {
       method: 'POST', headers: { Authorization: `Bearer ${token}` }
     })
     const d = await res.json()
-    setClaimMsg(res.ok ? '✓ Talebiniz alındı, inceleme sonrası bildirim alacaksınız.' : d.error || 'Hata oluştu.')
+    setClaimMsg(res.ok ? 'âœ“ Talebiniz alÄ±ndÄ±, inceleme sonrasÄ± bildirim alacaksÄ±nÄ±z.' : d.error || 'Hata oluÅŸtu.')
     setClaiming(null)
     if (res.ok) setClaimResults([])
   }
@@ -732,8 +732,8 @@ export default function SahipPaneliPage() {
     if (res.ok) {
       setSelected(d.business)
       setMyBusinesses(prev => prev.map(x => x.id === d.business.id ? d.business : x))
-      setSaveMsg('✓ Kaydedildi!'); setEditing(false)
-    } else { setSaveMsg(d.error || 'Kaydetme başarısız.') }
+      setSaveMsg('âœ“ Kaydedildi!'); setEditing(false)
+    } else { setSaveMsg(d.error || 'Kaydetme baÅŸarÄ±sÄ±z.') }
     setSaving(false)
     setTimeout(() => setSaveMsg(null), 3000)
   }
@@ -756,7 +756,7 @@ export default function SahipPaneliPage() {
 
   const getCover = (b: any) => b.coverPhoto || b.photos?.[0]?.url || (b.attributes?.photos?.[0]) || null
 
-  // ── Seçili işletme yönetim ekranı ──
+  // â”€â”€ SeÃ§ili iÅŸletme yÃ¶netim ekranÄ± â”€â”€
   if (selected) {
     const cover = getCover(selected)
     const rating = normalizeRating(selected.averageRating ?? 0)
@@ -780,7 +780,7 @@ export default function SahipPaneliPage() {
             <label className="absolute top-4 right-4 cursor-pointer">
               <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/40 backdrop-blur-sm border border-white/15 text-xs text-white font-medium">
-                {photoUploading ? <Loader2 size={11} className="animate-spin" /> : <Camera size={11} />} Fotoğraf
+                {photoUploading ? <Loader2 size={11} className="animate-spin" /> : <Camera size={11} />} FotoÄŸraf
               </div>
             </label>
             <div className="absolute bottom-4 left-4 right-4">
@@ -792,7 +792,7 @@ export default function SahipPaneliPage() {
                   selected.claimStatus === 'PENDING' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
                   'bg-white/[0.07] text-white/40 border-white/10'
                 )}>
-                  {selected.claimStatus === 'CLAIMED' ? '✓ Doğrulandı' : selected.claimStatus === 'PENDING' ? '⏳ İnceleniyor' : 'Doğrulanmamış'}
+                  {selected.claimStatus === 'CLAIMED' ? 'âœ“ DoÄŸrulandÄ±' : selected.claimStatus === 'PENDING' ? 'â³ Ä°nceleniyor' : 'DoÄŸrulanmamÄ±ÅŸ'}
                 </span>
               </div>
             </div>
@@ -817,9 +817,9 @@ export default function SahipPaneliPage() {
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { icon: Star, label: 'Puan', value: rating > 0 ? rating.toFixed(1) : '—', color: 'text-amber-400' },
+                    { icon: Star, label: 'Puan', value: rating > 0 ? rating.toFixed(1) : 'â€”', color: 'text-amber-400' },
                     { icon: MessageSquare, label: 'Yorum', value: selected.totalReviews ?? 0, color: 'text-indigo-400' },
-                    { icon: Eye, label: 'Görüntülenme', value: selected.totalViews ?? 0, color: 'text-purple-400' },
+                    { icon: Eye, label: 'GÃ¶rÃ¼ntÃ¼lenme', value: selected.totalViews ?? 0, color: 'text-purple-400' },
                   ].map(({ icon: Icon, label, value, color }) => (
                     <div key={label} className="bg-surface-1 border border-white/[0.07] rounded-2xl p-3 text-center">
                       <Icon size={18} className={cn('mx-auto mb-1', color)} />
@@ -833,7 +833,7 @@ export default function SahipPaneliPage() {
                 {rating > 0 && (
                   <div className="bg-surface-1 border border-white/[0.07] rounded-2xl p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-bold text-white">Puan Dağılımı</span>
+                      <span className="text-sm font-bold text-white">Puan DaÄŸÄ±lÄ±mÄ±</span>
                       <div className="flex items-center gap-1">
                         {[1,2,3,4,5].map(s => <Star key={s} size={12} className={s <= Math.round(rating) ? 'text-amber-400 fill-amber-400' : 'text-white/15'} />)}
                       </div>
@@ -849,13 +849,13 @@ export default function SahipPaneliPage() {
                   <button onClick={() => setActiveTab('edit')}
                     className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-surface-1 border border-white/[0.07] hover:border-indigo-500/30 transition-all">
                     <div className="w-9 h-9 rounded-xl bg-indigo-500/15 flex items-center justify-center"><Edit3 size={15} className="text-indigo-400" /></div>
-                    <div className="flex-1 text-left"><div className="text-sm font-bold text-white">İşletme Bilgilerini Düzenle</div><div className="text-xs text-white/35">Adres, telefon, açıklama</div></div>
+                    <div className="flex-1 text-left"><div className="text-sm font-bold text-white">Ä°ÅŸletme Bilgilerini DÃ¼zenle</div><div className="text-xs text-white/35">Adres, telefon, aÃ§Ä±klama</div></div>
                     <ChevronRight size={14} className="text-white/20" />
                   </button>
                   <Link href={`/isletme/${selected.slug}`}
                     className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-surface-1 border border-white/[0.07] hover:border-indigo-500/30 transition-all">
                     <div className="w-9 h-9 rounded-xl bg-purple-500/15 flex items-center justify-center"><Eye size={15} className="text-purple-400" /></div>
-                    <div className="flex-1 text-left"><div className="text-sm font-bold text-white">İşletme Sayfasını Görüntüle</div><div className="text-xs text-white/35">Müşterilerin gördüğü sayfa</div></div>
+                    <div className="flex-1 text-left"><div className="text-sm font-bold text-white">Ä°ÅŸletme SayfasÄ±nÄ± GÃ¶rÃ¼ntÃ¼le</div><div className="text-xs text-white/35">MÃ¼ÅŸterilerin gÃ¶rdÃ¼ÄŸÃ¼ sayfa</div></div>
                     <ChevronRight size={14} className="text-white/20" />
                   </Link>
                 </div>
@@ -871,39 +871,39 @@ export default function SahipPaneliPage() {
             {/* Edit Tab */}
             {activeTab === 'edit' && (
               <div>
-                {saveMsg && <div className={cn('text-xs mb-3 font-medium p-2.5 rounded-xl', saveMsg.startsWith('✓') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400')}>{saveMsg}</div>}
+                {saveMsg && <div className={cn('text-xs mb-3 font-medium p-2.5 rounded-xl', saveMsg.startsWith('âœ“') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400')}>{saveMsg}</div>}
                 {!editing ? (
                   <div className="space-y-3">
                     {[
-                      { key: 'name', label: 'İşletme Adı' },
+                      { key: 'name', label: 'Ä°ÅŸletme AdÄ±' },
                       { key: 'phoneNumber', label: 'Telefon' },
                       { key: 'email', label: 'E-posta' },
                       { key: 'website', label: 'Website' },
                       { key: 'address', label: 'Adres' },
-                      { key: 'city', label: 'Şehir' },
-                      { key: 'district', label: 'İlçe' },
-                      { key: 'description', label: 'Açıklama' },
+                      { key: 'city', label: 'Åehir' },
+                      { key: 'district', label: 'Ä°lÃ§e' },
+                      { key: 'description', label: 'AÃ§Ä±klama' },
                     ].map(({ key, label }) => (
                       <div key={key} className="bg-surface-1 border border-white/[0.07] rounded-2xl px-4 py-3">
                         <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1">{label}</div>
-                        <div className="text-sm text-white/70">{(selected as any)[key] || <span className="text-white/20 italic">Belirtilmemiş</span>}</div>
+                        <div className="text-sm text-white/70">{(selected as any)[key] || <span className="text-white/20 italic">BelirtilmemiÅŸ</span>}</div>
                       </div>
                     ))}
                     <button onClick={() => { setEditing(true); setForm({ name: selected.name, address: selected.address, city: selected.city, district: selected.district, description: selected.description, phoneNumber: selected.phoneNumber, email: selected.email, website: selected.website }) }}
                       className="w-full py-3 rounded-2xl bg-indigo-500 text-white text-sm font-bold hover:bg-indigo-600 transition-colors flex items-center justify-center gap-2">
-                      <Edit3 size={14} /> Düzenle
+                      <Edit3 size={14} /> DÃ¼zenle
                     </button>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {[
-                      { key: 'name', label: 'İşletme Adı', type: 'input' },
+                      { key: 'name', label: 'Ä°ÅŸletme AdÄ±', type: 'input' },
                       { key: 'phoneNumber', label: 'Telefon', type: 'input' },
                       { key: 'email', label: 'E-posta', type: 'input' },
                       { key: 'website', label: 'Website', type: 'input' },
                       { key: 'address', label: 'Adres', type: 'input' },
-                      { key: 'city', label: 'Şehir', type: 'input' },
-                      { key: 'district', label: 'İlçe', type: 'input' },
+                      { key: 'city', label: 'Åehir', type: 'input' },
+                      { key: 'district', label: 'Ä°lÃ§e', type: 'input' },
                     ].map(({ key, label }) => (
                       <div key={key}>
                         <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1">{label}</div>
@@ -912,7 +912,7 @@ export default function SahipPaneliPage() {
                       </div>
                     ))}
                     <div>
-                      <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1">Açıklama</div>
+                      <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1">AÃ§Ä±klama</div>
                       <textarea value={form.description || ''} onChange={e => setForm({ ...form, description: e.target.value })} rows={4}
                         className="w-full bg-surface-2 border border-indigo-500/30 rounded-xl px-3 py-2.5 text-sm text-white outline-none resize-none focus:border-indigo-500/60" />
                     </div>
@@ -921,7 +921,7 @@ export default function SahipPaneliPage() {
                         className="flex-1 py-3 rounded-2xl bg-indigo-500 text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2">
                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Kaydet
                       </button>
-                      <button onClick={() => setEditing(false)} className="px-5 py-3 rounded-2xl bg-white/[0.05] text-white/50 text-sm font-medium">İptal</button>
+                      <button onClick={() => setEditing(false)} className="px-5 py-3 rounded-2xl bg-white/[0.05] text-white/50 text-sm font-medium">Ä°ptal</button>
                     </div>
                   </div>
                 )}
@@ -945,18 +945,18 @@ export default function SahipPaneliPage() {
     )
   }
 
-  // ── Ana liste / sahiplen ekranı ──
+  // â”€â”€ Ana liste / sahiplen ekranÄ± â”€â”€
   return (
     <AppLayout>
       <div className="max-w-lg mx-auto px-4 py-6">
         <h1 className="text-2xl font-black text-white mb-1">Sahip Paneli</h1>
-        <p className="text-sm text-white/40 mb-6">İşletmenizi yönetin veya sahiplik talep edin</p>
+        <p className="text-sm text-white/40 mb-6">Ä°ÅŸletmenizi yÃ¶netin veya sahiplik talep edin</p>
 
         {loading ? (
           <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-white/30" /></div>
         ) : myBusinesses.length > 0 ? (
           <div className="mb-8">
-            <div className="text-xs font-bold text-white/40 uppercase tracking-wider mb-3">İşletmelerim</div>
+            <div className="text-xs font-bold text-white/40 uppercase tracking-wider mb-3">Ä°ÅŸletmelerim</div>
             {myBusinesses.map(b => {
               const cover = getCover(b)
               const rating = normalizeRating(b.averageRating ?? 0)
@@ -983,7 +983,7 @@ export default function SahipPaneliPage() {
                       b.claimStatus === 'CLAIMED' ? 'bg-emerald-500/15 text-emerald-400' :
                       b.claimStatus === 'PENDING' ? 'bg-amber-500/15 text-amber-400' : 'bg-white/[0.05] text-white/30'
                     )}>
-                      {b.claimStatus === 'CLAIMED' ? 'Doğrulandı' : b.claimStatus === 'PENDING' ? 'Bekliyor' : 'Taslak'}
+                      {b.claimStatus === 'CLAIMED' ? 'DoÄŸrulandÄ±' : b.claimStatus === 'PENDING' ? 'Bekliyor' : 'Taslak'}
                     </span>
                     <ChevronRight size={14} className="text-white/20" />
                   </div>
@@ -997,13 +997,13 @@ export default function SahipPaneliPage() {
         <div className="bg-surface-1 border border-white/[0.07] rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <Building2 size={16} className="text-indigo-400" />
-            <span className="text-sm font-bold text-white">İşletmenizi Sahiplenin</span>
+            <span className="text-sm font-bold text-white">Ä°ÅŸletmenizi Sahiplenin</span>
           </div>
-          <p className="text-xs text-white/40 mb-4">Listede işletmenizi arayın ve sahiplik talep edin.</p>
+          <p className="text-xs text-white/40 mb-4">Listede iÅŸletmenizi arayÄ±n ve sahiplik talep edin.</p>
           <div className="flex gap-2 mb-3">
             <input value={claimQuery} onChange={e => setClaimQuery(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && searchClaim()}
-              placeholder="İşletme adı..."
+              placeholder="Ä°ÅŸletme adÄ±..."
               className="flex-1 bg-surface-2 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-white/20 outline-none focus:border-indigo-500/40" />
             <button onClick={searchClaim} disabled={claimSearching}
               className="px-4 py-2 rounded-xl bg-indigo-500 text-white text-sm font-bold hover:bg-indigo-600 transition-colors disabled:opacity-50">
@@ -1011,7 +1011,7 @@ export default function SahipPaneliPage() {
             </button>
           </div>
           {claimMsg && (
-            <div className={cn('text-xs font-medium mb-3 p-2.5 rounded-xl', claimMsg.startsWith('✓') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400')}>
+            <div className={cn('text-xs font-medium mb-3 p-2.5 rounded-xl', claimMsg.startsWith('âœ“') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400')}>
               {claimMsg}
             </div>
           )}
@@ -1031,7 +1031,7 @@ export default function SahipPaneliPage() {
                     <div className="text-sm font-bold text-white truncate">{b.name}</div>
                     <div className="flex items-center gap-1 text-xs text-white/35 mt-0.5">
                       <MapPin size={9} /><span>{b.district ? `${b.district}, ${b.city}` : b.city}</span>
-                      {b.category && <><span className="text-white/15">·</span><span>{b.category.name}</span></>}
+                      {b.category && <><span className="text-white/15">Â·</span><span>{b.category.name}</span></>}
                     </div>
                     {rating > 0 && (
                       <div className="flex items-center gap-1 mt-1">
@@ -1044,7 +1044,7 @@ export default function SahipPaneliPage() {
                   </div>
                   <div className="flex-shrink-0">
                     {b.claimStatus === 'CLAIMED' ? (
-                      <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white/[0.05] text-white/25 border border-white/[0.06]">Sahiplenilmiş</span>
+                      <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white/[0.05] text-white/25 border border-white/[0.06]">SahiplenilmiÅŸ</span>
                     ) : b.claimStatus === 'PENDING' ? (
                       <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
                         <Clock size={9} /> Bekliyor

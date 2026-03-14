@@ -1,4 +1,4 @@
-const API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '')
+﻿const API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '')
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -28,6 +28,10 @@ export interface User {
   badgeLevel?: string
   trustScore?: number
   totalReviews?: number
+  helpfulVotes?: number
+  followersCount?: number
+  followingCount?: number
+  createdAt?: string
   role?: string
 }
 

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { ThumbsUp, Heart, MessageCircle, Share2, AlertTriangle, Shield, ShieldAlert } from 'lucide-react'
 import { useState } from 'react'
@@ -52,8 +52,8 @@ function ShieldBadge({ status, reason }: { status: Review['shieldStatus']; reaso
         : 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/30'
     )}>
       <Icon size={13} />
-      <span>{isWarning ? 'Şüpheli Yorum' : 'İnceleniyor'}</span>
-      {reason && <span className="text-gray-400 dark:text-white/40 ml-1">— {reason}</span>}
+      <span>{isWarning ? 'ÅÃ¼pheli Yorum' : 'Ä°nceleniyor'}</span>
+      {reason && <span className="text-gray-400 dark:text-white/40 ml-1">â€” {reason}</span>}
     </div>
   )
 }
@@ -93,7 +93,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
         <Link href={`/kullanici/${review.userHandle?.replace('@', '') || 'kullanici'}`} className="relative flex-shrink-0">
-          <Avatar name={review.userName || 'Kullanıcı'} image={review.userImage} size={44} />
+          <Avatar name={review.userName || 'KullanÄ±cÄ±'} image={review.userImage} size={44} />
           {review.userIsMuhtar && (
             <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center text-[9px] font-black text-black border-2 border-white dark:border-surface-1">
               M
@@ -114,7 +114,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full
                 bg-amber-50 text-amber-700 border border-amber-200
                 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30">
-                {review.userMuhtarNeighborhood} Muhtarı
+                {review.userMuhtarNeighborhood} MuhtarÄ±
               </span>
             )}
 
@@ -129,7 +129,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
 
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
             <span className="text-xs text-gray-400 dark:text-white/40">{review.userHandle}</span>
-            <span className="text-gray-200 dark:text-white/20">·</span>
+            <span className="text-gray-200 dark:text-white/20">Â·</span>
             <Link
               href={`/isletme/${review.businessSlug}`}
               className="text-xs text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors font-medium truncate"
@@ -152,7 +152,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
               dark:bg-red-500/10 dark:border-red-500/20">
               <AlertTriangle size={13} className="text-red-500 dark:text-red-400 mt-0.5 flex-shrink-0" />
               <div>
-                <span className="text-[11px] font-bold text-red-600 dark:text-red-400">İroni Tespit Edildi</span>
+                <span className="text-[11px] font-bold text-red-600 dark:text-red-400">Ä°roni Tespit Edildi</span>
                 {review.ironyExplanation && (
                   <p className="text-[11px] text-gray-500 dark:text-white/50 mt-0.5">{review.ironyExplanation}</p>
                 )}
@@ -174,9 +174,9 @@ export function ReviewCard({ review }: ReviewCardProps) {
           )}
 
           {/* Photos */}
-          {review.photos?.length > 0 && (
-            <div className="grid gap-2 mb-3" style={{ gridTemplateColumns: `repeat(${Math.min(review.photos.length, 3)}, 1fr)` }}>
-              {review.photos.map((photo, i) => (
+          {(review.photos?.length ?? 0) > 0 && (
+            <div className="grid gap-2 mb-3" style={{ gridTemplateColumns: `repeat(${Math.min((review.photos?.length ?? 0), 3)}, 1fr)` }}>
+              {(review.photos ?? []).map((photo, i) => (
                 <img key={i} src={photo} alt="" className="rounded-xl object-cover w-full h-28"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
               ))}
@@ -187,7 +187,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
           <div className="flex items-center gap-1 mb-3">
             {Array.from({ length: 5 }).map((_, i) => (
               <span key={i} className={i < review.rating ? 'text-amber-400' : 'text-gray-200 dark:text-white/15'} style={{ fontSize: 13 }}>
-                ★
+                â˜…
               </span>
             ))}
             <span className="text-xs text-gray-400 dark:text-white/40 ml-1">{review.rating}/5</span>
@@ -225,7 +225,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
                   <span className="w-4 h-4 rounded-full bg-pink-400/30 animate-ping-once" />
                 </span>
               )}
-              <span>Teşekkür</span>
+              <span>TeÅŸekkÃ¼r</span>
             </button>
 
             <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium
@@ -233,7 +233,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
               hover:bg-gray-50 dark:hover:bg-white/5
               hover:text-gray-600 dark:hover:text-white/70 transition-all">
               <MessageCircle size={13} />
-              <span>Yanıtla</span>
+              <span>YanÄ±tla</span>
             </button>
 
             <button className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium
@@ -246,7 +246,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
         </>
       ) : (
         <div className="text-center py-6 text-gray-400 dark:text-white/30 text-sm italic">
-          Bu içerik şüpheli aktivite nedeniyle inceleniyor
+          Bu iÃ§erik ÅŸÃ¼pheli aktivite nedeniyle inceleniyor
         </div>
       )}
     </article>

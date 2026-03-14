@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -21,18 +21,18 @@ interface BusinessProfileClientProps {
 const RESPONSE_TEMPLATES = [
   {
     id: 't1', tone: 'professional', Icon: Briefcase, label: 'Profesyonel',
-    preview: 'Değerli müşterimiz, geri bildiriminiz için teşekkür ederiz...',
-    full: 'Değerli müşterimiz, geri bildiriminiz için teşekkür ederiz. Yaşadığınız deneyimi ciddiyetle değerlendiriyoruz. Kalite standartlarımızı korumak adına gerekli önlemleri alacağımızı bildirmek isteriz.',
+    preview: 'DeÄŸerli mÃ¼ÅŸterimiz, geri bildiriminiz iÃ§in teÅŸekkÃ¼r ederiz...',
+    full: 'DeÄŸerli mÃ¼ÅŸterimiz, geri bildiriminiz iÃ§in teÅŸekkÃ¼r ederiz. YaÅŸadÄ±ÄŸÄ±nÄ±z deneyimi ciddiyetle deÄŸerlendiriyoruz. Kalite standartlarÄ±mÄ±zÄ± korumak adÄ±na gerekli Ã¶nlemleri alacaÄŸÄ±mÄ±zÄ± bildirmek isteriz.',
   },
   {
     id: 't2', tone: 'friendly', Icon: Smile, label: 'Samimi',
-    preview: 'Merhaba! Öncelikle bizi tercih ettiğiniz için teşekkürler...',
-    full: 'Merhaba! Öncelikle bizi tercih ettiğiniz için teşekkürler 🙏 Yorumunuzu okuduk ve çok değerli bulduk. Bir dahaki ziyaretinizde sizi ağırlamaktan mutluluk duyacağız!',
+    preview: 'Merhaba! Ã–ncelikle bizi tercih ettiÄŸiniz iÃ§in teÅŸekkÃ¼rler...',
+    full: 'Merhaba! Ã–ncelikle bizi tercih ettiÄŸiniz iÃ§in teÅŸekkÃ¼rler ğŸ™ Yorumunuzu okuduk ve Ã§ok deÄŸerli bulduk. Bir dahaki ziyaretinizde sizi aÄŸÄ±rlamaktan mutluluk duyacaÄŸÄ±z!',
   },
   {
-    id: 't3', tone: 'apologetic', Icon: Frown, label: 'Özür Dileyen',
-    preview: 'Öncelikle yaşadığınız olumsuz deneyim için özür dileriz...',
-    full: 'Öncelikle yaşadığınız olumsuz deneyim için içten özür dileriz. Bu asla kabul edilemez ve standartlarımızın altında bir durum. Hatamızı telafi etmek için sizi özel olarak arayacağız.',
+    id: 't3', tone: 'apologetic', Icon: Frown, label: 'Ã–zÃ¼r Dileyen',
+    preview: 'Ã–ncelikle yaÅŸadÄ±ÄŸÄ±nÄ±z olumsuz deneyim iÃ§in Ã¶zÃ¼r dileriz...',
+    full: 'Ã–ncelikle yaÅŸadÄ±ÄŸÄ±nÄ±z olumsuz deneyim iÃ§in iÃ§ten Ã¶zÃ¼r dileriz. Bu asla kabul edilemez ve standartlarÄ±mÄ±zÄ±n altÄ±nda bir durum. HatamÄ±zÄ± telafi etmek iÃ§in sizi Ã¶zel olarak arayacaÄŸÄ±z.',
   },
 ]
 
@@ -41,19 +41,19 @@ function AISummaryCard({ business }: { business: Business }) {
     <div className="rounded-2xl border border-white/[0.07] bg-surface-2 p-4">
       <div className="flex items-center gap-2 mb-3">
         <Brain size={15} className="text-indigo-400" />
-        <span className="text-sm font-bold text-white">AI Özeti</span>
+        <span className="text-sm font-bold text-white">AI Ã–zeti</span>
         <span className="text-[10px] text-white/30 ml-1">Perplexity-style</span>
       </div>
 
       <p className="text-xs text-white/50 mb-3">
-        {business.reviewCount} yorumun analizine göre:
+        {business.reviewCount} yorumun analizine gÃ¶re:
       </p>
 
       <ul className="space-y-2.5 mb-4">
         {[
-          { label: 'Atmosfer', value: business.aiSummary.atmosphere },
-          { label: 'Fiyat', value: business.aiSummary.price },
-          { label: 'En İyi Zaman', value: business.aiSummary.bestTime },
+          { label: 'Atmosfer', value: (business.aiSummary ?? { atmosphere: "", price: "", bestTime: "", highlights: [] }).atmosphere },
+          { label: 'Fiyat', value: (business.aiSummary ?? { atmosphere: "", price: "", bestTime: "", highlights: [] }).price },
+          { label: 'En Ä°yi Zaman', value: (business.aiSummary ?? { atmosphere: "", price: "", bestTime: "", highlights: [] }).bestTime },
         ].map((item) => (
           <li key={item.label} className="flex gap-2 text-sm">
             <span className="text-indigo-400 font-semibold flex-shrink-0">{item.label}:</span>
@@ -63,11 +63,11 @@ function AISummaryCard({ business }: { business: Business }) {
       </ul>
 
       <div className="border-t border-white/[0.06] pt-3">
-        <div className="text-xs font-semibold text-white/40 mb-2">Öne Çıkanlar</div>
+        <div className="text-xs font-semibold text-white/40 mb-2">Ã–ne Ã‡Ä±kanlar</div>
         <div className="flex flex-wrap gap-1.5">
-          {business.aiSummary.highlights.map((h) => (
+          {(business.aiSummary?.highlights ?? []).map((h) => (
             <span key={h} className="text-xs px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
-              ✦ {h}
+              âœ¦ {h}
             </span>
           ))}
         </div>
@@ -75,10 +75,10 @@ function AISummaryCard({ business }: { business: Business }) {
 
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/[0.06]">
         <button className="text-xs text-white/30 hover:text-white/60 flex items-center gap-1 transition-colors">
-          <TrendingUp size={12} /> Faydalı (89)
+          <TrendingUp size={12} /> FaydalÄ± (89)
         </button>
         <button className="text-xs text-white/30 hover:text-white/60 flex items-center gap-1 transition-colors">
-          Yeniden Özetle ↺
+          Yeniden Ã–zetle â†º
         </button>
       </div>
     </div>
@@ -97,7 +97,7 @@ function AIResponsePanel() {
       >
         <div className="flex items-center gap-2">
           <MessageSquare size={15} className="text-purple-400" />
-          <span className="text-sm font-bold text-white">AI Yanıt Asistanı</span>
+          <span className="text-sm font-bold text-white">AI YanÄ±t AsistanÄ±</span>
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30">Ollama</span>
         </div>
         <ChevronRight size={14} className={cn('text-white/30 transition-transform', open && 'rotate-90')} />
@@ -128,7 +128,7 @@ function AIResponsePanel() {
                   <p className="text-sm text-white/80 leading-relaxed mb-3">{t.full}</p>
                   <button className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-purple-500/20 text-purple-300 text-sm font-semibold border border-purple-500/30 hover:bg-purple-500/30 transition-all">
                     <Send size={13} />
-                    Bu Yanıtı Kullan
+                    Bu YanÄ±tÄ± Kullan
                   </button>
                 </div>
               )}
@@ -149,15 +149,15 @@ function SectorMetrics({ business }: { business: Business }) {
       { label: 'Fiyat/Perf.', value: 85, color: '#F472B6' },
     ],
     'Oto Servis': [
-      { label: 'Fiyat Şeffaflığı', value: 95, color: '#818CF8' },
-      { label: 'Teşhis Doğruluğu', value: 94, color: '#34D399' },
-      { label: 'Parça Orijinalliği', value: 98, color: '#FBBF24' },
-      { label: 'Garanti Desteği', value: 92, color: '#F472B6' },
+      { label: 'Fiyat ÅeffaflÄ±ÄŸÄ±', value: 95, color: '#818CF8' },
+      { label: 'TeÅŸhis DoÄŸruluÄŸu', value: 94, color: '#34D399' },
+      { label: 'ParÃ§a OrijinalliÄŸi', value: 98, color: '#FBBF24' },
+      { label: 'Garanti DesteÄŸi', value: 92, color: '#F472B6' },
     ],
-    'Eğitim': [
-      { label: 'Öğretmen İlgisi', value: 94, color: '#818CF8' },
-      { label: 'Veli İletişimi', value: 89, color: '#34D399' },
-      { label: 'İlerleme Takibi', value: 87, color: '#FBBF24' },
+    'EÄŸitim': [
+      { label: 'Ã–ÄŸretmen Ä°lgisi', value: 94, color: '#818CF8' },
+      { label: 'Veli Ä°letiÅŸimi', value: 89, color: '#34D399' },
+      { label: 'Ä°lerleme Takibi', value: 87, color: '#FBBF24' },
       { label: 'Fiyat/Perf.', value: 82, color: '#F472B6' },
     ],
   }
@@ -169,7 +169,7 @@ function SectorMetrics({ business }: { business: Business }) {
     <div className="rounded-2xl border border-white/[0.07] bg-surface-2 p-4">
       <div className="flex items-center gap-2 mb-4">
         <Wrench size={15} className="text-amber-400" />
-        <span className="text-sm font-bold text-white">Sektörel Değerlendirme</span>
+        <span className="text-sm font-bold text-white">SektÃ¶rel DeÄŸerlendirme</span>
       </div>
       <div className="grid grid-cols-2 gap-3">
         {metrics.map((m) => (
@@ -234,7 +234,7 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
               ? 'bg-emerald-500/30 border border-emerald-500/50 text-emerald-300'
               : 'bg-red-500/30 border border-red-500/50 text-red-300'
           )}>
-            {business.isOpen ? '● Açık' : '● Kapalı'} · {business.hours}
+            {business.isOpen ? 'â— AÃ§Ä±k' : 'â— KapalÄ±'} Â· {business.hours}
           </span>
         </div>
       </div>
@@ -250,7 +250,7 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
             <div className="flex items-center gap-1.5 text-xs text-white/50">
               <MapPin size={11} />
               <span>{business.district}, {business.city}</span>
-              <span className="text-white/20">·</span>
+              <span className="text-white/20">Â·</span>
               <span>{business.priceRange}</span>
             </div>
           </div>
@@ -262,12 +262,12 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
           <TrustStack stack={business.trustStack} />
         </div>
 
-        {/* Gönül Alma */}
+        {/* GÃ¶nÃ¼l Alma */}
         {business.hasGonulAlma && (
           <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl bg-pink-500/10 border border-pink-500/20">
             <Heart size={13} className="text-pink-400 fill-pink-400" />
-            <span className="text-xs font-bold text-pink-400 uppercase tracking-wider">Gönül Alma Rozeti</span>
-            <span className="text-xs text-white/40 ml-1">Müşteri memnuniyetine özel çaba gösterdi</span>
+            <span className="text-xs font-bold text-pink-400 uppercase tracking-wider">GÃ¶nÃ¼l Alma Rozeti</span>
+            <span className="text-xs text-white/40 ml-1">MÃ¼ÅŸteri memnuniyetine Ã¶zel Ã§aba gÃ¶sterdi</span>
           </div>
         )}
 
@@ -285,7 +285,7 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
           {[
             { label: 'Yorum', value: business.reviewCount.toLocaleString('tr-TR') },
             { label: 'TrustScore', value: business.trustScore.score, color },
-            { label: 'Eşleşme', value: business.semanticMatch ? `%${business.semanticMatch}` : '—' },
+            { label: 'EÅŸleÅŸme', value: business.semanticMatch ? `%${business.semanticMatch}` : 'â€”' },
           ].map((stat) => (
             <div key={stat.label} className="p-3 rounded-xl bg-surface-2 border border-white/[0.06] text-center">
               <div className="text-lg font-black text-white" style={stat.color ? { color: stat.color } : {}}>
@@ -299,9 +299,9 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
         {/* Tabs */}
         <div className="flex gap-1 bg-surface-2 p-1 rounded-xl border border-white/[0.06] mb-4">
           {[
-            { key: 'ozet', label: 'AI Özet' },
+            { key: 'ozet', label: 'AI Ã–zet' },
             { key: 'yorumlar', label: `Yorumlar (${reviews.length})` },
-            { key: 'fotograflar', label: 'Fotoğraflar' },
+            { key: 'fotograflar', label: 'FotoÄŸraflar' },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -326,7 +326,7 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
 
             {/* Contact */}
             <div className="rounded-2xl border border-white/[0.07] bg-surface-2 p-4">
-              <h3 className="text-sm font-bold text-white mb-3">İletişim & Konum</h3>
+              <h3 className="text-sm font-bold text-white mb-3">Ä°letiÅŸim & Konum</h3>
               <div className="space-y-3">
                 {[
                   { Icon: MapPin, text: business.address },
@@ -351,7 +351,7 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
             {reviews.length === 0 ? (
               <div className="text-center py-12 text-white/30">
                 <Star size={32} className="mx-auto mb-3 opacity-30" />
-                <p className="text-sm">Henüz yorum yok</p>
+                <p className="text-sm">HenÃ¼z yorum yok</p>
               </div>
             ) : (
               reviews.map((r) => <ReviewCard key={r.id} review={r} />)
@@ -373,7 +373,7 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
             </div>
             {reviews.flatMap((r) => r.photos).length === 0 && (
               <div className="col-span-2 text-center py-12 text-white/30 text-sm">
-                Kullanıcı fotoğrafı henüz yok
+                KullanÄ±cÄ± fotoÄŸrafÄ± henÃ¼z yok
               </div>
             )}
           </div>

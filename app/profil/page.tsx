@@ -5,7 +5,7 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import {
   Settings, TrendingUp, Camera, Edit3, ChevronRight,
   Shield, Bookmark, MessageSquare, Bell, LogOut,
-  MapPin, Award, User, Loader2, Trash2, Star, Pencil, Check, X, Building2
+  MapPin, Award, User as UserIcon, Loader2, Trash2, Star, Pencil, Check, X, Building2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ReviewCard } from '@/components/feed/ReviewCard'
@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 
+import type { User } from '@/types'
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '')
 const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
 
@@ -212,7 +213,7 @@ export default function ProfilPage() {
     VERIFIED:      { label: 'Doğrulanmış',    color: 'text-primary' },
   } as any)[user.trustLevel ?? ""] || { label: user.trustLevel, color: 'text-white/50' }
 
-  const joinDate = new Date(user.createdAt ?? Date.now()).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })
+  const joinDate = new Date((user as any).createdAt ?? Date.now()).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })
 
   return (
     <AppLayout>
@@ -341,10 +342,10 @@ export default function ProfilPage() {
           </div>
 
           <div className="flex gap-2 mb-5">
-            <StatCard label="Yorum"   value={user.totalReviews}   color="primary" />
-            <StatCard label="Faydali" value={user.helpfulVotes}   color="emerald" />
-            <StatCard label="Takipci" value={user.followersCount} />
-            <StatCard label="Takip"   value={user.followingCount} />
+            <StatCard label="Yorum"   value={(user as any).totalReviews ?? 0}   color="primary" />
+            <StatCard label="Faydali" value={(user as any).helpfulVotes ?? 0}   color="emerald" />
+            <StatCard label="Takipci" value={(user as any).followersCount ?? 0} />
+            <StatCard label="Takip"   value={(user as any).followingCount ?? 0} />
           </div>
 
           <div className="flex gap-1 bg-surface-2 p-1 rounded-xl border border-white/[0.06] mb-4">
@@ -466,7 +467,7 @@ export default function ProfilPage() {
                 </div>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-20 h-20 rounded-full flex items-center justify-center"
-                    style={{ background: `conic-gradient(#22C55E ${Math.min(user.trustScore / 5, 100) * 3.6}deg, #1F1F24 ${Math.min(user.trustScore / 5, 100) * 3.6}deg)` }}>
+                    style={{ background: `conic-gradient(#22C55E ${Math.min((user.trustScore ?? 0) / 5, 100) * 3.6}deg, #1F1F24 ${Math.min((user.trustScore ?? 0) / 5, 100) * 3.6}deg)` }}>
                     <div className="w-14 h-14 rounded-full bg-surface-2 flex items-center justify-center">
                       <span className="text-lg font-black text-emerald-400">{user.trustScore}</span>
                     </div>
@@ -476,9 +477,9 @@ export default function ProfilPage() {
                     <div className="text-xs text-white/40">Seviye: {user.trustLevel}</div>
                   </div>
                 </div>
-                <ActivityBar label="Yorum Sayisi" value={Math.min(user.totalReviews, 100)} color="#818CF8" />
-                <ActivityBar label="Faydali Oy Orani" value={user.totalReviews > 0 ? Math.round((user.helpfulVotes / user.totalReviews) * 100) : 0} color="#34D399" />
-                <ActivityBar label="TrustScore" value={Math.round((user.trustScore / 500) * 100)} color="#F59E0B" />
+                <ActivityBar label="Yorum Sayisi" value={Math.min((user.totalReviews ?? 0), 100)} color="#818CF8" />
+                <ActivityBar label="Faydali Oy Orani" value={(user.totalReviews ?? 0) > 0 ? Math.round(((user.helpfulVotes ?? 0) / (user.totalReviews ?? 0)) * 100) : 0} color="#34D399" />
+                <ActivityBar label="TrustScore" value={Math.round(((user.trustScore ?? 0) / 500) * 100)} color="#F59E0B" />
               </div>
               <div className="rounded-2xl border border-white/[0.07] bg-surface-2 p-4">
                 <div className="flex items-center gap-2 mb-4">
@@ -489,8 +490,8 @@ export default function ProfilPage() {
                   {[
                     { label: 'Dogrulanmis Yorum', value: (user as any).verifiedReviews ?? 0, color: 'text-primary' },
                     { label: 'Profil Goruntulenme', value: (user as any).profileViews ?? 0, color: 'text-primary' },
-                    { label: 'Faydali Oy', value: user.helpfulVotes, color: 'text-emerald-400' },
-                    { label: 'Faydali Oran', value: user.totalReviews > 0 ? `%${Math.round((user.helpfulVotes / user.totalReviews) * 100)}` : '%0', color: 'text-amber-400' },
+                    { label: 'Faydali Oy', value: (user.helpfulVotes ?? 0), color: 'text-emerald-400' },
+                    { label: 'Faydali Oran', value: (user.totalReviews ?? 0) > 0 ? `%${Math.round(((user.helpfulVotes ?? 0) / (user.totalReviews ?? 1)) * 100)}` : '%0', color: 'text-amber-400' },
                   ].map(({ label, value, color }) => (
                     <div key={label} className="bg-white/[0.03] rounded-xl p-3">
                       <div className="text-xs text-white/40 mb-1">{label}</div>
@@ -504,7 +505,7 @@ export default function ProfilPage() {
 
           {activeTab === 3 && (
             <div className="space-y-2">
-              <SettingsItem icon={User}     label="Hesap Bilgileri"   sub={user.email}                       href="/profil/hesap" />
+              <SettingsItem icon={UserIcon}     label="Hesap Bilgileri"   sub={user.email}                       href="/profil/hesap" />
               <SettingsItem icon={Bell}     label="Bildirimler"       sub="Push, e-posta bildirimleri"        href="/profil/bildirimler" />
               <SettingsItem icon={Shield}   label="Gizlilik"          sub="Profil gorunurlugu, veri"          href="/profil/gizlilik" />
               <SettingsItem icon={Bookmark} label="Kaydedilen Yerler" sub="Kaydettiginiz isletmeler"          href="/profil/kaydedilenler" />
