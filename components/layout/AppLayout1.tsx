@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Search, PlusCircle, Bell, User, Award, LogOut, MapPin, Sparkles, Sun, Moon, Building2, Star } from 'lucide-react'
+import { Home, Search, PlusCircle, Bell, User, Award, LogOut, MapPin, Sparkles, Sun, Moon, Building2, Star, ShoppingBag, Gift, Zap , ArrowLeftRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/AuthContext'
 import { useEffect, useState, useRef } from 'react'
@@ -116,7 +116,44 @@ function RightPanel() {
 
   return (
     <>
-      {/* Top muhtarlar/kullanıcılar */}
+      {/* 1. Öne Çıkan İşletmeler */}
+      {featuredBiz && (
+        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles size={14} className="text-indigo-400" />
+            <span className="font-bold text-sm text-white">Öne Çıkan İşletmeler</span>
+          </div>
+          <Link href={`/isletme/${featuredBiz.slug}`}>
+            <div className="group cursor-pointer">
+              {(featuredBiz.attributes?.coverPhoto || featuredBiz.attributes?.photos?.[0]) && (
+                <div className="relative rounded-xl overflow-hidden mb-3 h-32">
+                  <img
+                    src={featuredBiz.attributes.coverPhoto || featuredBiz.attributes.photos[0]}
+                    alt={featuredBiz.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                </div>
+              )}
+              <div className="font-bold text-sm text-white mb-1 group-hover:text-indigo-300 transition-colors">
+                {featuredBiz.name}
+              </div>
+              <div className="flex items-center gap-1 text-xs text-white/40">
+                <MapPin size={10} />
+                <span>{featuredBiz.district || featuredBiz.city}</span>
+                {featuredBiz.category && (
+                  <>
+                    <span className="text-white/20">·</span>
+                    <span>{featuredBiz.category.name}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </Link>
+        </div>
+      )}
+
+      {/* 2. Tecrübe Ustaları */}
       <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -173,47 +210,76 @@ function RightPanel() {
         )}
       </div>
 
-      {/* Öne çıkan işletme */}
-      {featuredBiz && (
-        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles size={14} className="text-indigo-400" />
-            <span className="font-bold text-sm text-white">Öne Çıkan İşletmeler</span>
+      {/* 3. Tecrübe Pazarı */}
+      <div className="rounded-2xl border border-indigo-500/20 bg-gradient-to-br from-indigo-950/40 to-purple-950/30 p-4 relative overflow-hidden">
+        {/* Arka plan dekorasyon */}
+        <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-16 h-16 bg-purple-500/10 rounded-full blur-xl pointer-events-none" />
+
+        <div className="relative">
+          <div className="flex items-center gap-2 mb-1">
+            <ShoppingBag size={14} className="text-indigo-400" />
+            <span className="font-bold text-sm text-white">Tecrübe Pazarı</span>
+            <span className="ml-auto text-[9px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded-full border border-indigo-500/20 font-medium">Yakında</span>
           </div>
-          <Link href={`/isletme/${featuredBiz.slug}`}>
-            <div className="group cursor-pointer">
-              {(featuredBiz.attributes?.coverPhoto || featuredBiz.attributes?.photos?.[0]) && (
-                <div className="relative rounded-xl overflow-hidden mb-3 h-32">
-                  <img
-                    src={featuredBiz.attributes.coverPhoto || featuredBiz.attributes.photos[0]}
-                    alt={featuredBiz.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                </div>
-              )}
-              <div className="font-bold text-sm text-white mb-1 group-hover:text-indigo-300 transition-colors">
-                {featuredBiz.name}
+          <p className="text-[11px] text-white/40 mb-4">Yorumlarınla puan kazan, ödüllere harca</p>
+
+          {/* Özellik önizleme */}
+          <div className="space-y-2.5 mb-4">
+            <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.04]">
+              <div className="w-7 h-7 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                <Zap size={12} className="text-amber-400" />
               </div>
-              <div className="flex items-center gap-1 text-xs text-white/40">
-                <MapPin size={10} />
-                <span>{featuredBiz.district || featuredBiz.city}</span>
-                {featuredBiz.category && (
-                  <>
-                    <span className="text-white/20">·</span>
-                    <span>{featuredBiz.category.name}</span>
-                  </>
-                )}
+              <div>
+                <div className="text-xs font-medium text-white">Yorum Yaz → Puan Kazan</div>
+                <div className="text-[10px] text-white/30">Her detaylı yorum +20 TP</div>
               </div>
             </div>
+            <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.04]">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                <Gift size={12} className="text-emerald-400" />
+              </div>
+              <div>
+                <div className="text-xs font-medium text-white">Puanını Harca</div>
+                <div className="text-[10px] text-white/30">Rozetler, özel ayrıcalıklar</div>
+              </div>
+            </div>
+          </div>
+
+          <Link href="/tecrube-pazari">
+            <button className="w-full py-2 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/30 transition-all">
+              Pazarı Keşfet →
+            </button>
           </Link>
         </div>
-      )}
+      </div>
 
+      {/* 4. İşletme Karşılaştır */}
+      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
+        <div className="flex items-center gap-2 mb-1">
+          <ArrowLeftRight size={14} className="text-emerald-400" />
+          <span className="font-bold text-sm text-white">İşletme Karşılaştır</span>
+        </div>
+        <p className="text-[11px] text-white/40 mb-3">İki işletmeyi yan yana karşılaştır, doğru kararı ver</p>
+        <div className="flex gap-2 mb-3">
+          <div className="flex-1 h-8 rounded-lg border border-indigo-500/30 bg-indigo-500/5 flex items-center justify-center">
+            <span className="text-[10px] text-indigo-400/60">1. İşletme</span>
+          </div>
+          <div className="text-[10px] text-white/20 flex items-center font-bold">VS</div>
+          <div className="flex-1 h-8 rounded-lg border border-amber-500/30 bg-amber-500/5 flex items-center justify-center">
+            <span className="text-[10px] text-amber-400/60">2. İşletme</span>
+          </div>
+        </div>
+        <Link href="/karsilastir/yeni">
+          <button className="w-full py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/25 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/25 transition-all flex items-center justify-center gap-1.5">
+            <ArrowLeftRight size={12} />
+            Karşılaştırmaya Başla →
+          </button>
+        </Link>
+      </div>
 
       <div className="px-1">
         <p className="text-[10px] text-white/20 leading-relaxed">Tecrübelerim Beta · <a href="/sozlesme/privacy_policy" className="hover:text-white/40 transition-colors">Gizlilik</a> · <a href="/sozlesme/terms_of_service" className="hover:text-white/40 transition-colors">Kullanım Koşulları</a> · <a href="/sozlesme/help" className="hover:text-white/40 transition-colors">Yardım</a></p>
-
         <p className="text-[10px] text-white/15 mt-1">© 2026 Tecrübelerim</p>
       </div>
     </>

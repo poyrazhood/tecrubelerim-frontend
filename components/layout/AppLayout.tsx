@@ -2,19 +2,19 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Search, PlusCircle, Bell, User, Award, LogOut, MapPin, Sparkles, Sun, Moon, Building2, Star, ShoppingBag, Gift, Zap } from 'lucide-react'
+import { Home, Search, PlusCircle, Bell, User, Award, LogOut, MapPin, Sparkles, Sun, Moon, Building2, Star, ShoppingBag, Gift, Zap , ArrowLeftRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/AuthContext'
 import { useEffect, useState, useRef } from 'react'
 
 const NAV_ITEMS = [
-  { href: '/',            icon: Home,       label: 'Ana Sayfa' },
-  { href: '/kesfet',      icon: Search,     label: 'Keşfet' },
-  { href: '/yorum-yaz',   icon: PlusCircle, label: 'Yorum Yaz' },
-  { href: '/bildirimler', icon: Bell,       label: 'Bildirimler' },
-  { href: '/profil',      icon: User,       label: 'Profil' },
-  { href: '/muhtarlar',   icon: Award,      label: 'Muhtarlar' },
-  { href: '/isletme-ekle', icon: Building2,   label: 'İşletme Ekle' },
+  { href: '/',                icon: Home,           label: 'Ana Sayfa' },
+  { href: '/kesfet',          icon: Search,         label: 'Keşfet' },
+  { href: '/yorum-yaz',       icon: PlusCircle,     label: 'Yorum Yaz' },
+  { href: '/karsilastir/ara', icon: ArrowLeftRight, label: 'Karşılaştır' },
+  { href: '/profil',          icon: User,           label: 'Profil' },
+  { href: '/muhtarlar',       icon: Award,          label: 'Muhtarlar' },
+  { href: '/isletme-ekle',    icon: Building2,      label: 'İşletme Ekle' },
 ]
 
 const RANK_COLORS: Record<number, string> = {
@@ -254,6 +254,7 @@ function RightPanel() {
         </div>
       </div>
 
+
       <div className="px-1">
         <p className="text-[10px] text-white/20 leading-relaxed">Tecrübelerim Beta · <a href="/sozlesme/privacy_policy" className="hover:text-white/40 transition-colors">Gizlilik</a> · <a href="/sozlesme/terms_of_service" className="hover:text-white/40 transition-colors">Kullanım Koşulları</a> · <a href="/sozlesme/help" className="hover:text-white/40 transition-colors">Yardım</a></p>
         <p className="text-[10px] text-white/15 mt-1">© 2026 Tecrübelerim</p>
@@ -391,6 +392,19 @@ export function AppLayout({ children, hideBottomNav }: {
             <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 bg-surface/90 backdrop-blur-xl border-t border-white/[0.06] px-2 py-2">
               <div className="flex items-center justify-around">
                 {NAV_ITEMS.slice(0, 5).map(({ href, icon: Icon, label }) => {
+                  // Karşılaştır aktif durumu
+                  if (href === '/karsilastir/ara') {
+                    const active = pathname?.startsWith('/karsilastir')
+                    return (
+                      <Link key="karsilastir" href="/karsilastir/ara" className={cn(
+                        'flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all',
+                        active ? 'text-emerald-400' : 'text-white/30 hover:text-white/60'
+                      )}>
+                        <ArrowLeftRight size={20} />
+                        <span className="text-[10px] font-medium">Karşılaştır</span>
+                      </Link>
+                    )
+                  }
                   // Kesfet slotunu isletmem ile degistir
                   if (href === '/kesfet' && hasBusiness) {
                     const active = pathname === '/sahip-paneli'
@@ -466,6 +480,18 @@ export function AppLayout({ children, hideBottomNav }: {
               )
             })}
           </nav>
+
+          {/* Karşılaştır butonu */}
+          <Link href="/karsilastir/ara"
+            className={cn(
+              'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-semibold text-sm',
+              pathname?.startsWith('/karsilastir')
+                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
+                : 'text-white/50 hover:text-white hover:bg-white/[0.05]'
+            )}>
+            <ArrowLeftRight size={18} />
+            Karşılaştır
+          </Link>
 
           {/* Isletmem butonu */}
           {hasBusiness && (

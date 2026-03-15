@@ -1,17 +1,18 @@
 ﻿'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { useAuth } from '@/lib/AuthContext'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { SearchBar } from '@/components/search/SearchBar'
 import { BusinessCard } from '@/components/business/BusinessCard'
 import { MuhtarLeaderboard } from '@/components/feed/MuhtarLeaderboard'
 import { SkeletonReviewCard, SkeletonBusinessCard } from '@/components/ui/SkeletonCard'
-import { MapPin, Sparkles, TrendingUp, Star, ThumbsUp, Share2, ExternalLink, ShoppingBag, Zap, Gift } from 'lucide-react'
+import { MapPin, Sparkles, TrendingUp, Star, ThumbsUp, Share2, ExternalLink, ShoppingBag, Zap, Gift, Brain, Navigation, Shield, ChevronRight, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import type { Business, MuhtarUser, TrustScore, TrustStack } from '@/types'
 
-const TABS = ['Tümü', 'Yakınımda', 'Muhtarlar', 'Kategoriler']
+const TABS = ['Tümü', '✨ Senin İçin', 'Muhtarlar', 'Kategoriler']
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
 // ─── Mapper'lar ────────────────────────────────────────────────────────────────
@@ -202,7 +203,14 @@ function RevealSection({ children, delay = 0 }: { children: React.ReactNode; del
 // ─── Ana bileşen ───────────────────────────────────────────────────────────────
 
 export default function HomePage() {
+  const { user } = useAuth()
   const [activeTab, setActiveTab]     = useState(0)
+  const [recommendations, setRecommendations] = useState<any[]>([])
+  const [recsLoading, setRecsLoading]   = useState(false)
+  const [recsLoaded, setRecsLoaded]     = useState(false)
+  const [recsMeta, setRecsMeta]         = useState<any>(null)
+  const [userLat, setUserLat]           = useState<number | null>(null)
+  const [userLng, setUserLng]           = useState<number | null>(null)
   const [loading, setLoading]         = useState(true)
   const [mounted, setMounted]         = useState(false)
   const [locationName, setLocationName] = useState(typeof window !== 'undefined' && localStorage.getItem('userCity') ? localStorage.getItem('userCity')! : 'Türkiye')
@@ -217,7 +225,37 @@ export default function HomePage() {
   useEffect(() => {
     setMounted(true)
     fetchInitial()
+    // Konum al
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        setUserLat(pos.coords.latitude)
+        setUserLng(pos.coords.longitude)
+      }, () => {})
+    }
   }, [])
+
+  const fetchRecommendations = useCallback(async () => {
+    if (recsLoaded || !user) return
+    setRecsLoading(true)
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+      if (!token) return
+      const params = userLat && userLng ? `?lat=${userLat}&lng=${userLng}&limit=10` : '?limit=10'
+      const res = await fetch(`${API}/recommendations/for-me${params}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setRecommendations(data.recommendations || [])
+        setRecsMeta(data.meta || null)
+      }
+    } catch {}
+    finally { setRecsLoading(false); setRecsLoaded(true) }
+  }, [recsLoaded, user, userLat, userLng])
+
+  useEffect(() => {
+    if (activeTab === 1) fetchRecommendations()
+  }, [activeTab, fetchRecommendations])
 
   async function fetchInitial() {
     setLoading(true)
@@ -318,6 +356,122 @@ export default function HomePage() {
             </div>
             <SkeletonBusinessCard />
             {[1,2,3].map(i => <SkeletonReviewCard key={i} />)}
+          </div>
+        ) : activeTab === 1 ? (
+          /* ✨ Senin İçin Tab */
+          <div className="animate-fade-in space-y-4">
+
+            {/* Nasıl Çalışır Banner */}
+            <div className="rounded-2xl border border-indigo-500/20 bg-gradient-to-br from-indigo-950/50 to-purple-950/30 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Brain size={16} className="text-indigo-400" />
+                <span className="text-sm font-bold text-white">Yapay Zeka Nasıl Seçiyor?</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                <div className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.05] text-center">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+                    <Brain size={14} className="text-indigo-400" />
+                  </div>
+                  <div className="text-[10px] font-bold text-white">%50</div>
+                  <div className="text-[9px] text-white/40 leading-tight">Zevk Analizi</div>
+                </div>
+                <div className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.05] text-center">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                    <Navigation size={14} className="text-emerald-400" />
+                  </div>
+                  <div className="text-[10px] font-bold text-white">%30</div>
+                  <div className="text-[9px] text-white/40 leading-tight">Konum</div>
+                </div>
+                <div className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.05] text-center">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                    <Shield size={14} className="text-amber-400" />
+                  </div>
+                  <div className="text-[10px] font-bold text-white">%20</div>
+                  <div className="text-[9px] text-white/40 leading-tight">Güven Skoru</div>
+                </div>
+              </div>
+              <p className="text-[10px] text-white/30 leading-relaxed">
+                Yazdığın yorumların anlamsal içeriğini <span className="text-indigo-400">mxbai-embed-large</span> modeliyle analiz ediyoruz. 
+                Zevk profilini 1024 boyutlu vektöre dönüştürüp 56.000+ işletmeyle karşılaştırıyoruz.
+              </p>
+            </div>
+
+            {/* Öneri içeriği */}
+            {!user ? (
+              <div className="text-center py-12 rounded-2xl border border-dashed border-white/[0.08]">
+                <Brain size={36} className="mx-auto mb-3 text-white/20" />
+                <div className="text-sm font-bold text-white mb-1">Kişisel Öneriler İçin Giriş Yap</div>
+                <div className="text-xs text-white/40 mb-4">Yorumlarını analiz edip sana özel mekanlar bulalım</div>
+                <Link href="/giris" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-xs font-bold text-indigo-300 hover:bg-indigo-500/30 transition-all">
+                  Giriş Yap →
+                </Link>
+              </div>
+            ) : recsLoading ? (
+              <div className="space-y-3">
+                {[1,2,3,4,5].map(i => (
+                  <div key={i} className="h-20 rounded-2xl bg-white/[0.03] border border-white/[0.05] animate-pulse" />
+                ))}
+              </div>
+            ) : !recsMeta?.hasProfile ? (
+              <div className="text-center py-12 rounded-2xl border border-dashed border-white/[0.08]">
+                <Sparkles size={36} className="mx-auto mb-3 text-white/20" />
+                <div className="text-sm font-bold text-white mb-1">Seni Tanımamıza Yardım Et</div>
+                <div className="text-xs text-white/40 mb-4">En az 2 yorum yaz, yapay zeka zevklerini öğrensin</div>
+                <Link href="/yorum-yaz" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-xs font-bold text-indigo-300 hover:bg-indigo-500/30 transition-all">
+                  Yorum Yaz → Puan Kazan
+                </Link>
+              </div>
+            ) : recommendations.length === 0 ? (
+              <div className="text-center py-12 text-white/30 text-sm">Öneri bulunamadı</div>
+            ) : (
+              <div className="space-y-3">
+                {recsMeta && (
+                  <div className="flex items-center gap-2 px-1">
+                    <Sparkles size={12} className="text-indigo-400" />
+                    <span className="text-xs text-white/40">{recsMeta.message}</span>
+                  </div>
+                )}
+                {recommendations.map((rec: any, i: number) => (
+                  <Link key={rec.id} href={`/isletme/${rec.slug}`}>
+                    <div className="flex items-center gap-3 p-3.5 rounded-2xl border border-white/[0.07] bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/[0.12] transition-all group">
+                      {/* Sıra */}
+                      <div className="w-8 h-8 rounded-xl bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-black text-indigo-400">{i + 1}</span>
+                      </div>
+
+                      {/* Bilgi */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                          <span className="text-sm font-bold text-white truncate">{rec.name}</span>
+                          {rec.category?.icon && <span className="text-xs">{rec.category.icon}</span>}
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[10px] text-white/30">{rec.category?.name}</span>
+                          {rec.district && <span className="text-[10px] text-white/20">· {rec.district}</span>}
+                        </div>
+                        {/* Neden önerildi */}
+                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                          {rec._reasons?.details?.slice(0, 2).map((r: string) => (
+                            <span key={r} className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/15 text-indigo-400 font-medium">
+                              {r}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Skor */}
+                      <div className="flex-shrink-0 text-right">
+                        <div className="text-xs font-black text-emerald-400">{rec.averageRating?.toFixed(1)} ★</div>
+                        <div className="text-[10px] text-white/25">{rec.totalReviews} yorum</div>
+                        <div className="text-[9px] text-indigo-400/60 mt-0.5">%{rec._reasons?.semantic} uyum</div>
+                      </div>
+
+                      <ChevronRight size={14} className="text-white/20 group-hover:text-white/40 transition-colors flex-shrink-0" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div className="animate-fade-in">
