@@ -10,7 +10,7 @@ import {
   Clock, ChevronRight, X, ZoomIn, Camera, Info,
   MessageSquare, CheckCircle, AlertCircle, ChevronDown, Building2
 } from 'lucide-react'
-import { cn , getTrustColor } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import YetkinlikRadari from '@/components/business/YetkinlikRadari'
 import Link from 'next/link'
 
@@ -334,25 +334,22 @@ export default function BusinessPage() {
   )
 
   const attrs = business.attributes ?? {}
-  // Bug?n?n ?al??ma saati
-  const todayNames = ['Pazar','Pazartesi','Sal?','?ar?amba','Per?embe','Cuma','Cumartesi']
-  const todayName = todayNames[new Date().getDay()]
-  const todayHours = (business.openingHours ?? []).find((h: any) =>
-    h.day?.toLowerCase() === todayName.toLowerCase()
-  )
-  const isOpenNow = (() => {
-    if (!todayHours?.openTime || !todayHours?.closeTime) return null
-    const now = new Date()
-    const [oh, om] = todayHours.openTime.split(':').map(Number)
-    const [ch, cm] = todayHours.closeTime.split(':').map(Number)
-    const nowMin = now.getHours() * 60 + now.getMinutes()
-    const openMin = oh * 60 + om
-    const closeMin = ch === 0 && cm === 0 ? 24 * 60 : ch * 60 + cm
-    return nowMin >= openMin && nowMin < closeMin
-  })()
   const photos: string[] = attrs.photos ?? []
   const coverPhoto: string = attrs.coverPhoto ?? photos[0] ?? `https://picsum.photos/seed/${slug}/800/400`
-  const trustScore = mapTrustScore(business.averageRating ?? 0)
+  // v4 Güven Skoru — batch hesaplandıysa gerçek skoru kullan, yoksa eski formüle düş
+  const trustScore = (business.trustScore && business.trustScore > 0)
+    ? {
+        score: Math.round(business.trustScore),
+        grade: (business.trustGrade ?? 'F') as 'A' | 'B' | 'C' | 'D' | 'F',
+        breakdown: {
+          reviewDepth:    Math.round(business.trustScore * 0.9),
+          recencyTrend:   Math.round(business.trustScore * 1.0),
+          verifiedRatio:  Math.round(business.trustScore * 0.95),
+          engagement:     Math.round(business.trustScore * 0.85),
+        },
+        trend: (business.recentTrend > 0.05 ? 'up' : business.recentTrend < -0.05 ? 'down' : 'stable') as 'up' | 'down' | 'stable',
+      }
+    : mapTrustScore(business.averageRating ?? 0)
   const features: string[] = (Object.values(attrs.about ?? {}).flat() as string[]).map(cleanFeature).filter(Boolean)
   const platformReviews: any[] = business.reviews ?? []
   const externalReviews: any[] = business.externalReviews ?? []
@@ -413,7 +410,7 @@ export default function BusinessPage() {
         </div>
 
         <div className="px-4 pt-4">
-          <div className="flex items-start justify-between gap-3 mb-1">
+          <div className="flex items-start justify-between gap-3 mb-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-1">
                 <h1 className="text-xl font-bold text-white leading-tight">{business.name}</h1>
@@ -443,21 +440,10 @@ export default function BusinessPage() {
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-2 text-base text-white/60"><MapPin size={11} className="text-indigo-400" /><span>{[business.district, business.city].filter(Boolean).join(', ')}</span></div>
-              {todayHours && (
-                <div className="flex items-center gap-2 text-base mt-0.5">
-                  <span className={`font-semibold ${isOpenNow === true ? "text-emerald-400" : isOpenNow === false ? "text-red-400" : "text-white/40"}`}>
-                    {isOpenNow === true ? "Acık" : isOpenNow === false ? "Kapali" : ""}
-                  </span>
-                  {todayHours.openTime && todayHours.closeTime && (
-                    <span className="text-white/35">{todayHours.openTime} – {todayHours.closeTime === "00:00" ? "Gece yarısı" : todayHours.closeTime}</span>
-                  )}
-                </div>
-              )}
+              <div className="flex items-center gap-1.5 text-xs text-white/50"><MapPin size={11} className="text-indigo-400" /><span>{[business.district, business.city].filter(Boolean).join(', ')}</span></div>
             </div>
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-[10px] font-bold uppercase tracking-widest" style={{color: getTrustColor(trustScore.grade)}}>Güven Skoru</span>
-              <TrustScoreRing score={trustScore} size="md" showBreakdown={true} />
+            <div className="flex flex-col items-center gap-1.5">
+              <TrustScoreRing score={trustScore} size="md" showBreakdown={false} />
               {business.isVerified && (
                 <div className="relative group cursor-default">
                   <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
@@ -492,12 +478,17 @@ export default function BusinessPage() {
                 </div>
               )}
           </div>
-          <div className="flex items-center gap-3 mb-0 flex-wrap">
+
+          <div className="flex items-center gap-3 mb-4 flex-wrap">
             {avgRating && (
               <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-1.5">
-                <Star size={13} className="text-amber-400 fill-amber-400" /><span className="text-xs text-white/50">Ortalama puan</span><span className="text-sm font-bold text-white ml-1">{avgRating}</span><span className="text-xs text-white/40 ml-0.5">({totalReviewCount} yorum)</span>
+                <Star size={13} className="text-amber-400 fill-amber-400" /><span className="text-sm font-bold text-white">{avgRating}</span><span className="text-xs text-white/40">({totalReviewCount})</span>
               </div>
             )}
+            <span className={cn('flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1.5 rounded-xl border', business.isOpen !== false ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25' : 'bg-red-500/15 text-red-300 border-red-500/25')}>
+              <div className={cn('w-1.5 h-1.5 rounded-full', business.isOpen !== false ? 'bg-emerald-400' : 'bg-red-400')} />
+              {business.isOpen !== false ? 'Acik' : 'Kapali'}
+            </span>
             {attrs.priceRange && <span className="text-xs text-white/50 bg-white/[0.05] border border-white/[0.08] px-2.5 py-1.5 rounded-xl">{attrs.priceRange}</span>}
           </div>
 

@@ -1,0 +1,10 @@
+﻿User-agent: *
+Allow: /
+
+Sitemap: https://tecrubelerim.com/sitemap.xml
+
+# Gereksiz sayfaları engelle
+Disallow: /admin
+Disallow: /giris
+Disallow: /kayit
+Disallow: /api/

@@ -1,42 +1,36 @@
-import { MetadataRoute } from 'next'
+﻿import { MetadataRoute } from 'next'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 const SITE_URL = 'https://tecrubelerim.com'
+const BATCH_SIZE = 50000
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const staticPages: MetadataRoute.Sitemap = [
-    { url: SITE_URL,                   lastModified: new Date(), changeFrequency: 'daily',   priority: 1 },
-    { url: `${SITE_URL}/kesfet`,       lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9 },
-    { url: `${SITE_URL}/arama`,        lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.7 },
-    { url: `${SITE_URL}/giris`,        lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
-    { url: `${SITE_URL}/kayit`,        lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
+  // Toplam işletme sayısını çek
+  let total = 432361 // fallback
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/businesses/count`, { next: { revalidate: 86400 } })
+    if (res.ok) {
+      const data = await res.json()
+      total = data.total ?? total
+    }
+  } catch {}
+
+  const batchCount = Math.ceil(total / BATCH_SIZE)
+  const now = new Date()
+
+  const sitemaps: MetadataRoute.Sitemap = [
+    { url: `${SITE_URL}/sitemap/static.xml`, lastModified: now },
+    { url: `${SITE_URL}/sitemap/cities.xml`, lastModified: now },
+    { url: `${SITE_URL}/sitemap/categories.xml`, lastModified: now },
+    { url: `${SITE_URL}/sitemap/districts.xml`, lastModified: now },
+    { url: `${SITE_URL}/sitemap/kategori-cities.xml`, lastModified: now },
   ]
 
-  try {
-    // Tum isletme slug'larini cek — sayfalama ile
-    const allSlugs: string[] = []
-    let page = 1
-    let hasMore = true
-
-    while (hasMore) {
-      const res = await fetch(`${API_BASE}/businesses?page=${page}&limit=1000`, { next: { revalidate: 86400 } })
-      if (!res.ok) break
-      const data = await res.json()
-      const businesses = data.businesses ?? []
-      businesses.forEach((b: { slug: string }) => allSlugs.push(b.slug))
-      hasMore = businesses.length === 1000
-      page++
-    }
-
-    const businessPages: MetadataRoute.Sitemap = allSlugs.map(slug => ({
-      url: `${SITE_URL}/isletme/${slug}`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.8,
-    }))
-
-    return [...staticPages, ...businessPages]
-  } catch {
-    return staticPages
+  for (let i = 1; i <= batchCount; i++) {
+    sitemaps.push({
+      url: `${SITE_URL}/sitemap/businesses-${i}.xml`,
+      lastModified: now,
+    })
   }
+
+  return sitemaps
 }

@@ -1,4 +1,5 @@
-﻿'use client'
+'use client'
+import ReferralAdminPanel from '@/components/admin/ReferralAdminPanel'
 import React, { useState, useEffect, useCallback } from 'react'
 import {
   Building2, Users, MessageSquare, CheckCircle, XCircle, Loader2,
@@ -21,7 +22,7 @@ function normalizeRating(raw: number) {
 
 const REASON_LABEL: Record<string, string> = {
   SPAM: 'Spam', INAPPROPRIATE: 'Uygunsuz', FAKE_REVIEW: 'Sahte Yorum',
-  HARASSMENT: 'Taciz', COPYRIGHT: 'Telif HakkÄ±', OTHER: 'DiÄŸer'
+  HARASSMENT: 'Taciz', COPYRIGHT: 'Telif Hakkı', OTHER: 'DiÄŸer'
 }
 const REASON_COLOR: Record<string, string> = {
   SPAM: 'bg-orange-500/15 text-orange-400',
@@ -79,7 +80,7 @@ function UpgradeRequestsSection({ apiBase }: { apiBase: string }) {
         {['PENDING','CONTACTED','COMPLETED','REJECTED'].map(s => (
           <button key={s} onClick={() => setStatusFilter(s)}
             className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${statusFilter === s ? STATUS_COLORS[s] + ' border' : 'text-white/30 hover:text-white bg-white/[0.03]'}`}>
-            {s === 'PENDING' ? 'Bekleyen' : s === 'CONTACTED' ? 'AranÄ±ldÄ±' : s === 'COMPLETED' ? 'Tamamlandi' : 'Reddedildi'}
+            {s === 'PENDING' ? 'Bekleyen' : s === 'CONTACTED' ? 'Aranıldı' : s === 'COMPLETED' ? 'Tamamlandi' : 'Reddedildi'}
           </button>
         ))}
       </div>
@@ -106,7 +107,7 @@ function UpgradeRequestsSection({ apiBase }: { apiBase: string }) {
             <div className="flex gap-1.5 pt-1">
               <button onClick={() => handleStatus(req.id, 'CONTACTED')} disabled={updating === req.id}
                 className="flex-1 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 text-[11px] font-bold border border-blue-500/20 hover:bg-blue-500/20 disabled:opacity-40 transition-all">
-                ArandÄ± âœ“
+                Arandı âœ“
               </button>
               <button onClick={() => handleStatus(req.id, 'COMPLETED')} disabled={updating === req.id}
                 className="flex-1 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-[11px] font-bold border border-emerald-500/20 hover:bg-emerald-500/20 disabled:opacity-40 transition-all">
@@ -558,14 +559,14 @@ function PendingBusinessSection({ apiBase }: { apiBase: string }) {
     setActing(null)
   }
 
-  if (loading) return <div className="p-6 text-white/40 text-sm">YÃ¼kleniyor...</div>
+  if (loading) return <div className="p-6 text-white/40 text-sm">Yükleniyor...</div>
 
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-lg font-black text-white">Bekleyen Ä°ÅŸletmeler</h2>
-          <p className="text-sm text-white/40">{businesses.length} iÅŸletme onay bekliyor</p>
+          <h2 className="text-lg font-black text-white">Bekleyen İşletmeler</h2>
+          <p className="text-sm text-white/40">{businesses.length} işletme onay bekliyor</p>
         </div>
         <button onClick={load} className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center text-white/40 hover:text-white transition-colors">
           <RefreshCw size={14} />
@@ -574,7 +575,7 @@ function PendingBusinessSection({ apiBase }: { apiBase: string }) {
       {businesses.length === 0 ? (
         <div className="text-center py-12 text-white/25">
           <CheckCircle size={32} className="mx-auto mb-3 opacity-30" />
-          <p>Bekleyen iÅŸletme yok</p>
+          <p>Bekleyen işletme yok</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -632,8 +633,8 @@ function ThemeSection() {
   return (
     <div className="p-6 max-w-3xl">
       <div className="mb-6">
-        <h2 className="text-lg font-black text-white mb-1">Tema ve Renk AyarlarÄ±</h2>
-        <p className="text-sm text-white/40">UygulamanÄ±n ana renk temasÄ±nÄ± seÃ§in</p>
+        <h2 className="text-lg font-black text-white mb-1">Tema ve Renk Ayarları</h2>
+        <p className="text-sm text-white/40">Uygulamanın ana renk temasını seçin</p>
       </div>
       <div className="grid grid-cols-2 gap-4 mb-6">
         {THEMES.map((th, idx) => (
@@ -649,7 +650,7 @@ function ThemeSection() {
                 <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: th.primary }}>
                   <Star size={10} className="text-white fill-white" />
                 </div>
-                <span className="text-xs font-black text-white">TecrÃ¼belerim</span>
+                <span className="text-xs font-black text-white">Tecrübelerim</span>
                 <span className="text-[9px] px-1.5 py-0.5 rounded font-bold ml-1" style={{ background: th.primary + '33', border: '1px solid ' + th.primary + '55', color: th.primary }}>BETA</span>
               </div>
               <div className="h-5 rounded-lg mb-1.5 bg-white/[0.06] border border-white/[0.05] flex items-center px-2">
@@ -668,7 +669,7 @@ function ThemeSection() {
       </div>
       {saved && (
         <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 text-sm font-medium">
-          <CheckCircle size={14} /> Tema uygulandÄ±!
+          <CheckCircle size={14} /> Tema uygulandı!
         </div>
       )}
     </div>
@@ -822,7 +823,7 @@ function SiteSettingsTab({ apiBase }: { apiBase: string }) {
 }
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<'stats'|'reports'|'flagged'|'claims'|'businesses'|'users'|'reviews'|'settings'|'muhtar'|'subscriptions'|'pending'|'theme'|'market'>('stats')
+  const [tab, setTab] = useState<'stats'|'reports'|'flagged'|'claims'|'businesses'|'users'|'reviews'|'settings'|'muhtar'|'subscriptions'|'pending'|'theme'|'market'|'referral'>('stats')
   const [stats, setStats] = useState<any>(null)
   const [modStats, setModStats] = useState<any>(null)
   const [pendingBizCount, setPendingBizCount] = React.useState(0)
@@ -906,7 +907,7 @@ export default function AdminPage() {
   }
 
   const deleteReview = async (id: string) => {
-    if (!confirm('Bu yorumu kalÄ±cÄ± olarak silmek istediÄŸinizden emin misiniz?')) return
+    if (!confirm('Bu yorumu kalıcı olarak silmek istediÄŸinizden emin misiniz?')) return
     setActionLoading(id)
     try {
       await fetch(`${API}/api/admin/reviews/${id}`, { method: 'DELETE', headers: getH() })
@@ -916,19 +917,19 @@ export default function AdminPage() {
   }
 
   const tabs = [
-    { key: 'stats',      label: 'Genel BakÄ±ÅŸ',    icon: Star },
-    { key: 'reports',    label: 'Åikayetler',      icon: Flag,       badge: modStats?.pendingReports },
-    { key: 'flagged',    label: 'ÅÃ¼pheli Yorumlar',icon: Shield,     badge: modStats?.flaggedReviews },
+    { key: 'stats',      label: 'Genel Bakış',    icon: Star },
+    { key: 'reports',    label: 'Şikayetler',      icon: Flag,       badge: modStats?.pendingReports },
+    { key: 'flagged',    label: 'Şüpheli Yorumlar',icon: Shield,     badge: modStats?.flaggedReviews },
     { key: 'claims',     label: 'Sahiplik Talepleri', icon: CheckCircle, badge: modStats?.pendingClaims },
-    { key: 'businesses', label: 'Ä°ÅŸletmeler',      icon: Building2, badge: stats?.businesses },
-    { key: 'users',      label: 'KullanÄ±cÄ±lar',    icon: Users, badge: stats?.users },
-    { key: 'reviews',    label: 'TÃ¼m Yorumlar',    icon: MessageSquare, badge: stats?.reviews },
+    { key: 'businesses', label: 'İşletmeler',      icon: Building2, badge: stats?.businesses },
+    { key: 'users',      label: 'Kullanıcılar',    icon: Users, badge: stats?.users },
+    { key: 'reviews',    label: 'Tüm Yorumlar',    icon: MessageSquare, badge: stats?.reviews },
     { key: 'subscriptions', label: 'Abonelikler', icon: Star, badge: stats?.activeSubscriptions },
     { key: 'muhtar',    label: 'Muhtar Basvurulari', icon: Shield, badge: muhtarPending },
-    { key: 'pending',    label: 'Bekleyen Ä°ÅŸletmeler', icon: Clock,   badge: pendingBizCount },
+    { key: 'pending',    label: 'Bekleyen İşletmeler', icon: Clock,   badge: pendingBizCount },
     { key: 'theme',      label: 'Tema ve Renk',        icon: Settings },
     { key: 'market',     label: 'Tecrübe Pazarı',      icon: ShoppingBag },
-
+    { key: 'referral',   label: 'Referral',             icon: Gift },
   ] as const
 
   const totalPages = Math.ceil(total / 20)
@@ -945,7 +946,7 @@ export default function AdminPage() {
           <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/20 font-bold">BETA</span>
         </div>
         <div className="flex items-center gap-3">
-          {stats && <span className="text-xs text-white/30">{stats.users?.toLocaleString()} kullanÄ±cÄ± Â· {stats.businesses?.toLocaleString()} iÅŸletme</span>}
+          {stats && <span className="text-xs text-white/30">{stats.users?.toLocaleString()} kullanıcı Â· {stats.businesses?.toLocaleString()} işletme</span>}
           <button onClick={loadStats} className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center text-white/40 hover:text-white transition-colors">
             <RefreshCw size={14} />
           </button>
@@ -973,11 +974,11 @@ export default function AdminPage() {
           {/* â”€â”€ STATS â”€â”€ */}
           {tab === 'stats' && stats && (
             <div>
-              <h2 className="text-xl font-black mb-5">Genel BakÄ±ÅŸ</h2>
+              <h2 className="text-xl font-black mb-5">Genel Bakış</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 {[
-                  { label: 'KullanÄ±cÄ±lar', value: stats.users, color: 'text-indigo-400', bg: 'bg-indigo-500/10 border-indigo-500/20' },
-                  { label: 'Ä°ÅŸletmeler',   value: stats.businesses, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
+                  { label: 'Kullanıcılar', value: stats.users, color: 'text-indigo-400', bg: 'bg-indigo-500/10 border-indigo-500/20' },
+                  { label: 'İşletmeler',   value: stats.businesses, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
                   { label: 'Yorumlar',     value: stats.reviews, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
                   { label: 'Bekleyen Talep', value: stats.pendingClaims, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
                 ].map(({ label, value, color, bg }) => (
@@ -988,14 +989,14 @@ export default function AdminPage() {
                 ))}
               </div>
 
-              {/* Moderasyon Ã¶zeti */}
+              {/* Moderasyon özeti */}
               {modStats && (
                 <div>
                   <div className="text-xs font-bold text-white/40 uppercase tracking-wider mb-3">Moderasyon Durumu</div>
                   <div className="grid grid-cols-3 gap-3 mb-5">
                     {[
-                      { label: 'Bekleyen Åikayet', value: modStats.pendingReports, color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20', tab: 'reports' },
-                      { label: 'ÅÃ¼pheli Yorum',    value: modStats.flaggedReviews, color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20', tab: 'flagged' },
+                      { label: 'Bekleyen Şikayet', value: modStats.pendingReports, color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20', tab: 'reports' },
+                      { label: 'Şüpheli Yorum',    value: modStats.flaggedReviews, color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20', tab: 'flagged' },
                       { label: 'Bekleyen Sahiplik', value: modStats.pendingClaims, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20', tab: 'claims' },
                     ].map(({ label, value, color, bg, tab: t }) => (
                       <button key={label} onClick={() => setTab(t as any)}
@@ -1011,7 +1012,7 @@ export default function AdminPage() {
               {(modStats?.pendingReports > 0 || modStats?.flaggedReviews > 0 || modStats?.pendingClaims > 0) && (
                 <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm font-bold">
                   <AlertTriangle size={15} />
-                  Dikkat gerektiren {(modStats.pendingReports || 0) + (modStats.flaggedReviews || 0) + (modStats.pendingClaims || 0)} Ã¶ÄŸe var
+                  Dikkat gerektiren {(modStats.pendingReports || 0) + (modStats.flaggedReviews || 0) + (modStats.pendingClaims || 0)} öÄŸe var
                 </div>
               )}
             </div>
@@ -1021,14 +1022,14 @@ export default function AdminPage() {
           {tab === 'reports' && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-black">KullanÄ±cÄ± Åikayetleri</h2>
+                <h2 className="text-xl font-black">Kullanıcı Şikayetleri</h2>
                 <div className="flex gap-1">
                   {['PENDING','REVIEWING','RESOLVED','DISMISSED','ALL'].map(f => (
                     <button key={f} onClick={() => setReportFilter(f)}
                       className={cn('px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors',
                         reportFilter === f ? 'bg-indigo-500 text-white' : 'bg-white/[0.05] text-white/40 hover:text-white'
                       )}>
-                      {f === 'PENDING' ? 'Bekleyen' : f === 'REVIEWING' ? 'Ä°nceleniyor' : f === 'RESOLVED' ? 'Ã‡Ã¶zÃ¼ldÃ¼' : f === 'DISMISSED' ? 'Reddedildi' : 'TÃ¼mÃ¼'}
+                      {f === 'PENDING' ? 'Bekleyen' : f === 'REVIEWING' ? 'İnceleniyor' : f === 'RESOLVED' ? 'Ã‡özüldü' : f === 'DISMISSED' ? 'Reddedildi' : 'Tümü'}
                     </button>
                   ))}
                 </div>
@@ -1073,11 +1074,11 @@ export default function AdminPage() {
                           )}
 
                           {r.reportedUser && (
-                            <div className="text-xs text-white/40 mb-1">Åikayet edilen kullanÄ±cÄ±: <span className="text-white/60 font-bold">@{r.reportedUser.username}</span></div>
+                            <div className="text-xs text-white/40 mb-1">Şikayet edilen kullanıcı: <span className="text-white/60 font-bold">@{r.reportedUser.username}</span></div>
                           )}
 
                           <div className="text-xs text-white/30">
-                            Åikayet eden: <span className="text-white/50">@{r.reporter?.username}</span>
+                            Şikayet eden: <span className="text-white/50">@{r.reporter?.username}</span>
                             {r.description && <span className="ml-2 italic">"{r.description}"</span>}
                           </div>
                         </div>
@@ -1087,12 +1088,12 @@ export default function AdminPage() {
                             {r.status === 'PENDING' && (
                               <button onClick={() => reportAction(r.id, 'reviewing')} disabled={actionLoading === r.id}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/15 text-blue-400 border border-blue-500/20 text-xs font-bold hover:bg-blue-500/25 transition-colors disabled:opacity-50">
-                                <Clock size={10} /> Ä°ncele
+                                <Clock size={10} /> İncele
                               </button>
                             )}
                             <button onClick={() => reportAction(r.id, 'resolve')} disabled={actionLoading === r.id}
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 text-xs font-bold hover:bg-emerald-500/25 transition-colors disabled:opacity-50">
-                              {actionLoading === r.id ? <Loader2 size={10} className="animate-spin" /> : <CheckCircle size={10} />} Ã‡Ã¶zÃ¼ldÃ¼
+                              {actionLoading === r.id ? <Loader2 size={10} className="animate-spin" /> : <CheckCircle size={10} />} Ã‡özüldü
                             </button>
                             <button onClick={() => reportAction(r.id, 'dismiss')} disabled={actionLoading === r.id}
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] text-white/40 text-xs font-bold hover:bg-white/[0.08] transition-colors disabled:opacity-50">
@@ -1106,7 +1107,7 @@ export default function AdminPage() {
                   {data.length === 0 && !loading && (
                     <div className="text-center py-16">
                       <Shield size={32} className="mx-auto mb-3 text-white/10" />
-                      <div className="text-white/25 text-sm">Bekleyen ÅŸikayet yok</div>
+                      <div className="text-white/25 text-sm">Bekleyen şikayet yok</div>
                     </div>
                   )}
                 </div>
@@ -1117,7 +1118,7 @@ export default function AdminPage() {
           {/* â”€â”€ FLAGGED REVIEWS â”€â”€ */}
           {tab === 'flagged' && (
             <div>
-              <h2 className="text-xl font-black mb-4">ÅÃ¼pheli & Raporlanan Yorumlar</h2>
+              <h2 className="text-xl font-black mb-4">Şüpheli & Raporlanan Yorumlar</h2>
               {loading ? <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-white/30" /></div> : (
                 <div className="space-y-3">
                   {data.map((r: any) => (
@@ -1165,7 +1166,7 @@ export default function AdminPage() {
                           ) : (
                             <button onClick={() => flagAction(r.id, false, true)} disabled={actionLoading === r.id}
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 text-xs font-bold hover:bg-emerald-500/25 transition-colors disabled:opacity-50">
-                              {actionLoading === r.id ? <Loader2 size={10} className="animate-spin" /> : <CheckCircle size={10} />} YayÄ±nla
+                              {actionLoading === r.id ? <Loader2 size={10} className="animate-spin" /> : <CheckCircle size={10} />} Yayınla
                             </button>
                           )}
                           <button onClick={() => deleteReview(r.id)} disabled={actionLoading === r.id}
@@ -1179,7 +1180,7 @@ export default function AdminPage() {
                   {data.length === 0 && !loading && (
                     <div className="text-center py-16">
                       <Shield size={32} className="mx-auto mb-3 text-white/10" />
-                      <div className="text-white/25 text-sm">ÅÃ¼pheli yorum yok</div>
+                      <div className="text-white/25 text-sm">Şüpheli yorum yok</div>
                     </div>
                   )}
                 </div>
@@ -1198,7 +1199,7 @@ export default function AdminPage() {
                       className={cn('px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors',
                         claimFilter === f ? 'bg-indigo-500 text-white' : 'bg-white/[0.05] text-white/40 hover:text-white'
                       )}>
-                      {f === 'PENDING' ? 'Bekleyen' : f === 'CLAIMED' ? 'OnaylÄ±' : f === 'UNCLAIMED' ? 'Reddedildi' : 'TÃ¼mÃ¼'}
+                      {f === 'PENDING' ? 'Bekleyen' : f === 'CLAIMED' ? 'Onaylı' : f === 'UNCLAIMED' ? 'Reddedildi' : 'Tümü'}
                     </button>
                   ))}
                 </div>
@@ -1241,7 +1242,7 @@ export default function AdminPage() {
                       </div>
                     </div>
                   ))}
-                  {data.length === 0 && !loading && <div className="text-center py-12 text-white/25 text-sm">Talep bulunamadÄ±</div>}
+                  {data.length === 0 && !loading && <div className="text-center py-12 text-white/25 text-sm">Talep bulunamadı</div>}
                 </div>
               )}
             </div>
@@ -1251,7 +1252,7 @@ export default function AdminPage() {
           {tab === 'businesses' && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-black">Ä°ÅŸletmeler <span className="text-white/30 font-normal text-base">({total.toLocaleString()})</span></h2>
+                <h2 className="text-xl font-black">İşletmeler <span className="text-white/30 font-normal text-base">({total.toLocaleString()})</span></h2>
                 <div className="flex items-center gap-2 bg-[#111118] border border-white/[0.08] rounded-xl px-3 py-2">
                   <Search size={13} className="text-white/30" />
                   <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} placeholder="Ara..." className="bg-transparent text-sm text-white outline-none w-40 placeholder-white/20" />
@@ -1264,7 +1265,7 @@ export default function AdminPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-bold text-white truncate">{b.name}</span>
-                          {b.isVerified && <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">âœ“ DoÄŸrulandÄ±</span>}
+                          {b.isVerified && <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">âœ“ DoÄŸrulandı</span>}
                           <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full',
                             b.claimStatus === 'CLAIMED' ? 'bg-emerald-500/10 text-emerald-400' :
                             b.claimStatus === 'PENDING' ? 'bg-amber-500/10 text-amber-400' : 'bg-white/[0.05] text-white/30'
@@ -1292,10 +1293,10 @@ export default function AdminPage() {
           {tab === 'users' && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-black">KullanÄ±cÄ±lar <span className="text-white/30 font-normal text-base">({total.toLocaleString()})</span></h2>
+                <h2 className="text-xl font-black">Kullanıcılar <span className="text-white/30 font-normal text-base">({total.toLocaleString()})</span></h2>
                 <div className="flex items-center gap-2 bg-[#111118] border border-white/[0.08] rounded-xl px-3 py-2">
                   <Search size={13} className="text-white/30" />
-                  <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} placeholder="KullanÄ±cÄ± ara..." className="bg-transparent text-sm text-white outline-none w-40 placeholder-white/20" />
+                  <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} placeholder="Kullanıcı ara..." className="bg-transparent text-sm text-white outline-none w-40 placeholder-white/20" />
                 </div>
               </div>
               {loading ? <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-white/30" /></div> : (
@@ -1308,7 +1309,7 @@ export default function AdminPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-bold text-white">@{u.username}</span>
-                          {u.isBanned && <span className="text-[10px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded-full font-bold">BanlÄ±</span>}
+                          {u.isBanned && <span className="text-[10px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded-full font-bold">Banlı</span>}
                           <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-bold',
                             u.trustLevel === 'HIGHLY_TRUSTED' || u.trustLevel === 'VERIFIED' ? 'bg-emerald-500/10 text-emerald-400' :
                             u.trustLevel === 'TRUSTED' ? 'bg-blue-500/10 text-blue-400' : 'bg-white/[0.05] text-white/30'
@@ -1325,7 +1326,7 @@ export default function AdminPage() {
                           u.isBanned ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
                         )}>
                         {actionLoading === u.id ? <Loader2 size={11} className="animate-spin" /> : <Ban size={11} />}
-                        {u.isBanned ? 'BanÄ± KaldÄ±r' : 'Banla'}
+                        {u.isBanned ? 'Banı Kaldır' : 'Banla'}
                       </button>
                     </div>
                   ))}
@@ -1337,7 +1338,7 @@ export default function AdminPage() {
           {/* â”€â”€ ALL REVIEWS â”€â”€ */}
           {tab === 'reviews' && (
             <div>
-              <h2 className="text-xl font-black mb-4">TÃ¼m Yorumlar <span className="text-white/30 font-normal text-base">({total.toLocaleString()})</span></h2>
+              <h2 className="text-xl font-black mb-4">Tüm Yorumlar <span className="text-white/30 font-normal text-base">({total.toLocaleString()})</span></h2>
               {loading ? <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-white/30" /></div> : (
                 <div className="space-y-3">
                   {data.map((r: any) => (
@@ -1375,7 +1376,7 @@ export default function AdminPage() {
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.05] text-white/50 text-sm disabled:opacity-30 hover:text-white transition-colors">
                 <ChevronLeft size={14} /> Ã–nceki
               </button>
-              <span className="text-xs text-white/30">{page} / {totalPages} Â· {total} Ã¶ÄŸe</span>
+              <span className="text-xs text-white/30">{page} / {totalPages} Â· {total} öÄŸe</span>
               <button onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page === totalPages || loading}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.05] text-white/50 text-sm disabled:opacity-30 hover:text-white transition-colors">
                 Sonraki <ChevronRight size={14} />
@@ -1398,6 +1399,9 @@ export default function AdminPage() {
           )}
           {tab === 'market' && (
             <MarketTab apiBase={API} />
+          )}
+          {tab === 'referral' && (
+            <ReferralAdminPanel />
           )}
         </div>
       </div>

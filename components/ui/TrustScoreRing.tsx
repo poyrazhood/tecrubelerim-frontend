@@ -2,7 +2,7 @@
 
 import { getTrustColor, getTrustBg } from '@/lib/utils'
 import type { TrustScore } from '@/types'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 interface TrustScoreRingProps {
   score: TrustScore
@@ -18,10 +18,37 @@ const SIZES = {
 
 export function TrustScoreRing({ score, size = 'md', showBreakdown = true }: TrustScoreRingProps) {
   const [open, setOpen] = useState(false)
+  const [popupStyle, setPopupStyle] = useState<React.CSSProperties>({})
+  const ringRef = useRef<HTMLButtonElement>(null)
   const color = getTrustColor(score.grade)
   const bg = getTrustBg(score.grade)
   const s = SIZES[size]
   const pct = (score.score / 100) * 360
+
+  const handleOpen = () => {
+    if (!showBreakdown) return
+    if (!open && ringRef.current) {
+      const rect = ringRef.current.getBoundingClientRect()
+      const popupWidth = 288 // w-72
+      const margin = 12
+
+      // Yatay: ekrandan taşmayacak şekilde hizala
+      let left = rect.left + rect.width / 2 - popupWidth / 2
+      if (left < margin) left = margin
+      if (left + popupWidth > window.innerWidth - margin) {
+        left = window.innerWidth - popupWidth - margin
+      }
+
+      // Dikey: önce aşağı dene, sığmazsa yukarı
+      let top = rect.bottom + 8
+      if (top + 280 > window.innerHeight - margin) {
+        top = rect.top - 280 - 8
+      }
+
+      setPopupStyle({ top, left, position: 'fixed' })
+    }
+    setOpen(!open)
+  }
 
   const breakdownItems = [
     { label: 'Yorum Derinliği', value: score.breakdown.reviewDepth, color: '#818CF8' },
@@ -33,7 +60,8 @@ export function TrustScoreRing({ score, size = 'md', showBreakdown = true }: Tru
   return (
     <div className="relative inline-flex flex-col items-center gap-1">
       <button
-        onClick={() => showBreakdown && setOpen(!open)}
+        ref={ringRef}
+        onClick={handleOpen}
         className="relative flex items-center justify-center rounded-full transition-transform hover:scale-105 active:scale-95"
         style={{
           width: s.outer,
@@ -64,8 +92,8 @@ export function TrustScoreRing({ score, size = 'md', showBreakdown = true }: Tru
       {open && showBreakdown && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 z-50 w-64 rounded-2xl border border-white/10 p-4 shadow-2xl"
-            style={{ background: '#18181C' }}>
+          <div className="z-50 w-72 rounded-2xl border border-white/10 p-4 shadow-2xl"
+            style={{ background: '#18181C', ...popupStyle }}>
             <div className="text-xs font-bold text-white/60 uppercase tracking-wider mb-3">
               TrustScore Kırılımı
             </div>
@@ -85,6 +113,7 @@ export function TrustScoreRing({ score, size = 'md', showBreakdown = true }: Tru
             ))}
             <div className="mt-3 pt-3 border-t border-white/5 text-[10px] text-white/30 text-center">
               Son güncelleme: 2 saat önce
+              <a href="/guven-skoru" className="mt-2 flex items-center justify-center gap-1 text-[10px] text-indigo-400/70 hover:text-indigo-400 transition-colors">Güven Skoru nasıl hesaplanır? →</a>
             </div>
           </div>
         </>
