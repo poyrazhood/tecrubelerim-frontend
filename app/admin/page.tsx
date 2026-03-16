@@ -823,6 +823,18 @@ function SiteSettingsTab({ apiBase }: { apiBase: string }) {
 }
 
 export default function AdminPage() {
+  
+  const [featuredSlugs, setFeaturedSlugs] = React.useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('featured_businesses') || '[]') } catch { return [] }
+  })
+  const toggleFeatured = (slug: string) => {
+    setFeaturedSlugs(prev => {
+      const next = prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev.slice(0,5), slug]
+      localStorage.setItem('featured_businesses', JSON.stringify(next))
+      return next
+    })
+  }
+
   const [tab, setTab] = useState<'stats'|'reports'|'flagged'|'claims'|'businesses'|'users'|'reviews'|'settings'|'muhtar'|'subscriptions'|'pending'|'theme'|'market'|'referral'>('stats')
   const [stats, setStats] = useState<any>(null)
   const [modStats, setModStats] = useState<any>(null)
@@ -1278,6 +1290,13 @@ export default function AdminPage() {
                           <span className="text-xs text-white/25">{b.totalReviews} yorum</span>
                         </div>
                       </div>
+                      <button
+                        onClick={() => toggleFeatured(b.slug)}
+                        title={featuredSlugs.includes(b.slug) ? 'Öne çıkarmayı kaldır' : 'Öne çıkar'}
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center mr-1 transition-all ${featuredSlugs.includes(b.slug) ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-white/[0.04] text-white/25 hover:text-amber-400'}`}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill={featuredSlugs.includes(b.slug) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                      </button>
                       <Link href={`/isletme/${b.slug}`} target="_blank"
                         className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center text-white/30 hover:text-white transition-colors flex-shrink-0">
                         <Eye size={13} />

@@ -363,3 +363,9 @@ input:focus, textarea:focus { outline: none; }
 [data-theme='rose'] .border-indigo-500\/20 { border-color: rgba(244,63,94,0.3) !important; }
 [data-theme='rose'] .bg-indigo-500\/10,
 [data-theme='rose'] .bg-indigo-500\/15 { background-color: rgba(244,63,94,0.12) !important; }
+
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.animate-hero-1 { animation: fadeInUp 0.6s ease forwards; }
+.animate-hero-2 { animation: fadeInUp 0.6s ease 0.15s forwards; opacity: 0; }
+.animate-hero-3 { animation: fadeInUp 0.6s ease 0.3s forwards; opacity: 0; }
+.animate-hero-4 { animation: fadeInUp 0.6s ease 0.45s forwards; opacity: 0; }

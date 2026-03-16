@@ -1,12 +1,22 @@
 'use client'
 import Link from 'next/link'
 import { MapPin, Star, MessageSquare, BadgeCheck, Zap } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import type { Business } from '@/types'
+import { cn, getTrustColor } from '@/lib/utils'
+import type { Business, TrustScore } from '@/types'
+import { TrustScoreRing } from '@/components/ui/TrustScoreRing'
 
 interface BusinessCardProps {
   business: Business
   showSemanticMatch?: boolean
+}
+
+
+function mapTrustScore(b: Business): TrustScore {
+  if (b.trustScore && typeof b.trustScore === 'object') return b.trustScore as TrustScore
+  const raw = b.averageRating ?? b.rating ?? 50
+  const score = raw > 5 ? Math.min(100, Math.round(raw)) : Math.round(raw * 20)
+  const grade = score >= 90 ? 'A' : score >= 75 ? 'B' : score >= 60 ? 'C' : score >= 40 ? 'D' : 'F'
+  return { grade, score, breakdown: { reviewDepth: Math.round(score*0.9), recencyTrend: Math.round(score*1.05), verifiedRatio: Math.round(score*0.95), engagement: Math.round(score*0.85) }, trend: 'stable' }
 }
 
 export function BusinessCard({ business }: BusinessCardProps) {
@@ -18,11 +28,7 @@ export function BusinessCard({ business }: BusinessCardProps) {
 
   return (
     <Link href={`/isletme/${business.slug}`}>
-      <article className="group flex gap-3 p-3 rounded-2xl border mb-2
-        bg-white dark:bg-surface-1
-        border-black/[0.06] dark:border-white/[0.06]
-        hover:border-indigo-500/30 hover:bg-indigo-500/[0.03]
-        transition-all duration-200">
+      <article className={cn("group flex gap-3 p-3 rounded-2xl border mb-4 bg-white dark:bg-surface-1 hover:bg-indigo-500/[0.03] transition-all duration-200")} style={{ borderColor: getTrustColor(mapTrustScore(business).grade) + '40' }}>
 
         {/* Sol: Küçük resim */}
         <div className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-white/[0.04]">
@@ -79,16 +85,11 @@ export function BusinessCard({ business }: BusinessCardProps) {
               </span>
             </div>
 
-            {/* Puan */}
-            {rating > 0 && (
-              <div className="flex-shrink-0 flex flex-col items-end">
-                <div className="flex items-center gap-1">
-                  <Star size={11} className="text-amber-400 fill-amber-400" />
-                  <span className="text-sm font-bold text-white">{rating.toFixed(1)}</span>
-                </div>
-                <span className="text-[10px] text-white/30">{reviewCount} yorum</span>
-              </div>
-            )}
+            {/* TrustScore Ring */}
+            <div className="flex-shrink-0 flex flex-col items-end gap-1">
+              <TrustScoreRing score={mapTrustScore(business)} size="sm" showBreakdown={true} />
+              <span className="text-[10px] text-white/30">{reviewCount} yorum</span>
+            </div>
           </div>
 
           {/* Alt: Özellikler */}
