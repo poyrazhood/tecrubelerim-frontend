@@ -4,46 +4,49 @@ export interface TrustScore {
   breakdown: { reviewDepth: number; recencyTrend: number; verifiedRatio: number; engagement: number }
   trend: 'up' | 'down' | 'stable'
 }
-
 export interface TrustStack {
   sms: boolean
   transaction: boolean
   photo: boolean
 }
-
 export interface Business {
   id: string
   slug: string
   name: string
-  category: string
+  category: string | { id: string; name: string; slug: string; icon?: string }
   city: string
   district: string
   address: string
   phone: string
   website?: string
-  trustScore: TrustScore
+  trustScore: TrustScore | number
+  trustGrade?: string
   trustStack: TrustStack
   hasGonulAlma?: boolean
-  priceRange: string
-  features: string[]
-  hours: string
-  isOpen: boolean
-  image: string
-  reviewCount: number
+  priceRange?: string
+  features?: string[]
+  hours?: string
+  isOpen?: boolean
+  image?: string
+  photos?: { url: string; order: number }[]
+  reviewCount?: number
+  totalReviews?: number
   semanticMatch?: number
-  culturalTags: string[]
+  culturalTags?: string[]
   badges?: string[]
   rating?: number
+  averageRating?: number
   isVerified?: boolean
+  verificationLevel?: number
   subscriptionPlan?: string
   attributes?: string[]
+  claimStatus?: string
   aiSummary?: { atmosphere: string; price: string; bestTime: string; highlights: string[] }
   description?: string
   merchantResponse?: string
   latitude?: number
   longitude?: number
 }
-
 export interface Review {
   id?: string
   businessId: string
@@ -72,7 +75,6 @@ export interface Review {
   aiHighlights?: string[]
   ironyExplanation?: string
 }
-
 export interface MuhtarUser {
   id?: string
   name?: string
@@ -87,7 +89,6 @@ export interface MuhtarUser {
   isMuhtar?: boolean
   muhtarNeighborhood?: string
 }
-
 export interface User {
   id: string
   name: string
@@ -110,7 +111,6 @@ export interface User {
   reviewCount?: number
   isVerified?: boolean
 }
-
 export type FeedItem =
   | { type: 'review'; data: Review }
   | { type: 'business_spotlight'; data: Business }

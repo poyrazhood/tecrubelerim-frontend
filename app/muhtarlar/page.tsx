@@ -7,9 +7,9 @@ import { MOCK_MUHTARLAR } from '@/lib/mock-data'
 import Link from 'next/link'
 
 const RANK_STYLES: Record<number, { gradient: string; medal: string; label: string }> = {
-  1: { gradient: 'from-amber-400/20 to-yellow-600/10 border-amber-500/30', medal: 'ğŸ¥‡', label: 'AltÄ±n Muhtar' },
-  2: { gradient: 'from-slate-300/15 to-slate-400/10 border-slate-400/30', medal: 'ğŸ¥ˆ', label: 'GÃ¼mÃ¼ÅŸ Muhtar' },
-  3: { gradient: 'from-amber-700/15 to-amber-800/10 border-amber-700/30', medal: 'ğŸ¥‰', label: 'Bronz Muhtar' },
+  1: { gradient: 'from-amber-400/20 to-yellow-600/10 border-amber-500/30', medal: '🥇', label: 'Altın Muhtar' },
+  2: { gradient: 'from-slate-300/15 to-slate-400/10 border-slate-400/30', medal: '🥈', label: 'Gümüş Muhtar' },
+  3: { gradient: 'from-amber-700/15 to-amber-800/10 border-amber-700/30', medal: '🥉', label: 'Bronz Muhtar' },
 }
 
 // Extended muhtarlar list
@@ -19,8 +19,8 @@ const ALL_MUHTARLAR = [
     id: 'u4',
     name: 'Kemal Arslan',
     handle: '@kemalarslan',
-    neighborhood: 'ÃœskÃ¼dar',
-    expertise: ['Restoran', 'BalÄ±k', 'Deniz ÃœrÃ¼nleri'],
+    neighborhood: 'Üsküdar',
+    expertise: ['Restoran', 'Balık', 'Deniz Ürünleri'],
     reviewCount: 78,
     helpfulCount: 934,
     followers: 312,
@@ -28,11 +28,11 @@ const ALL_MUHTARLAR = [
   },
   {
     id: 'u5',
-    name: 'Selin Ã‡elik',
+    name: 'Selin Çelik',
     handle: '@selincelik',
     image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&h=100&fit=crop&crop=face',
-    neighborhood: 'BeÅŸiktaÅŸ',
-    expertise: ['Kafe', 'Kitabevi', 'MÃ¼zik'],
+    neighborhood: 'Beşiktaş',
+    expertise: ['Kafe', 'Kitabevi', 'Müzik'],
     reviewCount: 112,
     helpfulCount: 867,
     followers: 289,
@@ -40,9 +40,9 @@ const ALL_MUHTARLAR = [
   },
   {
     id: 'u6',
-    name: 'TarÄ±k YÄ±ldÄ±rÄ±m',
+    name: 'Tarık Yıldırım',
     handle: '@tarikyildirim',
-    neighborhood: 'ÅiÅŸli',
+    neighborhood: 'Şişli',
     expertise: ['Elektronik', 'Teknoloji', 'Tamir'],
     reviewCount: 56,
     helpfulCount: 723,
@@ -59,16 +59,16 @@ export default function MuhtarlarPage() {
         <div className="mb-5">
           <div className="flex items-center gap-2 mb-1">
             <Award size={18} className="text-amber-400" />
-            <h1 className="font-black text-xl text-white">Mahalle MuhtarlarÄ±</h1>
+            <h1 className="font-black text-xl text-white">Mahalle Muhtarları</h1>
           </div>
           <p className="text-sm text-white/40 leading-relaxed">
-            En gÃ¼venilir ve faydalÄ± yorumcular. Muhtarlar, yorumlarÄ±yla mahallerinin sesini taÅŸÄ±yor.
+            En güvenilir ve faydalı yorumcular. Muhtarlar, yorumlarıyla mahallerinin sesini taşıyor.
           </p>
         </div>
 
         {/* Top 3 podium */}
         <div className="mb-6">
-          <div className="text-xs font-bold text-white/30 uppercase tracking-wider mb-3">Bu AyÄ±n Zirvesi</div>
+          <div className="text-xs font-bold text-white/30 uppercase tracking-wider mb-3">Bu Ayın Zirvesi</div>
           <div className="grid grid-cols-3 gap-2">
             {ALL_MUHTARLAR.slice(0, 3).map((muhtar) => {
               const style = RANK_STYLES[muhtar.rank as 1|2|3]
@@ -96,7 +96,7 @@ export default function MuhtarlarPage() {
                     <div className="text-xs font-black text-emerald-400">
                       {(muhtar.helpfulCount ?? 0).toLocaleString('tr-TR')}
                     </div>
-                    <div className="text-[9px] text-white/30">faydalÄ± oy</div>
+                    <div className="text-[9px] text-white/30">faydalı oy</div>
                   </div>
                 </Link>
               )
@@ -106,7 +106,7 @@ export default function MuhtarlarPage() {
 
         {/* Full list */}
         <div>
-          <div className="text-xs font-bold text-white/30 uppercase tracking-wider mb-3">TÃ¼m Muhtarlar</div>
+          <div className="text-xs font-bold text-white/30 uppercase tracking-wider mb-3">Tüm Muhtarlar</div>
           <div className="space-y-2">
             {ALL_MUHTARLAR.map((muhtar) => {
               const handle = (muhtar.handle?.replace('@', '') ?? (muhtar as any).id ?? "")
@@ -144,7 +144,7 @@ export default function MuhtarlarPage() {
                       <div className="flex items-center gap-1.5 text-xs text-white/40 mt-0.5">
                         <MapPin size={10} />
                         <span>{muhtar.neighborhood}</span>
-                        <span className="text-white/20">Â·</span>
+                        <span className="text-white/20">·</span>
                         <span className="truncate">{(muhtar.expertise ?? [])[0]}</span>
                       </div>
                     </div>
@@ -171,11 +171,11 @@ export default function MuhtarlarPage() {
         {/* Info card */}
         <div className="mt-5 rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-4">
           <div className="flex items-start gap-3">
-            <div className="text-2xl">ğŸ†</div>
+            <div className="text-2xl">🏆</div>
             <div>
-              <div className="font-bold text-sm text-white mb-1">Muhtar NasÄ±l Olunur?</div>
+              <div className="font-bold text-sm text-white mb-1">Muhtar Nasıl Olunur?</div>
               <p className="text-xs text-white/50 leading-relaxed">
-                En az 50 doÄŸrulanmÄ±ÅŸ yorum yap, topluluÄŸun faydalÄ± bulduÄŸu 500+ oy topla ve mahallenin gÃ¼venilir sesi ol. Her ay sÄ±ralama gÃ¼ncellenir.
+                En az 50 doğrulanmış yorum yap, topluluğun faydalı bulduğu 500+ oy topla ve mahallenin güvenilir sesi ol. Her ay sıralama güncellenir.
               </p>
             </div>
           </div>

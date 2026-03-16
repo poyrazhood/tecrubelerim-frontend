@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -8,13 +8,13 @@ import { useAuth } from '@/lib/AuthContext'
 import { useEffect, useState, useRef } from 'react'
 
 const NAV_ITEMS = [
-  { href: '/',            icon: Home,       label: 'Ana Sayfa' },
-  { href: '/kesfet',      icon: Search,     label: 'Keşfet' },
-  { href: '/yorum-yaz',   icon: PlusCircle, label: 'Yorum Yaz' },
-  { href: '/bildirimler', icon: Bell,       label: 'Bildirimler' },
-  { href: '/profil',      icon: User,       label: 'Profil' },
-  { href: '/muhtarlar',   icon: Award,      label: 'Muhtarlar' },
-  { href: '/isletme-ekle', icon: Building2,   label: 'İşletme Ekle' },
+  { href: '/',                icon: Home,           label: 'Ana Sayfa' },
+  { href: '/kesfet',          icon: Search,         label: 'KeÅŸfet' },
+  { href: '/yorum-yaz',       icon: PlusCircle,     label: 'Yorum Yaz' },
+  { href: '/sehirler', icon: MapPin, label: 'Åehirler' },
+  { href: '/profil',          icon: User,           label: 'Profil' },
+  { href: '/muhtarlar',       icon: Award,          label: 'Muhtarlar' },
+  { href: '/isletme-ekle',    icon: Building2,      label: 'Ä°ÅŸletme Ekle' },
 ]
 
 const RANK_COLORS: Record<number, string> = {
@@ -23,7 +23,7 @@ const RANK_COLORS: Record<number, string> = {
   3: 'from-amber-700 to-amber-800 text-white',
 }
 
-// ─── Tema Hook ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Tema Hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function useTheme() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
 
@@ -44,7 +44,7 @@ function useTheme() {
   return { theme, toggle }
 }
 
-// ─── Tema Toggle Butonu ───────────────────────────────────────────────────────
+// â”€â”€â”€ Tema Toggle Butonu â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function ThemeToggle({ className }: { className?: string }) {
   const { theme, toggle } = useTheme()
 
@@ -57,7 +57,7 @@ function ThemeToggle({ className }: { className?: string }) {
         'text-white/50 hover:text-white/80',
         className
       )}
-      title={theme === 'dark' ? 'Açık moda geç' : 'Koyu moda geç'}
+      title={theme === 'dark' ? 'AÃ§Ä±k moda geÃ§' : 'Koyu moda geÃ§'}
     >
       {theme === 'dark'
         ? <Sun size={14} className="text-amber-400" />
@@ -67,17 +67,18 @@ function ThemeToggle({ className }: { className?: string }) {
   )
 }
 
-// ─── Kullanıcı Avatar ─────────────────────────────────────────────────────────
+// â”€â”€â”€ KullanÄ±cÄ± Avatar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function UserAvatar({ name, username, avatarUrl, size = 'sm' }: {
   name?: string; username?: string; avatarUrl?: string | null; size?: 'sm' | 'md'
 }) {
   const initials = ((name || username || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2))
   const dim = size === 'md' ? 'w-9 h-9 text-xs' : 'w-8 h-8 text-[10px]'
 
-  if (avatarUrl) {
+  const safeAvatarUrl = avatarUrl?.startsWith('http') ? avatarUrl : avatarUrl ? `https://api.tecrubelerim.com${avatarUrl}` : null
+  if (safeAvatarUrl) {
     return (
       <img
-        src={avatarUrl}
+        src={safeAvatarUrl}
         alt={name || username}
         className={cn(dim, 'rounded-full object-cover border border-white/10 flex-shrink-0')}
       />
@@ -90,22 +91,22 @@ function UserAvatar({ name, username, avatarUrl, size = 'sm' }: {
   )
 }
 
-// ─── Sağ Panel ────────────────────────────────────────────────────────────────
-const API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/api\/?$/, '')
+// â”€â”€â”€ SaÄŸ Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const API_HOST = (process.env.NEXT_PUBLIC_API_URL || 'https://api.tecrubelerim.com').replace(/\/api\/?$/, '')
 
 function RightPanel() {
   const [topUsers, setTopUsers] = useState<any[]>([])
   const [featuredBiz, setFeaturedBiz] = useState<any>(null)
 
   useEffect(() => {
-    // Top kullanıcılar
-    fetch(`${API}/api/users?sort=trustScore&limit=5`)
+    // Top kullanÄ±cÄ±lar
+    fetch(`${API_HOST}/api/users?sort=trustScore&limit=5`)
       .then(r => r.json())
       .then(d => setTopUsers(Array.isArray(d) ? d : (d.users || d.data || [])))
       .catch(() => {})
 
-    // Öne çıkan işletme
-    fetch(`${API}/api/businesses?sort=rating&limit=1`)
+    // Ã–ne Ã§Ä±kan iÅŸletme
+    fetch(`${API_HOST}/api/businesses?sort=rating&limit=1`)
       .then(r => r.json())
       .then(d => {
         const list = Array.isArray(d) ? d : (d.data || [])
@@ -116,12 +117,12 @@ function RightPanel() {
 
   return (
     <>
-      {/* 1. Öne Çıkan İşletmeler */}
+      {/* 1. Ã–ne Ã‡Ä±kan Ä°ÅŸletmeler */}
       {featuredBiz && (
         <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles size={14} className="text-indigo-400" />
-            <span className="font-bold text-sm text-white">Öne Çıkan İşletmeler</span>
+            <span className="font-bold text-sm text-white">Ã–ne Ã‡Ä±kan Ä°ÅŸletmeler</span>
           </div>
           <Link href={`/isletme/${featuredBiz.slug}`}>
             <div className="group cursor-pointer">
@@ -143,7 +144,7 @@ function RightPanel() {
                 <span>{featuredBiz.district || featuredBiz.city}</span>
                 {featuredBiz.category && (
                   <>
-                    <span className="text-white/20">·</span>
+                    <span className="text-white/20">Â·</span>
                     <span>{featuredBiz.category.name}</span>
                   </>
                 )}
@@ -153,15 +154,15 @@ function RightPanel() {
         </div>
       )}
 
-      {/* 2. Tecrübe Ustaları */}
+      {/* 2. TecrÃ¼be UstalarÄ± */}
       <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Award size={15} className="text-amber-400" />
-            <span className="font-bold text-sm text-white">Tecrübe Ustaları</span>
+            <span className="font-bold text-sm text-white">TecrÃ¼be UstalarÄ±</span>
           </div>
           <Link href="/muhtarlar" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-medium">
-            Tümü →
+            TÃ¼mÃ¼ â†’
           </Link>
         </div>
 
@@ -210,7 +211,7 @@ function RightPanel() {
         )}
       </div>
 
-      {/* 3. Tecrübe Pazarı */}
+      {/* 3. TecrÃ¼be PazarÄ± */}
       <div className="rounded-2xl border border-indigo-500/20 bg-gradient-to-br from-indigo-950/40 to-purple-950/30 p-4 relative overflow-hidden">
         {/* Arka plan dekorasyon */}
         <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
@@ -219,20 +220,20 @@ function RightPanel() {
         <div className="relative">
           <div className="flex items-center gap-2 mb-1">
             <ShoppingBag size={14} className="text-indigo-400" />
-            <span className="font-bold text-sm text-white">Tecrübe Pazarı</span>
-            <span className="ml-auto text-[9px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded-full border border-indigo-500/20 font-medium">Yakında</span>
+            <span className="font-bold text-sm text-white">TecrÃ¼be PazarÄ±</span>
+            <span className="ml-auto text-[9px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded-full border border-indigo-500/20 font-medium">YakÄ±nda</span>
           </div>
-          <p className="text-[11px] text-white/40 mb-4">Yorumlarınla puan kazan, ödüllere harca</p>
+          <p className="text-[11px] text-white/40 mb-4">YorumlarÄ±nla puan kazan, Ã¶dÃ¼llere harca</p>
 
-          {/* Özellik önizleme */}
+          {/* Ã–zellik Ã¶nizleme */}
           <div className="space-y-2.5 mb-4">
             <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.04]">
               <div className="w-7 h-7 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
                 <Zap size={12} className="text-amber-400" />
               </div>
               <div>
-                <div className="text-xs font-medium text-white">Yorum Yaz → Puan Kazan</div>
-                <div className="text-[10px] text-white/30">Her detaylı yorum +20 TP</div>
+                <div className="text-xs font-medium text-white">Yorum Yaz â†’ Puan Kazan</div>
+                <div className="text-[10px] text-white/30">Her detaylÄ± yorum +20 TP</div>
               </div>
             </div>
             <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.04]">
@@ -240,53 +241,30 @@ function RightPanel() {
                 <Gift size={12} className="text-emerald-400" />
               </div>
               <div>
-                <div className="text-xs font-medium text-white">Puanını Harca</div>
-                <div className="text-[10px] text-white/30">Rozetler, özel ayrıcalıklar</div>
+                <div className="text-xs font-medium text-white">PuanÄ±nÄ± Harca</div>
+                <div className="text-[10px] text-white/30">Rozetler, Ã¶zel ayrÄ±calÄ±klar</div>
               </div>
             </div>
           </div>
 
           <Link href="/tecrube-pazari">
             <button className="w-full py-2 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/30 transition-all">
-              Pazarı Keşfet →
+              PazarÄ± KeÅŸfet â†’
             </button>
           </Link>
         </div>
       </div>
 
-      {/* 4. İşletme Karşılaştır */}
-      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
-        <div className="flex items-center gap-2 mb-1">
-          <ArrowLeftRight size={14} className="text-emerald-400" />
-          <span className="font-bold text-sm text-white">İşletme Karşılaştır</span>
-        </div>
-        <p className="text-[11px] text-white/40 mb-3">İki işletmeyi yan yana karşılaştır, doğru kararı ver</p>
-        <div className="flex gap-2 mb-3">
-          <div className="flex-1 h-8 rounded-lg border border-indigo-500/30 bg-indigo-500/5 flex items-center justify-center">
-            <span className="text-[10px] text-indigo-400/60">1. İşletme</span>
-          </div>
-          <div className="text-[10px] text-white/20 flex items-center font-bold">VS</div>
-          <div className="flex-1 h-8 rounded-lg border border-amber-500/30 bg-amber-500/5 flex items-center justify-center">
-            <span className="text-[10px] text-amber-400/60">2. İşletme</span>
-          </div>
-        </div>
-        <Link href="/karsilastir/yeni">
-          <button className="w-full py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/25 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/25 transition-all flex items-center justify-center gap-1.5">
-            <ArrowLeftRight size={12} />
-            Karşılaştırmaya Başla →
-          </button>
-        </Link>
-      </div>
 
       <div className="px-1">
-        <p className="text-[10px] text-white/20 leading-relaxed">Tecrübelerim Beta · <a href="/sozlesme/privacy_policy" className="hover:text-white/40 transition-colors">Gizlilik</a> · <a href="/sozlesme/terms_of_service" className="hover:text-white/40 transition-colors">Kullanım Koşulları</a> · <a href="/sozlesme/help" className="hover:text-white/40 transition-colors">Yardım</a></p>
-        <p className="text-[10px] text-white/15 mt-1">© 2026 Tecrübelerim</p>
+        <p className="text-[10px] text-white/20 leading-relaxed">TecrÃ¼belerim Beta Â· <a href="/sozlesme/privacy_policy" className="hover:text-white/40 transition-colors">Gizlilik</a> Â· <a href="/sozlesme/terms_of_service" className="hover:text-white/40 transition-colors">KullanÄ±m KoÅŸullarÄ±</a> Â· <a href="/sozlesme/help" className="hover:text-white/40 transition-colors">YardÄ±m</a></p>
+        <p className="text-[10px] text-white/15 mt-1">Â© 2026 TecrÃ¼belerim</p>
       </div>
     </>
   )
 }
 
-// ─── Ana Layout ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Ana Layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function AppLayout({ children, hideBottomNav }: {
   children: React.ReactNode
   hideBottomNav?: boolean
@@ -301,7 +279,7 @@ export function AppLayout({ children, hideBottomNav }: {
     if (!user) return
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
     if (!token) return
-    fetch(`${API}/api/users/me/businesses`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API_HOST}/api/users/me/businesses`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => {
         const businesses = d.businesses || d || []
@@ -325,7 +303,7 @@ export function AppLayout({ children, hideBottomNav }: {
     setClientMounted(true)
       const savedTheme = localStorage.getItem('app_theme') || 'indigo'
       document.documentElement.setAttribute('data-theme', savedTheme)
-    // rAF ile DOM'un tamamen yüklenmesini bekle
+    // rAF ile DOM'un tamamen yÃ¼klenmesini bekle
     const raf = requestAnimationFrame(() => {
       const el = document.getElementById('main-scroll')
       const handleScroll = () => {
@@ -334,7 +312,7 @@ export function AppLayout({ children, hideBottomNav }: {
       }
       el?.addEventListener('scroll', handleScroll, { passive: true })
       window.addEventListener('scroll', handleScroll, { passive: true })
-      // cleanup için ref'e sakla
+      // cleanup iÃ§in ref'e sakla
       ;(window as any).__feedScrollCleanup = () => {
         el?.removeEventListener('scroll', handleScroll)
         window.removeEventListener('scroll', handleScroll)
@@ -353,20 +331,20 @@ export function AppLayout({ children, hideBottomNav }: {
 
   const pageTitle: Record<string, string> = {
     '/':            'Ana Sayfa',
-    '/kesfet':      'Keşfet',
-    '/muhtarlar':   'Mahalle Muhtarları',
+    '/kesfet':      'KeÅŸfet',
+    '/muhtarlar':   'Mahalle MuhtarlarÄ±',
     '/profil':      'Profil',
     '/yorum-yaz':   'Yorum Yaz',
     '/bildirimler': 'Bildirimler',
   }
-  const title = pageTitle[pathname] ?? 'Tecrübelerim'
+  const title = pageTitle[pathname] ?? 'TecrÃ¼belerim'
   const displayName = user?.fullName || user?.username || '...'
   const username = user ? `@${user.username}` : ''
 
   return (
     <div className="min-h-screen bg-surface">
 
-      {/* ══════ MOBILE ══════ */}
+      {/* â•â•â•â•â•â• MOBILE â•â•â•â•â•â• */}
       <div className="lg:hidden flex justify-center">
         <div className="w-full max-w-[480px] h-screen relative border-x border-white/[0.04] flex flex-col">
 
@@ -391,7 +369,7 @@ export function AppLayout({ children, hideBottomNav }: {
                 )
               ) : (
                 <div className="flex items-center gap-1.5">
-                  <span className="font-black text-base tracking-tight text-white">Tecrübelerim</span>
+                  <span className="font-black text-base tracking-tight text-white">TecrÃ¼belerim</span>
                   <span className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider" style={{background:'var(--primary-bg)',color:'var(--primary)',border:'1px solid var(--primary-border)'}}>Beta</span>
                 </div>
               )}
@@ -399,7 +377,7 @@ export function AppLayout({ children, hideBottomNav }: {
             <div className="flex items-center gap-2 flex-shrink-0 ml-2">
               <ThemeToggle />
               <Link href="/bildirimler">
-                <button className="relative w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all">
+                <button aria-label="Bildirimler" className="relative w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all">
                   <Bell size={15} />
                 </button>
               </Link>
@@ -415,6 +393,19 @@ export function AppLayout({ children, hideBottomNav }: {
             <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 bg-surface/90 backdrop-blur-xl border-t border-white/[0.06] px-2 py-2">
               <div className="flex items-center justify-around">
                 {NAV_ITEMS.slice(0, 5).map(({ href, icon: Icon, label }) => {
+                  // KarÅŸÄ±laÅŸtÄ±r aktif durumu
+                  if (href === '/karsilastir/ara') {
+                    const active = pathname?.startsWith('/karsilastir')
+                    return (
+                      <Link key="karsilastir" href="/karsilastir/ara" className={cn(
+                        'flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all',
+                        active ? 'text-emerald-400' : 'text-white/30 hover:text-white/60'
+                      )}>
+                        <ArrowLeftRight size={20} />
+                        <span className="text-[10px] font-medium">KarÅŸÄ±laÅŸtÄ±r</span>
+                      </Link>
+                    )
+                  }
                   // Kesfet slotunu isletmem ile degistir
                   if (href === '/kesfet' && hasBusiness) {
                     const active = pathname === '/sahip-paneli'
@@ -427,7 +418,7 @@ export function AppLayout({ children, hideBottomNav }: {
                           <Building2 size={20} className={active ? 'fill-primary/20' : ''} />
                           {unreadReplies > 0 && <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />}
                         </div>
-                        <span className="text-[10px] font-medium">İşletmem</span>
+                        <span className="text-[10px] font-medium">Ä°ÅŸletmem</span>
                       </Link>
                     )
                   }
@@ -456,7 +447,7 @@ export function AppLayout({ children, hideBottomNav }: {
         </div>
       </div>
 
-      {/* ══════ DESKTOP ══════ */}
+      {/* â•â•â•â•â•â• DESKTOP â•â•â•â•â•â• */}
       <div className="hidden lg:grid min-h-screen" style={{ gridTemplateColumns: '260px 1fr 320px', maxWidth: 1240, margin: '0 auto' }}>
 
         {/* Sol sidebar */}
@@ -465,7 +456,7 @@ export function AppLayout({ children, hideBottomNav }: {
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0" style={{background:'var(--primary)'}}>
               <Star size={16} className="text-white fill-white" />
             </div>
-            <span className="font-black text-lg tracking-tight text-white">Tecrübelerim</span>
+            <span className="font-black text-lg tracking-tight text-white">TecrÃ¼belerim</span>
           </Link>
 
           <nav className="flex flex-col gap-1 flex-1">
@@ -491,6 +482,18 @@ export function AppLayout({ children, hideBottomNav }: {
             })}
           </nav>
 
+          {/* KarÅŸÄ±laÅŸtÄ±r butonu */}
+          <Link href="/karsilastir/ara"
+            className={cn(
+              'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-semibold text-sm',
+              pathname?.startsWith('/karsilastir')
+                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
+                : 'text-white/50 hover:text-white hover:bg-white/[0.05]'
+            )}>
+            <ArrowLeftRight size={18} />
+            KarÅŸÄ±laÅŸtÄ±r
+          </Link>
+
           {/* Isletmem butonu */}
           {hasBusiness && (
             <Link href="/sahip-paneli" className={cn(
@@ -504,7 +507,7 @@ export function AppLayout({ children, hideBottomNav }: {
                 <Building2 size={18} />
                 {unreadReplies > 0 && <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />}
               </div>
-              İşletmem
+              Ä°ÅŸletmem
             </Link>
           )}
 
@@ -516,7 +519,7 @@ export function AppLayout({ children, hideBottomNav }: {
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-white/50 hover:text-white hover:bg-white/[0.05] font-semibold text-sm"
             >
               {theme === 'dark'
-                ? <><Sun size={18} className="text-amber-400" /> Açık Mod</>
+                ? <><Sun size={18} className="text-amber-400" /> AÃ§Ä±k Mod</>
                 : <><Moon size={18} className="text-indigo-400" /> Koyu Mod</>
               }
             </button>
@@ -532,7 +535,7 @@ export function AppLayout({ children, hideBottomNav }: {
               <button
                 onClick={handleLogout}
                 className="text-white/30 hover:text-red-400 transition-colors p-1"
-                title="Çıkış Yap"
+                title="Ã‡Ä±kÄ±ÅŸ Yap" aria-label="Ã‡Ä±kÄ±ÅŸ Yap"
               >
                 <LogOut size={14} />
               </button>
@@ -547,7 +550,7 @@ export function AppLayout({ children, hideBottomNav }: {
             <div className="flex items-center gap-2">
               <ThemeToggle />
               <Link href="/bildirimler">
-                <button className="w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all">
+                <button aria-label="Bildirimler" className="w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all">
                   <Bell size={15} />
                 </button>
               </Link>
@@ -556,7 +559,7 @@ export function AppLayout({ children, hideBottomNav }: {
           <div className={hideBottomNav ? '' : 'pb-8'}>{children}</div>
         </main>
 
-        {/* Sağ sidebar */}
+        {/* SaÄŸ sidebar */}
         <aside className="sticky top-0 h-screen px-4 py-6 space-y-4 overflow-y-auto">
           <RightPanel />
         </aside>

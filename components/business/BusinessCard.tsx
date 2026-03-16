@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 import Link from 'next/link'
 import { MapPin, Star, MessageSquare, BadgeCheck, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -10,8 +10,11 @@ interface BusinessCardProps {
 }
 
 export function BusinessCard({ business }: BusinessCardProps) {
-  const rating = business.rating || 0
-  const reviewCount = business.reviewCount || 0
+  const rating = business.averageRating ?? business.rating ?? 0
+  const reviewCount = business.totalReviews ?? business.reviewCount ?? 0
+
+  // API'den gelen photos dizisini veya eski image alanını destekle
+  const imageUrl = business.photos?.[0]?.url ?? business.image ?? null
 
   return (
     <Link href={`/isletme/${business.slug}`}>
@@ -21,11 +24,11 @@ export function BusinessCard({ business }: BusinessCardProps) {
         hover:border-indigo-500/30 hover:bg-indigo-500/[0.03]
         transition-all duration-200">
 
-        {/* Sol: Kucuk resim */}
+        {/* Sol: Küçük resim */}
         <div className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-white/[0.04]">
-          {business.image ? (
+          {imageUrl ? (
             <img
-              src={business.image}
+              src={imageUrl}
               alt={business.name}
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
@@ -36,7 +39,7 @@ export function BusinessCard({ business }: BusinessCardProps) {
               <span className="text-2xl opacity-15">🏢</span>
             </div>
           )}
-          {/* Acik/Kapali badge */}
+          {/* Açık/Kapalı badge */}
           {business.isOpen !== undefined && (
             <span className={cn(
               'absolute bottom-1 left-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full',
@@ -47,11 +50,11 @@ export function BusinessCard({ business }: BusinessCardProps) {
           )}
         </div>
 
-        {/* Sag: Bilgiler */}
+        {/* Sağ: Bilgiler */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              {/* Isim + dogrulama */}
+              {/* İsim + doğrulama */}
               <div className="flex items-center gap-1.5">
                 <h3 className="text-sm font-bold text-white truncate">{business.name}</h3>
                 {business.isVerified && <BadgeCheck size={13} className="text-indigo-400 flex-shrink-0" />}
@@ -69,7 +72,11 @@ export function BusinessCard({ business }: BusinessCardProps) {
               </div>
 
               {/* Kategori */}
-              <span className="text-[10px] text-white/30 mt-0.5 block truncate">{typeof business.category === "string" ? business.category : (business.category as any)?.name ?? "Genel"}</span>
+              <span className="text-[10px] text-white/30 mt-0.5 block truncate">
+                {typeof business.category === 'string'
+                  ? business.category
+                  : (business.category as any)?.name ?? 'Genel'}
+              </span>
             </div>
 
             {/* Puan */}
@@ -84,7 +91,7 @@ export function BusinessCard({ business }: BusinessCardProps) {
             )}
           </div>
 
-          {/* Alt: Ozellikler */}
+          {/* Alt: Özellikler */}
           {business.attributes && business.attributes.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
               {business.attributes.slice(0, 3).map((attr: string, i: number) => (

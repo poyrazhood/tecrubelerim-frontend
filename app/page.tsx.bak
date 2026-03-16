@@ -315,8 +315,6 @@ export default function HomePage() {
           <span className="text-xs text-white/40">
             {loading ? '…' : `${totalCount.toLocaleString('tr-TR')} yorum`}
           </span>
-          <span className="text-white/20">·</span>
-          <Link href="/sehirler" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-medium flex items-center gap-1"><MapPin size={11} />Şehir Seç</Link>
         </div>
 
         {/* Search */}

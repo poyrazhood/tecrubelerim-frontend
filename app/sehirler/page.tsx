@@ -1,197 +1,239 @@
-﻿'use client'
+'use client'
 
 import Link from 'next/link'
-import { MapPin, Search, Sparkles, TrendingUp, ArrowUpRight, Flame } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { MapPin, Search, Building2, ChevronRight } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
 
-const POPULAR_CITIES = [
-  { name: 'Istanbul', href: '/istanbul', count: '12.4K mekan', vibe: 'En cok yorumlanan sehir', tone: 'from-pink-500/20 to-transparent' },
-  { name: 'Ankara', href: '/ankara', count: '8.1K mekan', vibe: 'Kafe, restoran, kampus rotalari', tone: 'from-indigo-500/20 to-transparent' },
-  { name: 'Izmir', href: '/izmir', count: '7.3K mekan', vibe: 'Sahil, lezzet, sosyal hayat', tone: 'from-cyan-500/20 to-transparent' },
-  { name: 'Antalya', href: '/antalya', count: '6.2K mekan', vibe: 'Turizm ve deneyim odakli', tone: 'from-amber-500/20 to-transparent' },
-  { name: 'Bursa', href: '/bursa', count: '4.9K mekan', vibe: 'Aile ve lezzet rotalari', tone: 'from-emerald-500/20 to-transparent' },
-  { name: 'Konya', href: '/konya', count: '3.8K mekan', vibe: 'Yerel deneyimler one cikiyor', tone: 'from-fuchsia-500/20 to-transparent' }
-]
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
 const CITY_GROUPS = [
-  { title: 'Marmara', cities: ['Istanbul', 'Bursa', 'Kocaeli', 'Sakarya', 'Tekirdag', 'Edirne', 'Balikesir', 'Canakkale'] },
-  { title: 'Ic Anadolu', cities: ['Ankara', 'Konya', 'Eskisehir', 'Kayseri', 'Sivas', 'Kirikkale', 'Aksaray', 'Nevsehir'] },
-  { title: 'Ege', cities: ['Izmir', 'Manisa', 'Aydin', 'Mugla', 'Denizli', 'Usak', 'Kutahya', 'Afyonkarahisar'] },
-  { title: 'Akdeniz', cities: ['Antalya', 'Adana', 'Mersin', 'Hatay', 'Isparta', 'Burdur', 'Osmaniye', 'Kahramanmaras'] },
-  { title: 'Karadeniz', cities: ['Samsun', 'Trabzon', 'Ordu', 'Giresun', 'Rize', 'Sinop', 'Amasya', 'Tokat'] },
-  { title: 'Dogu ve Guneydogu', cities: ['Gaziantep', 'Sanliurfa', 'Diyarbakir', 'Mardin', 'Van', 'Erzurum', 'Malatya', 'Elazig'] }
+  {
+    title: 'Marmara',
+    color: 'text-blue-400',
+    dot: 'bg-blue-400',
+    cities: [
+      { name: 'İstanbul',  slug: 'istanbul'  },
+      { name: 'Bursa',     slug: 'bursa'     },
+      { name: 'Kocaeli',   slug: 'kocaeli'   },
+      { name: 'Sakarya',   slug: 'sakarya'   },
+      { name: 'Tekirdağ',  slug: 'tekirdag'  },
+      { name: 'Edirne',    slug: 'edirne'    },
+      { name: 'Balıkesir', slug: 'balikesir' },
+      { name: 'Çanakkale', slug: 'canakkale' },
+      { name: 'Yalova',    slug: 'yalova'    },
+      { name: 'Bilecik',   slug: 'bilecik'   },
+    ],
+  },
+  {
+    title: 'İç Anadolu',
+    color: 'text-purple-400',
+    dot: 'bg-purple-400',
+    cities: [
+      { name: 'Ankara',     slug: 'ankara'     },
+      { name: 'Konya',      slug: 'konya'      },
+      { name: 'Eskişehir',  slug: 'eskisehir'  },
+      { name: 'Kayseri',    slug: 'kayseri'    },
+      { name: 'Sivas',      slug: 'sivas'      },
+      { name: 'Kırıkkale',  slug: 'kirikkale'  },
+      { name: 'Aksaray',    slug: 'aksaray'    },
+      { name: 'Nevşehir',   slug: 'nevsehir'   },
+      { name: 'Kırşehir',   slug: 'kirsehir'   },
+      { name: 'Yozgat',     slug: 'yozgat'     },
+    ],
+  },
+  {
+    title: 'Ege',
+    color: 'text-cyan-400',
+    dot: 'bg-cyan-400',
+    cities: [
+      { name: 'İzmir',          slug: 'izmir'          },
+      { name: 'Manisa',         slug: 'manisa'         },
+      { name: 'Aydın',          slug: 'aydin'          },
+      { name: 'Muğla',          slug: 'mugla'          },
+      { name: 'Denizli',        slug: 'denizli'        },
+      { name: 'Uşak',           slug: 'usak'           },
+      { name: 'Kütahya',        slug: 'kutahya'        },
+      { name: 'Afyonkarahisar', slug: 'afyonkarahisar' },
+    ],
+  },
+  {
+    title: 'Akdeniz',
+    color: 'text-orange-400',
+    dot: 'bg-orange-400',
+    cities: [
+      { name: 'Antalya',        slug: 'antalya'        },
+      { name: 'Adana',          slug: 'adana'          },
+      { name: 'Mersin',         slug: 'mersin'         },
+      { name: 'Hatay',          slug: 'hatay'          },
+      { name: 'Isparta',        slug: 'isparta'        },
+      { name: 'Burdur',         slug: 'burdur'         },
+      { name: 'Osmaniye',       slug: 'osmaniye'       },
+      { name: 'Kahramanmaraş',  slug: 'kahramanmaras'  },
+    ],
+  },
+  {
+    title: 'Karadeniz',
+    color: 'text-emerald-400',
+    dot: 'bg-emerald-400',
+    cities: [
+      { name: 'Samsun',    slug: 'samsun'    },
+      { name: 'Trabzon',   slug: 'trabzon'   },
+      { name: 'Ordu',      slug: 'ordu'      },
+      { name: 'Giresun',   slug: 'giresun'   },
+      { name: 'Rize',      slug: 'rize'      },
+      { name: 'Sinop',     slug: 'sinop'     },
+      { name: 'Amasya',    slug: 'amasya'    },
+      { name: 'Tokat',     slug: 'tokat'     },
+      { name: 'Kastamonu', slug: 'kastamonu' },
+      { name: 'Zonguldak', slug: 'zonguldak' },
+    ],
+  },
+  {
+    title: 'Doğu ve Güneydoğu',
+    color: 'text-rose-400',
+    dot: 'bg-rose-400',
+    cities: [
+      { name: 'Gaziantep',  slug: 'gaziantep'  },
+      { name: 'Şanlıurfa',  slug: 'sanliurfa'  },
+      { name: 'Diyarbakır', slug: 'diyarbakir' },
+      { name: 'Mardin',     slug: 'mardin'     },
+      { name: 'Van',        slug: 'van'        },
+      { name: 'Erzurum',    slug: 'erzurum'    },
+      { name: 'Malatya',    slug: 'malatya'    },
+      { name: 'Elazığ',     slug: 'elazig'     },
+      { name: 'Batman',     slug: 'batman'     },
+      { name: 'Siirt',      slug: 'siirt'      },
+    ],
+  },
 ]
 
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/ı/g, 'i')
-    .replace(/ğ/g, 'g')
-    .replace(/ü/g, 'u')
-    .replace(/ş/g, 's')
-    .replace(/ö/g, 'o')
-    .replace(/ç/g, 'c')
-    .replace(/\s+/g, '-')
-}
+const ALL_CITIES = CITY_GROUPS.flatMap(g => g.cities)
 
 export default function SehirlerPage() {
   const [query, setQuery] = useState('')
+  // slug → count map
+  const [counts, setCounts] = useState<Record<string, number>>({})
+  const [statsLoaded, setStatsLoaded] = useState(false)
+
+  useEffect(() => {
+    fetch(`${API}/businesses/cities-stats`)
+      .then(r => r.json())
+      .then(d => {
+        const map: Record<string, number> = {}
+        const rows: { city: string; count: number }[] = d.data || []
+        rows.forEach(row => {
+          // city name → slug eşleştir
+          const found = ALL_CITIES.find(c =>
+            c.name.toLowerCase() === row.city?.toLowerCase()
+          )
+          if (found) map[found.slug] = row.count
+        })
+        setCounts(map)
+        setStatsLoaded(true)
+      })
+      .catch(() => setStatsLoaded(true))
+  }, [])
 
   const filteredGroups = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return CITY_GROUPS
-
     return CITY_GROUPS
-      .map(group => ({
-        ...group,
-        cities: group.cities.filter(city => city.toLowerCase().includes(q))
+      .map(g => ({
+        ...g,
+        cities: g.cities.filter(c =>
+          c.name.toLowerCase().includes(q) || c.slug.includes(q)
+        ),
       }))
-      .filter(group => group.cities.length > 0)
+      .filter(g => g.cities.length > 0)
   }, [query])
+
+  function fmt(n: number) {
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}B`
+    return n.toString()
+  }
 
   return (
     <AppLayout>
       <div className="max-w-xl mx-auto pb-24 pt-5 px-4">
-        <section className="relative overflow-hidden rounded-[30px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.025))] p-5 shadow-[0_10px_50px_rgba(0,0,0,0.24)]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,0.16),transparent_30%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.15),transparent_26%),linear-gradient(180deg,transparent,rgba(255,255,255,0.02))]" />
-          <div className="relative">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.05] px-3 py-1.5 text-[11px] font-semibold text-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-              <Sparkles size={12} />
-              Sehir sec, deneyimi daralt
-            </div>
 
-            <div className="mt-4 flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <h1 className="text-[34px] leading-none font-black tracking-tight text-white">
-                  Sehirler
-                </h1>
-                <p className="mt-3 max-w-md text-[15px] leading-7 text-white/55">
-                  Sehir bazli kesfet, bolgesel tercihleri filtrele ve gercek kullanici deneyimlerine daha hizli ulas.
-                </p>
+        {/* Başlık */}
+        <div className="mb-5">
+          <h1 className="text-2xl font-black text-white tracking-tight">Şehirler</h1>
+          <p className="text-sm text-white/40 mt-1">
+            81 şehirde işletmeleri keşfet, gerçek yorumları incele.
+          </p>
+        </div>
+
+        {/* Arama */}
+        <div className="relative mb-6">
+          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Şehir ara…"
+            className="w-full h-10 pl-9 pr-4 rounded-xl bg-white/[0.05] border border-white/[0.08] text-sm text-white outline-none placeholder:text-white/25 focus:border-white/20 transition-colors"
+          />
+        </div>
+
+        {/* Bölgeler */}
+        <div className="space-y-5">
+          {filteredGroups.map(group => (
+            <div key={group.title}>
+
+              {/* Bölge başlığı */}
+              <div className="flex items-center gap-2 mb-2.5">
+                <div className={`w-1.5 h-1.5 rounded-full ${group.dot}`} />
+                <span className={`text-xs font-bold uppercase tracking-wider ${group.color}`}>
+                  {group.title}
+                </span>
               </div>
 
-              <div className="flex w-[138px] shrink-0 flex-col gap-2">
-                <div className="rounded-2xl border border-white/[0.08] bg-black/20 px-3 py-3 backdrop-blur-sm">
-                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/30">Kapsam</div>
-                  <div className="mt-1 text-xl font-black text-white">81+</div>
-                </div>
-                <div className="rounded-2xl border border-emerald-500/15 bg-emerald-500/[0.07] px-3 py-3 backdrop-blur-sm">
-                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/30">Trend</div>
-                  <div className="mt-1 flex items-center gap-1.5 text-xs font-bold text-emerald-400">
-                    <TrendingUp size={14} />
-                    Populer
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="relative mt-5">
-              <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Sehir ara..."
-                className="h-12 w-full rounded-2xl border border-white/[0.08] bg-black/25 pl-11 pr-4 text-sm text-white outline-none transition-all placeholder:text-white/22 focus:border-pink-500/35 focus:bg-white/[0.04]"
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-7">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Flame size={14} className="text-pink-400" />
-              <h2 className="text-sm font-black text-white">Populer sehirler</h2>
-            </div>
-            <span className="text-[11px] text-white/35">Hizli gecis</span>
-          </div>
-
-          <div className="grid gap-3">
-            {POPULAR_CITIES.map((city) => (
-              <Link
-                key={city.name}
-                href={city.href}
-                className="group relative overflow-hidden rounded-[26px] border border-white/[0.08] bg-white/[0.03] p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-white/[0.12] hover:bg-white/[0.045]"
-              >
-                <div className={'absolute inset-0 bg-gradient-to-br ' + city.tone + ' opacity-70'} />
-                <div className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(circle_at_right_top,rgba(255,255,255,0.08),transparent_25%)]" />
-
-                <div className="relative">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/[0.08] bg-black/25 text-pink-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-                        <MapPin size={18} />
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="text-[22px] leading-none font-black tracking-tight text-white">
-                          {city.name}
-                        </div>
-                        <div className="mt-2 text-[12px] font-semibold text-white/42">
-                          {city.count}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold text-white/55 shrink-0">
-                      Sehir sayfasi
-                      <ArrowUpRight size={11} />
-                    </div>
-                  </div>
-
-                  <p className="mt-5 text-sm leading-6 text-white/58">
-                    {city.vibe}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-8">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-black text-white">Bolgelere gore sehirler</h2>
-            <span className="text-[11px] text-white/35">
-              {query ? 'Filtrelenmis sonuc' : 'Tum liste'}
-            </span>
-          </div>
-
-          <div className="space-y-4">
-            {filteredGroups.map((group) => (
-              <div
-                key={group.title}
-                className="rounded-[28px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.02))] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.18)]"
-              >
-                <div className="mb-4 flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-pink-400 shadow-[0_0_18px_rgba(236,72,153,0.9)]" />
-                  <h3 className="text-[15px] font-black text-white">{group.title}</h3>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  {group.cities.map((city) => (
+              {/* Şehir listesi */}
+              <div className="rounded-2xl border border-white/[0.07] overflow-hidden divide-y divide-white/[0.05]">
+                {group.cities.map((city, i) => {
+                  const count = counts[city.slug]
+                  return (
                     <Link
-                      key={city}
-                      href={`/${slugify(city)}`}
-                      className="rounded-2xl border border-white/[0.06] bg-black/20 px-3 py-3 text-sm font-semibold text-white/75 transition-all hover:border-white/[0.12] hover:bg-white/[0.05] hover:text-white"
+                      key={city.slug}
+                      href={`/${city.slug}`}
+                      className="flex items-center justify-between px-4 py-3 hover:bg-white/[0.04] transition-colors group"
                     >
-                      {city}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <MapPin size={13} className="text-white/20 shrink-0 group-hover:text-white/40 transition-colors" />
+                        <span className="text-sm font-semibold text-white/80 group-hover:text-white transition-colors truncate">
+                          {city.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {statsLoaded ? (
+                          count ? (
+                            <div className="flex items-center gap-1 text-[11px] text-white/35">
+                              <Building2 size={10} />
+                              <span>{fmt(count)}</span>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-white/20">—</span>
+                          )
+                        ) : (
+                          <div className="w-8 h-2 rounded bg-white/[0.06] animate-pulse" />
+                        )}
+                        <ChevronRight size={13} className="text-white/15 group-hover:text-white/40 transition-colors" />
+                      </div>
                     </Link>
-                  ))}
-                </div>
+                  )
+                })}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
 
           {filteredGroups.length === 0 && (
-            <div className="rounded-[28px] border border-white/[0.08] bg-white/[0.03] p-8 text-center">
-              <div className="text-base font-bold text-white">Sonuc bulunamadi</div>
-              <div className="mt-2 text-sm text-white/45">
-                Farkli bir sehir adi deneyebilirsin.
-              </div>
+            <div className="text-center py-16 text-white/30 text-sm">
+              <MapPin size={28} className="mx-auto mb-3 opacity-30" />
+              <p>"{query}" için sonuç bulunamadı.</p>
             </div>
           )}
-        </section>
+        </div>
       </div>
     </AppLayout>
   )
