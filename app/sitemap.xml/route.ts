@@ -7,7 +7,7 @@ export async function GET() {
     const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api') + '/businesses/count', { next: { revalidate: 86400 } })
     if (res.ok) { const d = await res.json(); total = d.total ?? total }
   } catch {}
-  const batchCount = Math.ceil(total / 50000)
+  const batchCount = Math.ceil(total / 10000)
   const now = new Date().toISOString()
   const sitemaps = [
     'sitemap/static.xml','sitemap/cities.xml','sitemap/categories.xml',
