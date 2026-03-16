@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     default: 'Tecrubelerim — Guvenilir Mahalle Deneyimleri',
     template: '%s | Tecrubelerim',
   },
-  description: 'AI destekli, guven tabanli yerel deneyim platformu. Mahalle muhtarlari ve dogrulanmis yorumlarla en guvenilir rehberiniz.',
+  description: 'AI destekli, güven tabanlı yerel deneyim platformu. Mahalle muhtarları ve doğrulanmış yorumlarla en güvenilir rehberiniz.',
   keywords: ['yorum', 'deneyim', 'guvenilir', 'mahalle', 'istanbul', 'kafe', 'restoran', 'isletme'],
   manifest: '/manifest.json',
   metadataBase: new URL('https://tecrubelerim.com'),
@@ -23,13 +23,13 @@ export const metadata: Metadata = {
     type: 'website',
     siteName: 'Tecrubelerim',
     title: 'Tecrubelerim — Guvenilir Mahalle Deneyimleri',
-    description: 'AI destekli guvenilir mahalle deneyim platformu',
+    description: 'AI destekli güvenilir mahalle deneyim platformu',
     url: 'https://tecrubelerim.com',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Tecrubelerim',
-    description: 'AI destekli guvenilir mahalle deneyim platformu',
+    description: 'AI destekli güvenilir mahalle deneyim platformu',
   },
   icons: {
     icon: [
@@ -46,8 +46,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   themeColor: [
     { media: '(prefers-color-scheme: dark)',  color: '#0C0C0F' },
     { media: '(prefers-color-scheme: light)', color: '#6366F1' },
@@ -58,6 +56,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="tr">
       <head>
+        <link rel="preconnect" href="https://api.tecrubelerim.com" />
+        <link rel="dns-prefetch" href="https://api.tecrubelerim.com" />
+        <link rel="preconnect" href="https://lh3.googleusercontent.com" crossOrigin="anonymous" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

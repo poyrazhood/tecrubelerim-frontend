@@ -74,10 +74,11 @@ function UserAvatar({ name, username, avatarUrl, size = 'sm' }: {
   const initials = ((name || username || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2))
   const dim = size === 'md' ? 'w-9 h-9 text-xs' : 'w-8 h-8 text-[10px]'
 
-  if (avatarUrl) {
+  const safeAvatarUrl = avatarUrl?.startsWith('http') ? avatarUrl : avatarUrl ? `https://api.tecrubelerim.com${avatarUrl}` : null
+  if (safeAvatarUrl) {
     return (
       <img
-        src={avatarUrl}
+        src={safeAvatarUrl}
         alt={name || username}
         className={cn(dim, 'rounded-full object-cover border border-white/10 flex-shrink-0')}
       />
@@ -91,7 +92,7 @@ function UserAvatar({ name, username, avatarUrl, size = 'sm' }: {
 }
 
 // ─── Sağ Panel ────────────────────────────────────────────────────────────────
-const API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/api\/?$/, '')
+const API_HOST = (process.env.NEXT_PUBLIC_API_URL || 'https://api.tecrubelerim.com').replace(/\/api\/?$/, '')
 
 function RightPanel() {
   const [topUsers, setTopUsers] = useState<any[]>([])
@@ -99,13 +100,13 @@ function RightPanel() {
 
   useEffect(() => {
     // Top kullanıcılar
-    fetch(`${API}/api/users?sort=trustScore&limit=5`)
+    fetch(`${API_HOST}/api/users?sort=trustScore&limit=5`)
       .then(r => r.json())
       .then(d => setTopUsers(Array.isArray(d) ? d : (d.users || d.data || [])))
       .catch(() => {})
 
     // Öne çıkan işletme
-    fetch(`${API}/api/businesses?sort=rating&limit=1`)
+    fetch(`${API_HOST}/api/businesses?sort=rating&limit=1`)
       .then(r => r.json())
       .then(d => {
         const list = Array.isArray(d) ? d : (d.data || [])
@@ -278,7 +279,7 @@ export function AppLayout({ children, hideBottomNav }: {
     if (!user) return
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
     if (!token) return
-    fetch(`${API}/api/users/me/businesses`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API_HOST}/api/users/me/businesses`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => {
         const businesses = d.businesses || d || []
@@ -376,7 +377,7 @@ export function AppLayout({ children, hideBottomNav }: {
             <div className="flex items-center gap-2 flex-shrink-0 ml-2">
               <ThemeToggle />
               <Link href="/bildirimler">
-                <button className="relative w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all">
+                <button aria-label="Bildirimler" className="relative w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all">
                   <Bell size={15} />
                 </button>
               </Link>
@@ -534,7 +535,7 @@ export function AppLayout({ children, hideBottomNav }: {
               <button
                 onClick={handleLogout}
                 className="text-white/30 hover:text-red-400 transition-colors p-1"
-                title="Çıkış Yap"
+                title="Çıkış Yap" aria-label="Çıkış Yap"
               >
                 <LogOut size={14} />
               </button>
@@ -549,7 +550,7 @@ export function AppLayout({ children, hideBottomNav }: {
             <div className="flex items-center gap-2">
               <ThemeToggle />
               <Link href="/bildirimler">
-                <button className="w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all">
+                <button aria-label="Bildirimler" className="w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all">
                   <Bell size={15} />
                 </button>
               </Link>

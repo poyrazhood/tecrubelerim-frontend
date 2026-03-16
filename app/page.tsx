@@ -225,13 +225,7 @@ export default function HomePage() {
   useEffect(() => {
     setMounted(true)
     fetchInitial()
-    // Konum al
-    if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(pos => {
-        setUserLat(pos.coords.latitude)
-        setUserLng(pos.coords.longitude)
-      }, () => {})
-    }
+    // Konum otomatik istenmez - kullanıcı isteğiyle alınır
   }, [])
 
   const fetchRecommendations = useCallback(async () => {
