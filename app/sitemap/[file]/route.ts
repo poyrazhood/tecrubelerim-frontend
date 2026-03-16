@@ -109,7 +109,7 @@ ${urls.join('\n')}
 
     while (allSlugs.length < BATCH_SIZE) {
       const res = await fetch(
-        `${API_BASE}/businesses?page=${currentPage}&limit=1000`,
+        `${API_BASE}/businesses?page=${currentPage}&limit=1000&_sitemap=1`,
         { next: { revalidate: 86400 } }
       )
       if (!res.ok) break
