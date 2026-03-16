@@ -114,7 +114,7 @@ ${urls.join('\n')}
       )
       if (!res.ok) break
       const data = await res.json()
-      const businesses = data.businesses ?? []
+      const businesses = data.businesses ?? data.data ?? []
       if (businesses.length === 0) break
       allSlugs.push(...businesses.map((b: any) => ({
         slug: b.slug,
