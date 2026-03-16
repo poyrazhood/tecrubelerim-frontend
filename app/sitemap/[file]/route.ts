@@ -1,7 +1,7 @@
 
 const SITE_URL = 'https://tecrubelerim.com'
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-const BATCH_SIZE = 50000
+const BATCH_SIZE = 10000
 
 export async function GET(
   request: Request,
@@ -121,7 +121,7 @@ ${urls.join('\n')}
         updatedAt: b.updatedAt ?? new Date().toISOString()
       })))
       currentPage++
-      if (businesses.length < 1000) break
+      if (businesses.length < 10000) break
     }
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
