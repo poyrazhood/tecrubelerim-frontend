@@ -255,7 +255,7 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
               <span>{business.priceRange}</span>
             </div>
           </div>
-          <TrustScoreRing score={business.trustScore} size="lg" />
+          <TrustScoreRing score={trustScoreObj as any} size="lg" />
         </div>
 
         {/* Trust stack */}
