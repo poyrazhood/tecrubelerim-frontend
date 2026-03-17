@@ -5,7 +5,7 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { Search, ArrowLeftRight, X, ChevronRight, AlertCircle, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '')
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
 interface Business {
   id: string
@@ -51,8 +51,8 @@ export default function KarsilastirAra() {
   const [catError, setCatError] = useState(false)
 
   const cache = useRef<Record<string, Business[]>>({})
-  const dq1 = useDebounce(q1, 280)
-  const dq2 = useDebounce(q2, 280)
+  const dq1 = useDebounce(q1, 180)
+  const dq2 = useDebounce(q2, 180)
 
   // Genel arama fonksiyonu
   const doSearch = useCallback(async (
@@ -60,13 +60,13 @@ export default function KarsilastirAra() {
     setR: (v: Business[]) => void,
     setLoading: (v: boolean) => void,
   ) => {
-    if (q.length < 2) { setR([]); return }
+    if (q.length < 3) { setR([]); return }
     if (cache.current[q]) { setR(cache.current[q]); return }
 
     setLoading(true)
     try {
       const res = await fetch(
-        `${API}/api/businesses?search=${encodeURIComponent(q)}&limit=12`,
+        `${API}/businesses?search=${encodeURIComponent(q)}&limit=12`,
         { signal: AbortSignal.timeout(6000) }
       )
       const d = await res.json()
@@ -93,7 +93,7 @@ export default function KarsilastirAra() {
         sort: 'totalReviews',
         limit: '8',
       })
-      const res = await fetch(`${API}/api/businesses?${params}`, { signal: AbortSignal.timeout(6000) })
+      const res = await fetch(`${API}/businesses?${params}`, { signal: AbortSignal.timeout(6000) })
       const d = await res.json()
       let arr: Business[] = d.data || d.businesses || []
       // biz1'in kendisini çıkar
@@ -191,7 +191,7 @@ export default function KarsilastirAra() {
                   {q1 && <button onClick={() => { setQ1(''); setR1([]) }} className="text-white/20 hover:text-white/50"><X size={12} /></button>}
                 </div>
                 {r1.length > 0 && <ResultList items={r1} onSelect={selectBiz1} />}
-                {!loading1 && q1.length >= 2 && r1.length === 0 && (
+                {!loading1 && q1.length >= 3 && r1.length === 0 && (
                   <div className="absolute top-full left-0 right-0 mt-1 rounded-xl border border-white/[0.08] bg-[#0f0f14] px-4 py-3 z-50 text-center text-sm text-white/30">
                     Sonuç bulunamadı
                   </div>
@@ -229,17 +229,17 @@ export default function KarsilastirAra() {
                 </div>
 
                 {/* Arama sonuçları */}
-                {q2.length >= 2 && r2.length > 0 && (
+                {q2.length >= 3 && r2.length > 0 && (
                   <ResultList items={r2} onSelect={selectBiz2} />
                 )}
-                {!loading2 && q2.length >= 2 && r2.length === 0 && (
+                {!loading2 && q2.length >= 3 && r2.length === 0 && (
                   <div className="absolute top-full left-0 right-0 mt-1 rounded-xl border border-white/[0.08] bg-[#0f0f14] px-4 py-3 z-50 text-center text-sm text-white/30">
                     Sonuç bulunamadı
                   </div>
                 )}
 
                 {/* Öneri listesi — arama yokken göster */}
-                {biz1 && q2.length < 2 && suggestions.length > 0 && (
+                {biz1 && q2.length < 3 && suggestions.length > 0 && (
                   <div className="mt-3">
                     <div className="flex items-center gap-1.5 mb-2">
                       <TrendingUp size={11} className="text-amber-400/70" />
@@ -271,7 +271,7 @@ export default function KarsilastirAra() {
                 )}
 
                 {/* Öneri yükleniyor */}
-                {biz1 && q2.length < 2 && suggestions.length === 0 && (
+                {biz1 && q2.length < 3 && suggestions.length === 0 && (
                   <div className="mt-3 space-y-2">
                     {[1,2,3].map(i => (
                       <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04] animate-pulse">

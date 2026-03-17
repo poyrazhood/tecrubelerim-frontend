@@ -219,7 +219,7 @@ export default function AuthModal({ initialMode = 'login', onClose, isPage = fal
         body: JSON.stringify(body),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.message || 'Bir hata oluştu')
+      if (!res.ok) throw new Error(data.message || data.error || 'Bir hata oluştu')
       const token = data.token || data.accessToken
       if (token) {
         localStorage.setItem('auth_token', token)

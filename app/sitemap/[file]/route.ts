@@ -101,28 +101,19 @@ ${urls.join('\n')}
   if (!match) return new Response('Not found', { status: 404 })
 
   const batchNum = parseInt(match[1])
-  const startPage = Math.floor(((batchNum - 1) * BATCH_SIZE) / 1000) + 1
 
   try {
-    const allSlugs: { slug: string; updatedAt: string }[] = []
-    let currentPage = startPage
-
-    while (allSlugs.length < BATCH_SIZE) {
-      const res = await fetch(
-        `${API_BASE}/businesses?page=${currentPage}&limit=10000&_sitemap=1`,
-        { next: { revalidate: 86400 } }
-      )
-      if (!res.ok) break
-      const data = await res.json()
-      const businesses = data.businesses ?? data.data ?? []
-      if (businesses.length === 0) break
-      allSlugs.push(...businesses.map((b: any) => ({
-        slug: b.slug,
-        updatedAt: b.updatedAt ?? new Date().toISOString()
-      })))
-      currentPage++
-      if (businesses.length < 10000) break
-    }
+    const res = await fetch(
+      `${API_BASE}/businesses?page=${batchNum}&limit=10000&_sitemap=1`,
+      { next: { revalidate: 86400 } }
+    )
+    if (!res.ok) return new Response('Error fetching businesses', { status: 500 })
+    const data = await res.json()
+    const businesses = data.businesses ?? data.data ?? []
+    const allSlugs: { slug: string; updatedAt: string }[] = businesses.map((b: any) => ({
+      slug: b.slug,
+      updatedAt: b.updatedAt ?? new Date().toISOString()
+    }))
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
