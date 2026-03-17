@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -162,7 +162,7 @@ function SectorMetrics({ business }: { business: Business }) {
     ],
   }
 
-  const metrics = metricsByCategory[business.category]
+  const metrics = metricsByCategory[typeof business.category === "string" ? business.category : (business.category as any)?.name ?? ""]
   if (!metrics) return null
 
   return (
