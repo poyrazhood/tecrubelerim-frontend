@@ -227,7 +227,7 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
         {/* Category + open badge */}
         <div className="absolute bottom-4 left-4 flex items-center gap-2">
           <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-sm border border-white/20 text-white">
-            {business.category}
+            {typeof business.category === "string" ? business.category : (business.category as any)?.name ?? ""}
           </span>
           <span className={cn(
             'text-xs font-bold px-2.5 py-1 rounded-full backdrop-blur-sm',
