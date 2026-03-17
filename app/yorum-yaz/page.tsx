@@ -72,7 +72,7 @@ function YorumYazInner() {
   const preId = searchParams.get('businessId')
   const preName = searchParams.get('businessName')
 
-  const [mode, setMode] = useState<'quick'|'detail'|'done-quick'|null>('quick')
+  const [mode, setMode] = useState<string|null>('quick')
   const [selectedAttrs, setSelectedAttrs] = useState<string[]>([])
   const [bizCategory, setBizCategory] = useState('')
   const [step, setStep] = useState(1)
