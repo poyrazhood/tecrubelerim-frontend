@@ -11,7 +11,7 @@ import { TrustScoreRing } from '@/components/ui/TrustScoreRing'
 import { TrustStack } from '@/components/ui/TrustStack'
 import { ReviewCard } from '@/components/feed/ReviewCard'
 import { cn, getTrustColor } from '@/lib/utils'
-import type { Business, Review } from '@/types'
+import type { Business, Review, TrustScore } from '@/types'
 
 interface BusinessProfileClientProps {
   business: Business
@@ -21,39 +21,57 @@ interface BusinessProfileClientProps {
 const RESPONSE_TEMPLATES = [
   {
     id: 't1', tone: 'professional', Icon: Briefcase, label: 'Profesyonel',
-    preview: 'DeÄŸerli mÃ¼ÅŸterimiz, geri bildiriminiz iÃ§in teÅŸekkÃ¼r ederiz...',
-    full: 'DeÄŸerli mÃ¼ÅŸterimiz, geri bildiriminiz iÃ§in teÅŸekkÃ¼r ederiz. YaÅŸadÄ±ÄŸÄ±nÄ±z deneyimi ciddiyetle deÄŸerlendiriyoruz. Kalite standartlarÄ±mÄ±zÄ± korumak adÄ±na gerekli Ã¶nlemleri alacaÄŸÄ±mÄ±zÄ± bildirmek isteriz.',
+    preview: 'Değerli müşterimiz, geri bildiriminiz için teşekkür ederiz...',
+    full: 'Değerli müşterimiz, geri bildiriminiz için teşekkür ederiz. Yaşadığınız deneyimi ciddiyetle değerlendiriyoruz. Kalite standartlarımızı korumak adına gerekli önlemleri alacağımızı bildirmek isteriz.',
   },
   {
     id: 't2', tone: 'friendly', Icon: Smile, label: 'Samimi',
-    preview: 'Merhaba! Ã–ncelikle bizi tercih ettiÄŸiniz iÃ§in teÅŸekkÃ¼rler...',
-    full: 'Merhaba! Ã–ncelikle bizi tercih ettiÄŸiniz iÃ§in teÅŸekkÃ¼rler ğŸ™ Yorumunuzu okuduk ve Ã§ok deÄŸerli bulduk. Bir dahaki ziyaretinizde sizi aÄŸÄ±rlamaktan mutluluk duyacaÄŸÄ±z!',
+    preview: 'Merhaba! Öncelikle bizi tercih ettiğiniz için teşekkürler...',
+    full: 'Merhaba! Öncelikle bizi tercih ettiğiniz için teşekkürler 🙏 Yorumunuzu okuduk ve çok değerli bulduk. Bir dahaki ziyaretinizde sizi ağırlamaktan mutluluk duyacağız!',
   },
   {
-    id: 't3', tone: 'apologetic', Icon: Frown, label: 'Ã–zÃ¼r Dileyen',
-    preview: 'Ã–ncelikle yaÅŸadÄ±ÄŸÄ±nÄ±z olumsuz deneyim iÃ§in Ã¶zÃ¼r dileriz...',
-    full: 'Ã–ncelikle yaÅŸadÄ±ÄŸÄ±nÄ±z olumsuz deneyim iÃ§in iÃ§ten Ã¶zÃ¼r dileriz. Bu asla kabul edilemez ve standartlarÄ±mÄ±zÄ±n altÄ±nda bir durum. HatamÄ±zÄ± telafi etmek iÃ§in sizi Ã¶zel olarak arayacaÄŸÄ±z.',
+    id: 't3', tone: 'apologetic', Icon: Frown, label: 'Özür Dileyen',
+    preview: 'Öncelikle yaşadığınız olumsuz deneyim için özür dileriz...',
+    full: 'Öncelikle yaşadığınız olumsuz deneyim için içten özür dileriz. Bu asla kabul edilemez ve standartlarımızın altında bir durum. Hatamızı telafi etmek için sizi özel olarak arayacağız.',
   },
 ]
 
+function getCategory(business: Business): string {
+  if (typeof business.category === 'string') return business.category
+  return (business.category as any)?.name ?? ''
+}
+
+function makeTrustScore(business: Business): TrustScore {
+  if (business.trustScore && typeof business.trustScore === 'object') {
+    return business.trustScore as TrustScore
+  }
+  const raw = typeof business.trustScore === 'number' ? business.trustScore : 50
+  const score = raw > 5 ? Math.min(100, Math.round(raw)) : Math.round(raw * 20)
+  const grade = score >= 90 ? 'A' : score >= 75 ? 'B' : score >= 60 ? 'C' : score >= 40 ? 'D' : 'F'
+  return {
+    grade, score,
+    breakdown: { reviewDepth: Math.round(score * 0.9), recencyTrend: Math.round(score * 1.05), verifiedRatio: Math.round(score * 0.95), engagement: Math.round(score * 0.85) },
+    trend: 'stable',
+  }
+}
+
 function AISummaryCard({ business }: { business: Business }) {
+  const summary = business.aiSummary ?? { atmosphere: '', price: '', bestTime: '', highlights: [] }
   return (
     <div className="rounded-2xl border border-white/[0.07] bg-surface-2 p-4">
       <div className="flex items-center gap-2 mb-3">
         <Brain size={15} className="text-indigo-400" />
-        <span className="text-sm font-bold text-white">AI Ã–zeti</span>
+        <span className="text-sm font-bold text-white">AI Özeti</span>
         <span className="text-[10px] text-white/30 ml-1">Perplexity-style</span>
       </div>
-
       <p className="text-xs text-white/50 mb-3">
-        {business.reviewCount} yorumun analizine gÃ¶re:
+        {business.reviewCount ?? 0} yorumun analizine göre:
       </p>
-
       <ul className="space-y-2.5 mb-4">
         {[
-          { label: 'Atmosfer', value: (business.aiSummary ?? { atmosphere: "", price: "", bestTime: "", highlights: [] }).atmosphere },
-          { label: 'Fiyat', value: (business.aiSummary ?? { atmosphere: "", price: "", bestTime: "", highlights: [] }).price },
-          { label: 'En Ä°yi Zaman', value: (business.aiSummary ?? { atmosphere: "", price: "", bestTime: "", highlights: [] }).bestTime },
+          { label: 'Atmosfer', value: summary.atmosphere },
+          { label: 'Fiyat', value: summary.price },
+          { label: 'En İyi Zaman', value: summary.bestTime },
         ].map((item) => (
           <li key={item.label} className="flex gap-2 text-sm">
             <span className="text-indigo-400 font-semibold flex-shrink-0">{item.label}:</span>
@@ -61,24 +79,22 @@ function AISummaryCard({ business }: { business: Business }) {
           </li>
         ))}
       </ul>
-
       <div className="border-t border-white/[0.06] pt-3">
-        <div className="text-xs font-semibold text-white/40 mb-2">Ã–ne Ã‡Ä±kanlar</div>
+        <div className="text-xs font-semibold text-white/40 mb-2">Öne Çıkanlar</div>
         <div className="flex flex-wrap gap-1.5">
-          {(business.aiSummary?.highlights ?? []).map((h) => (
+          {(summary.highlights ?? []).map((h) => (
             <span key={h} className="text-xs px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
-              âœ¦ {h}
+              ✦ {h}
             </span>
           ))}
         </div>
       </div>
-
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/[0.06]">
         <button className="text-xs text-white/30 hover:text-white/60 flex items-center gap-1 transition-colors">
-          <TrendingUp size={12} /> FaydalÄ± (89)
+          <TrendingUp size={12} /> Faydalı (89)
         </button>
         <button className="text-xs text-white/30 hover:text-white/60 flex items-center gap-1 transition-colors">
-          Yeniden Ã–zetle â†º
+          Yeniden Özetle ↺
         </button>
       </div>
     </div>
@@ -97,7 +113,7 @@ function AIResponsePanel() {
       >
         <div className="flex items-center gap-2">
           <MessageSquare size={15} className="text-purple-400" />
-          <span className="text-sm font-bold text-white">AI YanÄ±t AsistanÄ±</span>
+          <span className="text-sm font-bold text-white">AI Yanıt Asistanı</span>
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30">Ollama</span>
         </div>
         <ChevronRight size={14} className={cn('text-white/30 transition-transform', open && 'rotate-90')} />
@@ -128,7 +144,7 @@ function AIResponsePanel() {
                   <p className="text-sm text-white/80 leading-relaxed mb-3">{t.full}</p>
                   <button className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-purple-500/20 text-purple-300 text-sm font-semibold border border-purple-500/30 hover:bg-purple-500/30 transition-all">
                     <Send size={13} />
-                    Bu YanÄ±tÄ± Kullan
+                    Bu Yanıtı Kullan
                   </button>
                 </div>
               )}
@@ -149,27 +165,27 @@ function SectorMetrics({ business }: { business: Business }) {
       { label: 'Fiyat/Perf.', value: 85, color: '#F472B6' },
     ],
     'Oto Servis': [
-      { label: 'Fiyat ÅeffaflÄ±ÄŸÄ±', value: 95, color: '#818CF8' },
-      { label: 'TeÅŸhis DoÄŸruluÄŸu', value: 94, color: '#34D399' },
-      { label: 'ParÃ§a OrijinalliÄŸi', value: 98, color: '#FBBF24' },
-      { label: 'Garanti DesteÄŸi', value: 92, color: '#F472B6' },
+      { label: 'Fiyat Şeffaflığı', value: 95, color: '#818CF8' },
+      { label: 'Teşhis Doğruluğu', value: 94, color: '#34D399' },
+      { label: 'Parça Orijinalliği', value: 98, color: '#FBBF24' },
+      { label: 'Garanti Desteği', value: 92, color: '#F472B6' },
     ],
-    'EÄŸitim': [
-      { label: 'Ã–ÄŸretmen Ä°lgisi', value: 94, color: '#818CF8' },
-      { label: 'Veli Ä°letiÅŸimi', value: 89, color: '#34D399' },
-      { label: 'Ä°lerleme Takibi', value: 87, color: '#FBBF24' },
+    'Eğitim': [
+      { label: 'Öğretmen İlgisi', value: 94, color: '#818CF8' },
+      { label: 'Veli İletişimi', value: 89, color: '#34D399' },
+      { label: 'İlerleme Takibi', value: 87, color: '#FBBF24' },
       { label: 'Fiyat/Perf.', value: 82, color: '#F472B6' },
     ],
   }
 
-  const metrics = metricsByCategory[typeof business.category === "string" ? business.category : (business.category as any)?.name ?? ""]
+  const metrics = metricsByCategory[getCategory(business)]
   if (!metrics) return null
 
   return (
     <div className="rounded-2xl border border-white/[0.07] bg-surface-2 p-4">
       <div className="flex items-center gap-2 mb-4">
         <Wrench size={15} className="text-amber-400" />
-        <span className="text-sm font-bold text-white">SektÃ¶rel DeÄŸerlendirme</span>
+        <span className="text-sm font-bold text-white">Sektörel Değerlendirme</span>
       </div>
       <div className="grid grid-cols-2 gap-3">
         {metrics.map((m) => (
@@ -177,10 +193,7 @@ function SectorMetrics({ business }: { business: Business }) {
             <div className="text-xl font-black mb-0.5" style={{ color: m.color }}>
               %{m.value}
             </div>
-            <div className="text-[11px] text-white/40">{m.label}</div>
-            <div className="mt-2 h-1 rounded-full bg-white/[0.06] overflow-hidden">
-              <div className="h-full rounded-full" style={{ width: `${m.value}%`, background: m.color }} />
-            </div>
+            <div className="text-[11px] text-white/50">{m.label}</div>
           </div>
         ))}
       </div>
@@ -192,8 +205,8 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
   const [activeTab, setActiveTab] = useState<'ozet' | 'yorumlar' | 'fotograflar'>('ozet')
   const [saved, setSaved] = useState(false)
 
-  const trustScoreObj = typeof business.trustScore === "number" ? { grade: "C", score: business.trustScore, breakdown: { reviewDepth: 60, recencyTrend: 60, verifiedRatio: 60, engagement: 60 }, trend: "stable" as const } : business.trustScore
-  const color = getTrustColor(trustScoreObj?.grade ?? "C")
+  const trustScoreObj = makeTrustScore(business)
+  const color = getTrustColor(trustScoreObj.grade)
 
   return (
     <div className="min-h-screen">
@@ -204,30 +217,30 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
           alt={business.name}
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-surface" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
         {/* Top bar */}
         <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-4">
-          <Link href="/" className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/20 text-white hover:bg-black/60 transition-all">
-            <ChevronLeft size={18} />
+          <Link href="/" className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/20">
+            <ChevronLeft size={18} className="text-white" />
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex gap-2">
             <button
               onClick={() => setSaved(!saved)}
-              className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/20 text-white hover:bg-black/60 transition-all"
+              className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/20"
             >
-              <Bookmark size={15} className={saved ? 'fill-white' : ''} />
+              <Bookmark size={15} className={saved ? 'text-indigo-400 fill-indigo-400' : 'text-white'} />
             </button>
-            <button className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/20 text-white hover:bg-black/60 transition-all">
-              <Share2 size={15} />
+            <button className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/20">
+              <Share2 size={15} className="text-white" />
             </button>
           </div>
         </div>
 
-        {/* Category + open badge */}
+        {/* Bottom badges */}
         <div className="absolute bottom-4 left-4 flex items-center gap-2">
           <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-sm border border-white/20 text-white">
-            {typeof business.category === "string" ? business.category : (business.category as any)?.name ?? ""}
+            {getCategory(business)}
           </span>
           <span className={cn(
             'text-xs font-bold px-2.5 py-1 rounded-full backdrop-blur-sm',
@@ -235,7 +248,7 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
               ? 'bg-emerald-500/30 border border-emerald-500/50 text-emerald-300'
               : 'bg-red-500/30 border border-red-500/50 text-red-300'
           )}>
-            {business.isOpen ? 'â— AÃ§Ä±k' : 'â— KapalÄ±'} Â· {business.hours}
+            {business.isOpen ? '● Açık' : '● Kapalı'} · {business.hours}
           </span>
         </div>
       </div>
@@ -251,42 +264,46 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
             <div className="flex items-center gap-1.5 text-xs text-white/50">
               <MapPin size={11} />
               <span>{business.district}, {business.city}</span>
-              <span className="text-white/20">Â·</span>
+              <span className="text-white/20">·</span>
               <span>{business.priceRange}</span>
             </div>
           </div>
-          <TrustScoreRing score={trustScoreObj as any} size="lg" />
+          <TrustScoreRing score={trustScoreObj} size="lg" />
         </div>
 
         {/* Trust stack */}
-        <div className="mb-3">
-          <TrustStack stack={business.trustStack} />
-        </div>
+        {business.trustStack && (
+          <div className="mb-3">
+            <TrustStack stack={business.trustStack} />
+          </div>
+        )}
 
-        {/* GÃ¶nÃ¼l Alma */}
+        {/* Gönül Alma */}
         {business.hasGonulAlma && (
           <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl bg-pink-500/10 border border-pink-500/20">
             <Heart size={13} className="text-pink-400 fill-pink-400" />
-            <span className="text-xs font-bold text-pink-400 uppercase tracking-wider">GÃ¶nÃ¼l Alma Rozeti</span>
-            <span className="text-xs text-white/40 ml-1">MÃ¼ÅŸteri memnuniyetine Ã¶zel Ã§aba gÃ¶sterdi</span>
+            <span className="text-xs font-bold text-pink-400 uppercase tracking-wider">Gönül Alma Rozeti</span>
+            <span className="text-xs text-white/40 ml-1">Müşteri memnuniyetine özel çaba gösterdi</span>
           </div>
         )}
 
         {/* Cultural tags */}
-        <div className="flex flex-wrap gap-1.5 mb-4">
-          {business.culturalTags.map((tag) => (
-            <span key={tag} className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400/80 border border-amber-500/20">
-              {tag}
-            </span>
-          ))}
-        </div>
+        {(business.culturalTags ?? []).length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {(business.culturalTags ?? []).map((tag) => (
+              <span key={tag} className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400/80 border border-amber-500/20">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-2 mb-4">
           {[
-            { label: 'Yorum', value: business.reviewCount.toLocaleString('tr-TR') },
-            { label: 'TrustScore', value: business.trustScore.score, color },
-            { label: 'EÅŸleÅŸme', value: business.semanticMatch ? `%${business.semanticMatch}` : 'â€”' },
+            { label: 'Yorum', value: (business.reviewCount ?? 0).toLocaleString('tr-TR') },
+            { label: 'TrustScore', value: trustScoreObj.score, color },
+            { label: 'Eşleşme', value: business.semanticMatch ? `%${business.semanticMatch}` : '—' },
           ].map((stat) => (
             <div key={stat.label} className="p-3 rounded-xl bg-surface-2 border border-white/[0.06] text-center">
               <div className="text-lg font-black text-white" style={stat.color ? { color: stat.color } : {}}>
@@ -300,9 +317,9 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
         {/* Tabs */}
         <div className="flex gap-1 bg-surface-2 p-1 rounded-xl border border-white/[0.06] mb-4">
           {[
-            { key: 'ozet', label: 'AI Ã–zet' },
+            { key: 'ozet', label: 'AI Özet' },
             { key: 'yorumlar', label: `Yorumlar (${reviews.length})` },
-            { key: 'fotograflar', label: 'FotoÄŸraflar' },
+            { key: 'fotograflar', label: 'Fotoğraflar' },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -327,14 +344,14 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
 
             {/* Contact */}
             <div className="rounded-2xl border border-white/[0.07] bg-surface-2 p-4">
-              <h3 className="text-sm font-bold text-white mb-3">Ä°letiÅŸim & Konum</h3>
+              <h3 className="text-sm font-bold text-white mb-3">İletişim & Konum</h3>
               <div className="space-y-3">
                 {[
                   { Icon: MapPin, text: business.address },
                   { Icon: Phone, text: business.phone },
                   ...(business.website ? [{ Icon: Globe, text: business.website }] : []),
                   { Icon: Clock, text: business.hours },
-                ].map(({ Icon, text }) => (
+                ].filter(item => item.text).map(({ Icon, text }) => (
                   <div key={text} className="flex items-center gap-3 text-sm text-white/60">
                     <Icon size={14} className="text-white/30 flex-shrink-0" />
                     <span>{text}</span>
@@ -352,7 +369,7 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
             {reviews.length === 0 ? (
               <div className="text-center py-12 text-white/30">
                 <Star size={32} className="mx-auto mb-3 opacity-30" />
-                <p className="text-sm">HenÃ¼z yorum yok</p>
+                <p className="text-sm">Henüz yorum yok</p>
               </div>
             ) : (
               reviews.map((r) => <ReviewCard key={r.id} review={r} />)
@@ -363,7 +380,7 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
         {activeTab === 'fotograflar' && (
           <div className="pb-24">
             <div className="grid grid-cols-2 gap-2">
-              {[business.image, ...reviews.flatMap((r) => r.photos)].map((photo, i) => (
+              {[business.image, ...reviews.flatMap((r) => r.photos ?? [])].filter(Boolean).map((photo, i) => (
                 <img
                   key={i}
                   src={photo}
@@ -372,9 +389,9 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
                 />
               ))}
             </div>
-            {reviews.flatMap((r) => r.photos).length === 0 && (
+            {reviews.flatMap((r) => r.photos ?? []).length === 0 && (
               <div className="col-span-2 text-center py-12 text-white/30 text-sm">
-                KullanÄ±cÄ± fotoÄŸrafÄ± henÃ¼z yok
+                Kullanıcı fotoğrafı henüz yok
               </div>
             )}
           </div>
