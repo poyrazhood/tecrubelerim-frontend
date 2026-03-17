@@ -192,7 +192,8 @@ export function BusinessProfileClient({ business, reviews }: BusinessProfileClie
   const [activeTab, setActiveTab] = useState<'ozet' | 'yorumlar' | 'fotograflar'>('ozet')
   const [saved, setSaved] = useState(false)
 
-  const color = getTrustColor(business.trustScore.grade)
+  const trustScoreObj = typeof business.trustScore === "number" ? { grade: "C", score: business.trustScore, breakdown: { reviewDepth: 60, recencyTrend: 60, verifiedRatio: 60, engagement: 60 }, trend: "stable" as const } : business.trustScore
+  const color = getTrustColor(trustScoreObj?.grade ?? "C")
 
   return (
     <div className="min-h-screen">
