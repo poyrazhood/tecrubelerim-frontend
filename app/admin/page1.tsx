@@ -20,20 +20,9 @@ function normalizeRating(raw: number) {
   return raw / 1000
 }
 
-// ─── Performance: debounce hook ─────────────────────────────────────────────
-function useDebounce<T>(value: T, delay = 400): T {
-  const [debounced, setDebounced] = React.useState(value)
-  React.useEffect(() => {
-    const t = setTimeout(() => setDebounced(value), delay)
-    return () => clearTimeout(t)
-  }, [value, delay])
-  return debounced
-}
-
-
 const REASON_LABEL: Record<string, string> = {
   SPAM: 'Spam', INAPPROPRIATE: 'Uygunsuz', FAKE_REVIEW: 'Sahte Yorum',
-  HARASSMENT: 'Taciz', COPYRIGHT: 'Telif Hakkı', OTHER: 'Diğer'
+  HARASSMENT: 'Taciz', COPYRIGHT: 'Telif Hakkı', OTHER: 'DiÄŸer'
 }
 const REASON_COLOR: Record<string, string> = {
   SPAM: 'bg-orange-500/15 text-orange-400',
@@ -91,12 +80,12 @@ function UpgradeRequestsSection({ apiBase }: { apiBase: string }) {
         {['PENDING','CONTACTED','COMPLETED','REJECTED'].map(s => (
           <button key={s} onClick={() => setStatusFilter(s)}
             className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${statusFilter === s ? STATUS_COLORS[s] + ' border' : 'text-white/30 hover:text-white bg-white/[0.03]'}`}>
-            {s === 'PENDING' ? 'Bekleyen' : s === 'CONTACTED' ? 'Aranıldı' : s === 'COMPLETED' ? 'Tamamlandı' : 'Reddedildi'}
+            {s === 'PENDING' ? 'Bekleyen' : s === 'CONTACTED' ? 'Aranıldı' : s === 'COMPLETED' ? 'Tamamlandi' : 'Reddedildi'}
           </button>
         ))}
       </div>
       {loading ? (
-        <div className="text-white/25 text-xs text-center py-4">Yükleniyor...</div>
+        <div className="text-white/25 text-xs text-center py-4">Yukleniyor...</div>
       ) : requests.length === 0 ? (
         <div className="text-white/25 text-xs text-center py-4">Talep yok</div>
       ) : requests.map((req: any) => (
@@ -104,7 +93,7 @@ function UpgradeRequestsSection({ apiBase }: { apiBase: string }) {
           <div className="flex items-start justify-between gap-2">
             <div>
               <div className="font-bold text-sm text-white">{req.businessName}</div>
-              <div className="text-xs text-white/40 mt-0.5">{req.fullName || req.username} · {req.email}</div>
+              <div className="text-xs text-white/40 mt-0.5">{req.fullName || req.username} Â· {req.email}</div>
               {req.phone && <div className="text-xs text-indigo-300 mt-0.5 font-bold">ğŸ“ {req.phone}</div>}
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -118,11 +107,11 @@ function UpgradeRequestsSection({ apiBase }: { apiBase: string }) {
             <div className="flex gap-1.5 pt-1">
               <button onClick={() => handleStatus(req.id, 'CONTACTED')} disabled={updating === req.id}
                 className="flex-1 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 text-[11px] font-bold border border-blue-500/20 hover:bg-blue-500/20 disabled:opacity-40 transition-all">
-                Arandı ✓
+                Arandı âœ“
               </button>
               <button onClick={() => handleStatus(req.id, 'COMPLETED')} disabled={updating === req.id}
                 className="flex-1 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-[11px] font-bold border border-emerald-500/20 hover:bg-emerald-500/20 disabled:opacity-40 transition-all">
-                Tamamlandı ✓
+                Tamamlandi âœ“
               </button>
               <button onClick={() => handleStatus(req.id, 'REJECTED')} disabled={updating === req.id}
                 className="flex-1 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-[11px] font-bold border border-red-500/20 hover:bg-red-500/15 disabled:opacity-40 transition-all">
@@ -133,7 +122,7 @@ function UpgradeRequestsSection({ apiBase }: { apiBase: string }) {
           {req.status === 'CONTACTED' && (
             <button onClick={() => handleStatus(req.id, 'COMPLETED')} disabled={updating === req.id}
               className="w-full py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-[11px] font-bold border border-emerald-500/20 hover:bg-emerald-500/20 disabled:opacity-40 transition-all">
-              Tamamlandı olarak isaretle
+              Tamamlandi olarak isaretle
             </button>
           )}
         </div>
@@ -389,7 +378,7 @@ function SubscriptionsTab({ apiBase }: { apiBase: string }) {
     PREMIUM: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
     ENTERPRISE: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
   }
-  const PLAN_PRICES: Record<string,string> = { FREE:'0₺', PROFESSIONAL:'99₺/ay', PREMIUM:'299₺/ay', ENTERPRISE:'999₺/ay' }
+  const PLAN_PRICES: Record<string,string> = { FREE:'0â‚º', PROFESSIONAL:'99â‚º/ay', PREMIUM:'299â‚º/ay', ENTERPRISE:'999â‚º/ay' }
 
   const load = async () => {
     setLoading(true)
@@ -445,7 +434,7 @@ function SubscriptionsTab({ apiBase }: { apiBase: string }) {
 
       {/* Arama + Yeni Abonelik */}
       <div className="flex gap-2">
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="İşletme ara..."
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Isletme ara..."
           className="flex-1 bg-white/[0.04] border border-white/[0.07] rounded-xl px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-indigo-500/40" />
         <button onClick={() => setUpgradeModal({ id: '', name: 'Yeni' })}
           className="px-4 py-2 rounded-xl bg-indigo-500 text-white text-xs font-bold hover:bg-indigo-600 transition-all">
@@ -455,14 +444,14 @@ function SubscriptionsTab({ apiBase }: { apiBase: string }) {
 
       {/* Liste */}
       {loading ? (
-        <div className="text-white/30 text-sm text-center py-8">Yükleniyor...</div>
+        <div className="text-white/30 text-sm text-center py-8">Yukleniyor...</div>
       ) : filtered.length === 0 ? (
-        <div className="text-white/30 text-sm text-center py-8">Abonelik bulunamadı</div>
+        <div className="text-white/30 text-sm text-center py-8">Abonelik bulunamadi</div>
       ) : filtered.map((sub: any) => (
         <div key={sub.id} className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 flex items-center justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="font-bold text-sm text-white truncate">{sub.business?.name}</div>
-            <div className="text-xs text-white/40 mt-0.5">{sub.business?.city} · {new Date(sub.endsAt).toLocaleDateString('tr-TR')} tarihine kadar</div>
+            <div className="text-xs text-white/40 mt-0.5">{sub.business?.city} Â· {new Date(sub.endsAt).toLocaleDateString('tr-TR')} tarihine kadar</div>
             {sub.notes && <div className="text-[11px] text-white/25 mt-1 italic">{sub.notes}</div>}
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -484,9 +473,9 @@ function SubscriptionsTab({ apiBase }: { apiBase: string }) {
       {upgradeModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[#12121a] border border-white/[0.1] rounded-2xl p-6 w-full max-w-md space-y-4">
-            <div className="font-black text-white">Plan Ata / Güncelle</div>
+            <div className="font-black text-white">Plan Ata / Guncelle</div>
             <div>
-              <label className="text-xs text-white/40 mb-1 block">İşletme ID</label>
+              <label className="text-xs text-white/40 mb-1 block">Isletme ID</label>
               <input value={upgradeModal.id || ''} onChange={e => setUpgradeModal((m: any) => ({...m, id: e.target.value}))}
                 placeholder="Business ID girin"
                 className="w-full bg-white/[0.04] border border-white/[0.07] rounded-xl px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-indigo-500/40" />
@@ -505,7 +494,7 @@ function SubscriptionsTab({ apiBase }: { apiBase: string }) {
             </div>
             <div>
               <label className="text-xs text-white/40 mb-1 block">Not (opsiyonel)</label>
-              <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Ödeme referansı, açıklama..."
+              <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Odeme referansi, aciklama..."
                 className="w-full bg-white/[0.04] border border-white/[0.07] rounded-xl px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-indigo-500/40" />
             </div>
             <div className="flex gap-2 pt-1">
@@ -522,9 +511,9 @@ function SubscriptionsTab({ apiBase }: { apiBase: string }) {
         </div>
       )}
 
-      {/* Yükseltme Talepleri */}
+      {/* Yukseltme Talepleri */}
       <div className="mt-6">
-        <div className="text-xs text-white/30 font-bold uppercase tracking-wider px-1 mb-3">Yükseltme Talepleri</div>
+        <div className="text-xs text-white/30 font-bold uppercase tracking-wider px-1 mb-3">Yukseltme Talepleri</div>
         <UpgradeRequestsSection apiBase={apiBase} />
       </div>
     </div>
@@ -596,7 +585,7 @@ function PendingBusinessSection({ apiBase }: { apiBase: string }) {
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-white text-sm">{biz.name}</div>
                   <div className="text-xs text-white/40 mt-0.5">
-                    {biz.category?.name} · {biz.city} {biz.district && `/ ${biz.district}`}
+                    {biz.category?.name} Â· {biz.city} {biz.district && `/ ${biz.district}`}
                   </div>
                   <div className="text-xs text-white/30 mt-0.5">{biz.address}</div>
                   {biz.owner && <div className="text-xs text-indigo-400 mt-1">@{biz.owner.username}</div>}
@@ -673,7 +662,7 @@ function ThemeSection() {
               </div>
             </div>
             <div className="text-xs font-bold" style={{ color: active === th.id ? th.primary : 'rgba(255,255,255,0.6)' }}>
-              {idx + 1} — {th.label}
+              {idx + 1} â€” {th.label}
             </div>
           </button>
         ))}
@@ -729,15 +718,15 @@ function MuhtarTab({ apiBase }: { apiBase: string }) {
         ))}
       </div>
       {loading ? (
-        <div className="text-white/30 text-sm text-center py-8">Yükleniyor...</div>
+        <div className="text-white/30 text-sm text-center py-8">Yukleniyor...</div>
       ) : apps.length === 0 ? (
-        <div className="text-white/30 text-sm text-center py-8">Başvuru yok</div>
+        <div className="text-white/30 text-sm text-center py-8">Basvuru yok</div>
       ) : apps.map((app: any) => (
         <div key={app.id} className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="font-bold text-sm text-white">{app.user?.fullName || app.user?.username}</div>
-              <div className="text-xs text-white/40 mt-0.5">{app.user?.totalReviews} yorum · TrustScore: {app.user?.trustScore} · {app.user?.trustLevel}</div>
+              <div className="text-xs text-white/40 mt-0.5">{app.user?.totalReviews} yorum Â· TrustScore: {app.user?.trustScore} Â· {app.user?.trustLevel}</div>
               <div className="text-xs text-indigo-300 mt-1">{app.neighborhood}, {app.district} / {app.city}</div>
             </div>
             <div className={`text-[10px] font-bold px-2 py-1 rounded-lg ${app.status === 'PENDING' ? 'bg-amber-500/15 text-amber-400' : app.status === 'APPROVED' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}`}>
@@ -753,7 +742,7 @@ function MuhtarTab({ apiBase }: { apiBase: string }) {
               <div className="flex gap-2">
                 <button onClick={() => handleAction(app.id, 'APPROVED')} disabled={actionLoading === app.id}
                   className="flex-1 py-2 rounded-xl bg-emerald-500/15 text-emerald-400 text-xs font-bold border border-emerald-500/20 hover:bg-emerald-500/25 disabled:opacity-40 transition-all">
-                  {actionLoading === app.id ? 'İşleniyor...' : 'Onayla (MUHTAR yap)'}
+                  {actionLoading === app.id ? 'Isleniyor...' : 'Onayla (MUHTAR yap)'}
                 </button>
                 <button onClick={() => handleAction(app.id, 'REJECTED')} disabled={actionLoading === app.id}
                   className="flex-1 py-2 rounded-xl bg-red-500/10 text-red-400 text-xs font-bold border border-red-500/20 hover:bg-red-500/15 disabled:opacity-40 transition-all">
@@ -819,7 +808,7 @@ function SiteSettingsTab({ apiBase }: { apiBase: string }) {
             <h3 className="font-bold text-sm text-white">{label}</h3>
             <button onClick={() => save(key)} disabled={saving === key}
               className="px-4 py-1.5 rounded-xl bg-indigo-500 text-white text-xs font-bold hover:bg-indigo-600 disabled:opacity-40 transition-all flex items-center gap-1.5">
-              {saving === key ? <Loader2 size={12} className="animate-spin" /> : saved === key ? '✓ Kaydedildi' : 'Kaydet'}
+              {saving === key ? <Loader2 size={12} className="animate-spin" /> : saved === key ? 'âœ“ Kaydedildi' : 'Kaydet'}
             </button>
           </div>
           <textarea value={values[key] || ''}
@@ -835,10 +824,9 @@ function SiteSettingsTab({ apiBase }: { apiBase: string }) {
 
 export default function AdminPage() {
   
-  const [featuredSlugs, setFeaturedSlugs] = React.useState<string[]>([])
-  React.useEffect(() => {
-    try { setFeaturedSlugs(JSON.parse(localStorage.getItem('featured_businesses') || '[]')) } catch {}
-  }, [])
+  const [featuredSlugs, setFeaturedSlugs] = React.useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('featured_businesses') || '[]') } catch { return [] }
+  })
   const toggleFeatured = (slug: string) => {
     setFeaturedSlugs(prev => {
       const next = prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev.slice(0,5), slug]
@@ -861,23 +849,16 @@ export default function AdminPage() {
   const [claimFilter, setClaimFilter] = useState('PENDING')
   const [reportFilter, setReportFilter] = useState('PENDING')
 
-  const loadStats = React.useCallback(() => {
-    Promise.all([
-      fetch(`${API}/api/businesses/pending?secret=tecrube_admin_2026`).then(r=>r.json()).catch(()=>({})),
-      fetch(`${API}/api/muhtar/admin/list?status=PENDING`, { headers: getH() }).then(r=>r.json()).catch(()=>({})),
-      fetch(`${API}/api/admin/stats`, { headers: getH() }).then(r=>r.json()).catch(()=>({})),
-      fetch(`${API}/api/admin/moderation-stats`, { headers: getH() }).then(r=>r.json()).catch(()=>({})),
-    ]).then(([pendingD, muhtarD, statsD, modD]) => {
-      setPendingBizCount((pendingD.businesses||[]).length)
-      setMuhtarPending((muhtarD.apps||muhtarD.applications||[]).length)
-      if (statsD.users !== undefined) setStats(statsD)
-      if (modD.pendingReports !== undefined) setModStats(modD)
-    })
-  }, [])
+  const loadStats = () => {
+    fetch(`${API}/api/businesses/pending?secret=tecrube_admin_2026`)
+      .then(r=>r.json()).then(d=>setPendingBizCount((d.businesses||[]).length)).catch(()=>{});
+    fetch(`${API}/api/muhtar/admin/list?status=PENDING`, { headers: getH() })
+      .then(r=>r.json()).then(d=>setMuhtarPending((d.applications||[]).length)).catch(()=>{});
+    fetch(`${API}/api/admin/stats`, { headers: getH() }).then(r => r.json()).then(setStats).catch(() => {})
+    fetch(`${API}/api/admin/moderation-stats`, { headers: getH() }).then(r => r.json()).then(setModStats).catch(() => {})
+  }
 
   useEffect(() => { loadStats() }, [])
-
-  const debouncedSearch = useDebounce(search, 400)
 
   const load = useCallback(async () => {
     if (tab === 'stats') return
@@ -887,8 +868,8 @@ export default function AdminPage() {
       if (tab === 'reports') url = `${API}/api/admin/reports?status=${reportFilter}&page=${page}`
       if (tab === 'flagged') url = `${API}/api/admin/flagged-reviews?page=${page}`
       if (tab === 'claims') url = `${API}/api/admin/claims?status=${claimFilter}&page=${page}`
-      if (tab === 'businesses') url = `${API}/api/admin/businesses?page=${page}&search=${encodeURIComponent(debouncedSearch)}`
-      if (tab === 'users') url = `${API}/api/admin/users?page=${page}&search=${encodeURIComponent(debouncedSearch)}`
+      if (tab === 'businesses') url = `${API}/api/admin/businesses?page=${page}&search=${encodeURIComponent(search)}`
+      if (tab === 'users') url = `${API}/api/admin/users?page=${page}&search=${encodeURIComponent(search)}`
       if (tab === 'reviews') url = `${API}/api/admin/reviews?page=${page}`
       const r = await fetch(url, { headers: getH() })
       const d = await r.json()
@@ -896,7 +877,7 @@ export default function AdminPage() {
       setTotal(d.total || 0)
     } catch(e) { console.error(e) }
     setLoading(false)
-  }, [tab, page, debouncedSearch, claimFilter, reportFilter])
+  }, [tab, page, search, claimFilter, reportFilter])
 
   useEffect(() => { setPage(1); setData([]) }, [tab, claimFilter, reportFilter])
   useEffect(() => { load() }, [load])
@@ -938,7 +919,7 @@ export default function AdminPage() {
   }
 
   const deleteReview = async (id: string) => {
-    if (!confirm('Bu yorumu kalıcı olarak silmek istediğinizden emin misiniz?')) return
+    if (!confirm('Bu yorumu kalıcı olarak silmek istediÄŸinizden emin misiniz?')) return
     setActionLoading(id)
     try {
       await fetch(`${API}/api/admin/reviews/${id}`, { method: 'DELETE', headers: getH() })
@@ -956,7 +937,7 @@ export default function AdminPage() {
     { key: 'users',      label: 'Kullanıcılar',    icon: Users, badge: stats?.users },
     { key: 'reviews',    label: 'Tüm Yorumlar',    icon: MessageSquare, badge: stats?.reviews },
     { key: 'subscriptions', label: 'Abonelikler', icon: Star, badge: stats?.activeSubscriptions },
-    { key: 'muhtar',    label: 'Muhtar Başvuruları', icon: Shield, badge: muhtarPending },
+    { key: 'muhtar',    label: 'Muhtar Basvurulari', icon: Shield, badge: muhtarPending },
     { key: 'pending',    label: 'Bekleyen İşletmeler', icon: Clock,   badge: pendingBizCount },
     { key: 'theme',      label: 'Tema ve Renk',        icon: Settings },
     { key: 'market',     label: 'Tecrübe Pazarı',      icon: ShoppingBag },
@@ -977,7 +958,7 @@ export default function AdminPage() {
           <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/20 font-bold">BETA</span>
         </div>
         <div className="flex items-center gap-3">
-          {stats && <span className="text-xs text-white/30">{stats.users?.toLocaleString()} kullanıcı · {stats.businesses?.toLocaleString()} işletme</span>}
+          {stats && <span className="text-xs text-white/30">{stats.users?.toLocaleString()} kullanıcı Â· {stats.businesses?.toLocaleString()} işletme</span>}
           <button onClick={loadStats} className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center text-white/40 hover:text-white transition-colors">
             <RefreshCw size={14} />
           </button>
@@ -1002,7 +983,7 @@ export default function AdminPage() {
         {/* Content */}
         <div className="flex-1 p-6 max-w-5xl overflow-auto">
 
-          {/* ── STATS ── */}
+          {/* â”€â”€ STATS â”€â”€ */}
           {tab === 'stats' && stats && (
             <div>
               <h2 className="text-xl font-black mb-5">Genel Bakış</h2>
@@ -1043,13 +1024,13 @@ export default function AdminPage() {
               {(modStats?.pendingReports > 0 || modStats?.flaggedReviews > 0 || modStats?.pendingClaims > 0) && (
                 <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm font-bold">
                   <AlertTriangle size={15} />
-                  Dikkat gerektiren {(modStats.pendingReports || 0) + (modStats.flaggedReviews || 0) + (modStats.pendingClaims || 0)} öğe var
+                  Dikkat gerektiren {(modStats.pendingReports || 0) + (modStats.flaggedReviews || 0) + (modStats.pendingClaims || 0)} öÄŸe var
                 </div>
               )}
             </div>
           )}
 
-          {/* ── REPORTS ── */}
+          {/* â”€â”€ REPORTS â”€â”€ */}
           {tab === 'reports' && (
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -1088,7 +1069,7 @@ export default function AdminPage() {
                             <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 mb-2">
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="text-xs text-white/50">@{r.reportedReview.user?.username}</span>
-                                <span className="text-white/20">→</span>
+                                <span className="text-white/20">â†’</span>
                                 <Link href={`/isletme/${r.reportedReview.business?.slug}`} target="_blank"
                                   className="text-xs text-indigo-400 hover:underline">{r.reportedReview.business?.name}</Link>
                                 <div className="flex gap-0.5 ml-auto">
@@ -1146,7 +1127,7 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* ── FLAGGED REVIEWS ── */}
+          {/* â”€â”€ FLAGGED REVIEWS â”€â”€ */}
           {tab === 'flagged' && (
             <div>
               <h2 className="text-xl font-black mb-4">Şüpheli & Raporlanan Yorumlar</h2>
@@ -1158,7 +1139,7 @@ export default function AdminPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap mb-2">
                             <span className="text-xs font-bold text-white">@{r.user?.username}</span>
-                            <span className="text-white/25 text-xs">→</span>
+                            <span className="text-white/25 text-xs">â†’</span>
                             <Link href={`/isletme/${r.business?.slug}`} target="_blank" className="text-xs text-indigo-400 hover:underline">{r.business?.name}</Link>
                             <div className="flex gap-0.5 ml-1">
                               {[1,2,3,4,5].map(s => <Star key={s} size={9} className={s <= r.rating ? 'text-amber-400 fill-amber-400' : 'text-white/10'} />)}
@@ -1219,7 +1200,7 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* ── CLAIMS ── */}
+          {/* â”€â”€ CLAIMS â”€â”€ */}
           {tab === 'claims' && (
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -1279,7 +1260,7 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* ── BUSINESSES ── */}
+          {/* â”€â”€ BUSINESSES â”€â”€ */}
           {tab === 'businesses' && (
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -1296,7 +1277,7 @@ export default function AdminPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-bold text-white truncate">{b.name}</span>
-                          {b.isVerified && <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">✓ Doğrulandı</span>}
+                          {b.isVerified && <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">âœ“ DoÄŸrulandı</span>}
                           <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full',
                             b.claimStatus === 'CLAIMED' ? 'bg-emerald-500/10 text-emerald-400' :
                             b.claimStatus === 'PENDING' ? 'bg-amber-500/10 text-amber-400' : 'bg-white/[0.05] text-white/30'
@@ -1327,7 +1308,7 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* ── USERS ── */}
+          {/* â”€â”€ USERS â”€â”€ */}
           {tab === 'users' && (
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -1373,7 +1354,7 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* ── ALL REVIEWS ── */}
+          {/* â”€â”€ ALL REVIEWS â”€â”€ */}
           {tab === 'reviews' && (
             <div>
               <h2 className="text-xl font-black mb-4">Tüm Yorumlar <span className="text-white/30 font-normal text-base">({total.toLocaleString()})</span></h2>
@@ -1385,7 +1366,7 @@ export default function AdminPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className="text-xs font-bold text-white">@{r.user?.username}</span>
-                            <span className="text-white/25">→</span>
+                            <span className="text-white/25">â†’</span>
                             <Link href={`/isletme/${r.business?.slug}`} target="_blank" className="text-xs text-indigo-400 hover:underline">{r.business?.name}</Link>
                             <div className="flex gap-0.5 ml-auto">
                               {[1,2,3,4,5].map(s => <Star key={s} size={10} className={s <= (r.rating ?? 0) ? 'text-amber-400 fill-amber-400' : 'text-white/15'} />)}
@@ -1412,9 +1393,9 @@ export default function AdminPage() {
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/[0.06]">
               <button onClick={() => setPage(p => Math.max(1, p-1))} disabled={page === 1 || loading}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.05] text-white/50 text-sm disabled:opacity-30 hover:text-white transition-colors">
-                <ChevronLeft size={14} /> Önceki
+                <ChevronLeft size={14} /> Ã–nceki
               </button>
-              <span className="text-xs text-white/30">{page} / {totalPages} · {total} öğe</span>
+              <span className="text-xs text-white/30">{page} / {totalPages} Â· {total} öÄŸe</span>
               <button onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page === totalPages || loading}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.05] text-white/50 text-sm disabled:opacity-30 hover:text-white transition-colors">
                 Sonraki <ChevronRight size={14} />
@@ -1423,7 +1404,7 @@ export default function AdminPage() {
           )}
 
 
-          {/* ── SITE SETTINGS ── */}
+          {/* â”€â”€ SITE SETTINGS â”€â”€ */}
           {tab === 'subscriptions' && (
             <SubscriptionsTab apiBase={API} />
           )}

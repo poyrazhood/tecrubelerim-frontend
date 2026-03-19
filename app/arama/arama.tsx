@@ -194,8 +194,8 @@ export default function AramaPage() {
 
       // Paralel aramalar
       const [bizRes, revRes, usrRes] = await Promise.allSettled([
-        fetch(`${API}/api/search?${params}&type=business`).then(r => { if (!r.ok) throw new Error(String(r.status)); return r.json() }),
-        fetch(`${API}/api/search?${params}&type=review`).then(r => { if (!r.ok) throw new Error(String(r.status)); return r.json() }),
+        fetch(`${API}/api/search?${params}&type=business`).then(r => r.json()),
+        fetch(`${API}/api/search?${params}&type=review`).then(r => r.json()),
         fetch(`${API}/api/search?${params}&type=user`).then(r => r.json()),
       ])
 
@@ -212,13 +212,11 @@ export default function AramaPage() {
         setUsers(Array.isArray(d) ? d : (d.users || d.data || d.results || []))
       }
     } catch (e) {
-      // fallback: doğrudan businesses endpoint
+      // fallback: sadece işletme ara
       try {
-        const params2 = new URLSearchParams({ search: q, limit: '20', sort: sortVal })
-        if (cat !== 'Tümü') params2.set('categoryName', cat)
-        const r = await fetch(`${API}/api/businesses?${params2}`)
+        const r = await fetch(`${API}/api/businesses?search=${encodeURIComponent(q)}&limit=20`)
         const d = await r.json()
-        setBusinesses(Array.isArray(d) ? d : (d.data || d.businesses || []))
+        setBusinesses(Array.isArray(d) ? d : (d.data || []))
       } catch {}
     } finally {
       setLoading(false)

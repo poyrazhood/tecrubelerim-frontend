@@ -20,15 +20,21 @@ const withPWA = require('next-pwa')({
 const nextConfig = {
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
-      { protocol: 'https', hostname: 'lh4.googleusercontent.com' },
-      { protocol: 'https', hostname: 'lh5.googleusercontent.com' },
-      { protocol: 'https', hostname: 'lh6.googleusercontent.com' },
+      // ─── Local development ───────────────────────────────────────────
+      { protocol: 'http',  hostname: 'localhost' },
+      { protocol: 'http',  hostname: '127.0.0.1' },
+      // ─── Production API ──────────────────────────────────────────────
+      { protocol: 'https', hostname: 'api.tecrubelerim.com' },
+      { protocol: 'https', hostname: 'tecrubelerim.com' },
+      // ─── Google ──────────────────────────────────────────────────────
       { protocol: 'https', hostname: '*.googleusercontent.com' },
       { protocol: 'https', hostname: 'streetviewpixels-pa.googleapis.com' },
       { protocol: 'https', hostname: '*.googleapis.com' },
+      // ─── Unsplash (mock data) ────────────────────────────────────────
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: '*.unsplash.com' },
+      // ─── Picsum (fallback görseller) ─────────────────────────────────
+      { protocol: 'https', hostname: 'picsum.photos' },
     ],
     unoptimized: true,
   },
@@ -41,7 +47,7 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          // Cross-Origin-Opener-Policy kaldırıldı — localhost görsel yüklemesini blokluyor
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' },
         ],
       },

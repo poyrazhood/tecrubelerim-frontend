@@ -215,31 +215,6 @@ export default function ProfilPage() {
 
   const handleLogout = () => { logout(); router.push('/giris') }
 
-  const handleDeleteAccount = async () => {
-    const confirmed = window.confirm(
-      'Hesabınızı kalıcı olarak silmek istediğinizden emin misiniz?\n\nBu işlem geri alınamaz. Tüm yorumlarınız, puanlarınız ve verileriniz silinecek.'
-    )
-    if (!confirmed) return
-    const double = window.confirm('Son onay: Hesabınız ve tüm verileriniz kalıcı olarak silinecek. Devam etmek istiyor musunuz?')
-    if (!double) return
-    try {
-      const token = getToken()
-      const res = await fetch(`${API_BASE}/api/users/me`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (res.ok) {
-        logout()
-        router.push('/')
-      } else {
-        const d = await res.json().catch(() => ({}))
-        alert(d.error || 'Hesap silinemedi. Lütfen tekrar deneyin.')
-      }
-    } catch {
-      alert('Bağlantı hatası. Lütfen tekrar deneyin.')
-    }
-  }
-
   if (!loading && !user) { router.push('/giris'); return null }
   if (loading || !user) return <AppLayout><ProfileSkeleton /></AppLayout>
 
@@ -392,8 +367,8 @@ export default function ProfilPage() {
 
           <div className="flex gap-2 mb-5">
             <StatCard label="Yorum"   value={(user as any).totalReviews ?? 0}   color="primary" />
-            <StatCard label="Faydalı" value={(user as any).helpfulVotes ?? 0}   color="emerald" />
-            <StatCard label="Takipçi" value={(user as any).followersCount ?? 0} />
+            <StatCard label="Faydali" value={(user as any).helpfulVotes ?? 0}   color="emerald" />
+            <StatCard label="Takipci" value={(user as any).followersCount ?? 0} />
             <StatCard label="Takip"   value={(user as any).followingCount ?? 0} />
           </div>
 
@@ -415,8 +390,8 @@ export default function ProfilPage() {
               ) : myReviews.length === 0 ? (
                 <div className="text-center py-12">
                   <MessageSquare size={32} className="mx-auto mb-3 text-white/20" />
-                  <div className="text-white/40 text-sm mb-1">Henüz yorum yok</div>
-                  <Link href="/yorum-yaz" className="text-primary text-sm font-medium hover:text-primary">İlk yorumunu yaz</Link>
+                  <div className="text-white/40 text-sm mb-1">Henuz yorum yok</div>
+                  <Link href="/yorum-yaz" className="text-primary text-sm font-medium hover:text-primary">Ilk yorumunu yaz</Link>
                 </div>
               ) : myReviews.map((r) => (
                 <div key={r.id} className="bg-surface-1 border border-white/[0.06] rounded-2xl p-4 mb-3">
@@ -431,7 +406,7 @@ export default function ProfilPage() {
                       </div>
                       <textarea value={editContent} onChange={e => setEditContent(e.target.value)} rows={3} maxLength={1000}
                         className="w-full bg-surface-2 border border-primary-soft rounded-xl p-3 text-sm text-white outline-none resize-none placeholder-white/20 mb-3"
-                        placeholder="Yorumunuzu yazın..." />
+                        placeholder="Yorumunuzu yazin..." />
                       <div className="flex gap-2">
                         <button onClick={async () => {
                           setEditSaving(true)
@@ -458,11 +433,7 @@ export default function ProfilPage() {
                     <div>
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div>
-                          {r.business?.slug ? (
-                            <a href={`/isletme/${r.business.slug}`} className="text-xs font-bold text-indigo-400 hover:text-indigo-300 mb-1 block transition-colors">{r.business?.name ?? "İşletme"} →</a>
-                          ) : (
-                            <p className="text-xs font-bold text-white/80 mb-1">{r.business?.name ?? "İşletme"}</p>
-                          )}
+                          <p className="text-xs font-bold text-white/80 mb-1">{r.business?.name ?? "İşletme"}</p>
                           <div className="flex gap-0.5 mb-2">
                             {[1,2,3,4,5].map(s => <Star key={s} size={12} className={s <= (r.rating ?? 0) ? "text-amber-400 fill-amber-400" : "text-white/20"} />)}
                           </div>
@@ -474,7 +445,7 @@ export default function ProfilPage() {
                             <Pencil size={13} />
                           </button>
                           <button onClick={async () => {
-                            if (!confirm("Bu yorumu silmek istediğinizden emin misiniz?")) return
+                            if (!confirm("Bu yorumu silmek istediginizden emin misiniz?")) return
                             setDeletingReview(r.id)
                             const token = getToken()
                             const res = await fetch(`${API_BASE}/api/reviews/${r.id}`, {
@@ -504,8 +475,8 @@ export default function ProfilPage() {
               ) : savedBusinesses.length === 0 ? (
                 <div className="text-center py-12">
                   <Bookmark size={32} className="mx-auto mb-3 text-white/20" />
-                  <div className="text-white/40 text-sm mb-1">Henüz kaydedilen yer yok</div>
-                  <Link href="/kesfet" className="text-primary text-sm font-medium hover:text-primary">Yerleri Keşfet</Link>
+                  <div className="text-white/40 text-sm mb-1">Henuz kaydedilen yer yok</div>
+                  <Link href="/kesf" className="text-primary text-sm font-medium hover:text-primary">Yerleri kesfet</Link>
                 </div>
               ) : savedBusinesses.map((b) => <BusinessCard key={b.id} business={b} />)}
             </div>
@@ -702,19 +673,18 @@ export default function ProfilPage() {
             <div className="space-y-2">
               <SettingsItem icon={UserIcon}     label="Hesap Bilgileri"   sub={user.email}                       href="/profil/hesap" />
               <SettingsItem icon={Bell}     label="Bildirimler"       sub="Push, e-posta bildirimleri"        href="/profil/bildirimler" />
-              <SettingsItem icon={Shield}   label="Gizlilik"          sub="Profil görünürlüğü, veri"          href="/profil/gizlilik" />
-              <SettingsItem icon={Bookmark} label="Kaydedilen Yerler" sub="Kaydettiğiniz işletmeler"          href="/profil/kaydedilenler" />
-              <SettingsItem icon={Building2} label="Sahip Paneli" sub="İşletmenizi yönetin veya sahiplenin" href="/sahip-paneli" />
-              <SettingsItem icon={Award}    label="Muhtar Başvurusu"  sub="Mahallenizin güvenilir yorumcusu olun" href="/muhtarlar/basvur" />
-              <div className="pt-2 space-y-2">
-                <SettingsItem icon={LogOut} label="Çıkış Yap" danger onClick={handleLogout} />
-                <SettingsItem icon={Trash2} label="Hesabımı Sil" sub="Tüm verileriniz kalıcı olarak silinir" danger onClick={handleDeleteAccount} />
+              <SettingsItem icon={Shield}   label="Gizlilik"          sub="Profil gorunurlugu, veri"          href="/profil/gizlilik" />
+              <SettingsItem icon={Bookmark} label="Kaydedilen Yerler" sub="Kaydettiginiz isletmeler"          href="/profil/kaydedilenler" />
+              <SettingsItem icon={Building2} label="Sahip Paneli" sub="Isletmenizi yonetin veya sahiplenin" href="/sahip-paneli" />
+              <SettingsItem icon={Award}    label="Muhtar Basvurusu"  sub="Mahallenizin guvenilir yorumcusu olun" />
+              <div className="pt-2">
+                <SettingsItem icon={LogOut} label="Cikis Yap" danger onClick={handleLogout} />
               </div>
               <div className="pt-4 pb-2 px-1">
                 <p className="text-[11px] text-white/20 leading-relaxed">
-                  Tecrübelerim Beta &middot;{' '}
+                  Tecrubelerim Beta &middot;{' '}
                   <a href="/sozlesme/privacy_policy" className="hover:text-white/40 transition-colors">Gizlilik</a> &middot;{' '}
-                  <a href="/sozlesme/terms_of_service" className="hover:text-white/40 transition-colors">Kullanım Koşulları</a> &middot;{' '}
+                  <a href="/sozlesme/terms_of_service" className="hover:text-white/40 transition-colors">Kullanim Kosullari</a> &middot;{' '}
                   <a href="/sozlesme/help" className="hover:text-white/40 transition-colors">Yardim</a>
                 </p>
                 <p className="text-[11px] text-white/15 mt-1">© 2026 Tecrubelerim</p>

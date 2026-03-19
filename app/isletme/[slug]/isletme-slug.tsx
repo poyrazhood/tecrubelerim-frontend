@@ -43,7 +43,7 @@ function formatRelativeTime(dateStr: string): string {
   if (!dateStr) return ''
   const diff = Date.now() - new Date(dateStr).getTime()
   const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'şimdi'
+  if (mins < 1) return 'simdi'
   if (mins < 60) return `${mins}dk`
   const hrs = Math.floor(mins / 60)
   if (hrs < 24) return `${hrs}s`
@@ -51,7 +51,7 @@ function formatRelativeTime(dateStr: string): string {
   if (days < 30) return `${days}g`
   const months = Math.floor(days / 30)
   if (months < 12) return `${months} ay`
-  return `${Math.floor(months / 12)} yıl`
+  return `${Math.floor(months / 12)} yil`
 }
 
 function Avatar({ name, image, size = 40 }: { name: string; image?: string; size?: number }) {
@@ -148,7 +148,7 @@ function PlatformReviewCard({ review }: { review: any }) {
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-sm text-white">{user.fullName ?? user.username ?? 'Anonim'}</span>
             {user.trustLevel === 'MUHTAR' && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">Muhtar</span>}
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/20">Tecrübelerim</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/20">Tecrubelerim</span>
             {review.isVerified && <CheckCircle size={11} className="text-emerald-400" />}
           </div>
           <div className="flex items-center gap-2 mt-0.5">
@@ -165,18 +165,14 @@ function PlatformReviewCard({ review }: { review: any }) {
       {isLong && <button onClick={() => setExpanded(!expanded)} className="text-xs text-indigo-400 hover:text-indigo-300 mt-1 transition-colors">{expanded ? 'Daha az' : 'Devamini oku'}</button>}
       {photos.length > 0 && (
         <div className="grid gap-1.5 mt-3" style={{ gridTemplateColumns: `repeat(${Math.min(photos.length, 3)}, 1fr)` }}>
-          {photos.map((p: any, i: number) => {
-            const src = typeof p === 'string' ? p : (p.url ?? p.photoUrl ?? p.imageUrl ?? '')
-            if (!src) return null
-            return <img key={i} src={src} alt="" className="rounded-xl object-cover w-full h-20 cursor-pointer" onClick={() => {}} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
-          })}
+          {photos.map((p: any, i: number) => <img key={i} src={p.url} alt="" className="rounded-xl object-cover w-full h-20" />)}
         </div>
       )}
       <div className="flex items-center gap-1 pt-3 mt-1 border-t border-white/[0.05]">
         <button onClick={() => setLiked(!liked)} className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all', liked ? 'bg-indigo-500/15 text-indigo-400' : 'text-white/40 hover:bg-white/5 hover:text-white/70')}>
           <ThumbsUp size={12} /><span>Faydali ({(review.helpfulCount ?? 0) + (liked ? 1 : 0)})</span>
         </button>
-        <button className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-white/25 hover:text-white/50 hover:bg-white/[0.04] transition-all"><Flag size={11} />Şikayet</button>
+        <button className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-white/25 hover:text-white/50 hover:bg-white/[0.04] transition-all"><Flag size={11} />Sikayet</button>
       </div>
     </article>
   )
@@ -221,7 +217,7 @@ function ExternalReviewCard({ review }: { review: any }) {
       )}
       {review.sourceUrl && (
         <div className="mt-2 pt-2 border-t border-white/[0.04]">
-          <a href={review.sourceUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[11px] text-white/25 hover:text-white/50 transition-colors w-fit"><ExternalLink size={10} />Kaynağı Gör</a>
+          <a href={review.sourceUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[11px] text-white/25 hover:text-white/50 transition-colors w-fit"><ExternalLink size={10} />Kaynagi gor</a>
         </div>
       )}
     </article>
@@ -248,8 +244,8 @@ function ShareSheet({ name, onClose }: { name: string; onClose: () => void }) {
             </a>
           ))}
           <button onClick={copy} className="flex flex-col items-center gap-2">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl bg-indigo-500/20 border border-indigo-500/40">{copied ? '✓' : 'ğŸ“‹'}</div>
-            <span className="text-xs text-white/50">{copied ? 'Kopyalandı!' : 'Kopyala'}</span>
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl bg-indigo-500/20 border border-indigo-500/40">{copied ? 'âœ“' : 'ğŸ“‹'}</div>
+            <span className="text-xs text-white/50">{copied ? 'Kopyalandi!' : 'Kopyala'}</span>
           </button>
         </div>
         <button onClick={onClose} className="w-full py-3 rounded-2xl bg-white/[0.05] text-white/50 text-sm font-medium">Kapat</button>
@@ -266,7 +262,7 @@ export default function BusinessPage() {
   const [business, setBusiness] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
-  const [activeTab, setActiveTab] = useState<'yorumlar' | 'bilgiler' | 'fotoğraflar'>('yorumlar')
+  const [activeTab, setActiveTab] = useState<'yorumlar' | 'bilgiler' | 'fotograflar'>('yorumlar')
   const [activePhoto, setActivePhoto] = useState(0)
   const [reviewFilter, setReviewFilter] = useState<'tumu' | 'platform' | 'google'>('tumu')
   const [galleryOpen, setGalleryOpen] = useState(false)
@@ -288,26 +284,10 @@ export default function BusinessPage() {
   async function fetchBusiness() {
     setLoading(true)
     try {
-      // includePhotos=true ensures review photos are included in the response
-      const res = await fetch(`${API_BASE}/api/businesses/${slug}?includePhotos=true&includeReviews=true`)
+      const res = await fetch(`${API_BASE}/api/businesses/${slug}`)
       if (!res.ok) { setError(true); return }
       const data = await res.json()
-      const biz = data.data ?? data
-      setBusiness(biz)
-      // If reviews came without photos, try fetching them separately
-      if (biz?.id && biz.reviews?.length > 0 && !biz.reviews[0]?.photos) {
-        fetch(`${API_BASE}/api/businesses/${biz.id}/reviews?limit=50&includePhotos=true`)
-          .then(r => r.ok ? r.json() : null)
-          .then(d => {
-            if (d) {
-              const reviews = d.data ?? d.reviews ?? d
-              if (Array.isArray(reviews) && reviews.length > 0) {
-                setBusiness((prev: any) => prev ? { ...prev, reviews } : prev)
-              }
-            }
-          })
-          .catch(() => {})
-      }
+      setBusiness(data.data ?? data)
     } catch { setError(true) }
     finally { setLoading(false) }
   }
@@ -346,9 +326,9 @@ export default function BusinessPage() {
     <AppLayout>
       <div className="flex flex-col items-center justify-center py-24 text-white/40 px-4 text-center">
         <AlertCircle size={40} className="mb-4 opacity-50" />
-        <p className="text-lg font-semibold mb-2 text-white/60">İşletme bulunamadı</p>
+        <p className="text-lg font-semibold mb-2 text-white/60">Isletme bulunamadi</p>
         <p className="text-sm mb-6">Bu sayfa mevcut degil veya kaldirilmis olabilir.</p>
-        <button onClick={() => router.back()} className="px-5 py-2.5 rounded-xl bg-indigo-500/20 text-indigo-400 text-sm font-medium">Geri Dön</button>
+        <button onClick={() => router.back()} className="px-5 py-2.5 rounded-xl bg-indigo-500/20 text-indigo-400 text-sm font-medium">Geri Don</button>
       </div>
     </AppLayout>
   )
@@ -381,15 +361,7 @@ export default function BusinessPage() {
   const avgRating = externalReviews.length > 0
     ? (externalReviews.reduce((s: number, r: any) => s + (r.rating ?? 0), 0) / externalReviews.length).toFixed(1)
     : business.averageRating > 0 ? normalizeRating(business.averageRating).toFixed(1) : null
-  // Include photos from reviews in gallery
-  const reviewPhotos: string[] = (business.reviews ?? [])
-    .flatMap((r: any) => (r.photos ?? []).map((p: any) => typeof p === 'string' ? p : p.url ?? ''))
-    .filter(Boolean)
-  const allPhotos = photos.length > 0
-    ? [...new Set([...photos, ...reviewPhotos])]
-    : reviewPhotos.length > 0
-    ? reviewPhotos
-    : [coverPhoto]
+  const allPhotos = photos.length > 0 ? photos : [coverPhoto]
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(business.name + ' ' + (business.address ?? ''))}`
 
   return (
@@ -426,7 +398,7 @@ export default function BusinessPage() {
           {allPhotos.length > 1 && (
             <>
               <button onClick={() => openGallery(activePhoto)} className="absolute bottom-4 right-4 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-black/50 backdrop-blur-sm text-white/80 text-xs font-medium border border-white/10">
-                <Camera size={12} />{allPhotos.length} fotoğraf
+                <Camera size={12} />{allPhotos.length} fotograf
               </button>
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1">
                 {allPhotos.slice(0, 7).map((_: string, i: number) => (
@@ -447,14 +419,14 @@ export default function BusinessPage() {
                 <h1 className="text-xl font-bold text-white leading-tight">{business.name}</h1>
                 {business.badges?.map((badge: any) => {
                   const BADGE_META: Record<string, { label: string; color: string; icon: string }> = {
-                    VERIFIED:              { label: 'Doğrulanmış',      color: 'emerald', icon: '✓' },
+                    VERIFIED:              { label: 'Dogrulanmis',      color: 'emerald', icon: '✓' },
                     NEIGHBORHOOD_FAVORITE: { label: 'Mahalle Favorisi', color: 'amber',   icon: '⭐' },
-                    FEATURED:              { label: 'Öne Çıkan',        color: 'indigo',  icon: '🔥' },
+                    FEATURED:              { label: 'One Cikan',        color: 'indigo',  icon: '🔥' },
                     PREMIUM:               { label: 'Premium',          color: 'purple',  icon: '💎' },
-                    TOP_RATED:             { label: 'En Yüksek Puanlı', color: 'yellow',  icon: '🏅' },
-                    HIGHLY_REVIEWED:       { label: 'Çok Yorumlanan',   color: 'blue',    icon: '💬' },
-                    NEW_BUSINESS:          { label: 'Yeni İşletme',     color: 'cyan',    icon: '🆕' },
-                    TRUSTED:               { label: 'Güvenilir',        color: 'teal',    icon: '🤝' },
+                    TOP_RATED:             { label: 'En Yuksek Puanli', color: 'yellow',  icon: '🏅' },
+                    HIGHLY_REVIEWED:       { label: 'Cok Yorumlanan',   color: 'blue',    icon: '💬' },
+                    NEW_BUSINESS:          { label: 'Yeni Isletme',     color: 'cyan',    icon: '🆕' },
+                    TRUSTED:               { label: 'Guvenilir',        color: 'teal',    icon: '🤝' },
                   }
                   const meta = BADGE_META[badge.type]
                   if (!meta) return null
@@ -475,7 +447,7 @@ export default function BusinessPage() {
               {todayHours && (
                 <div className="flex items-center gap-2 text-base mt-0.5">
                   <span className={`font-semibold ${isOpenNow === true ? "text-emerald-400" : isOpenNow === false ? "text-red-400" : "text-white/40"}`}>
-                    {isOpenNow === true ? "Açık" : isOpenNow === false ? "Kapalı" : ""}
+                    {isOpenNow === true ? "Acık" : isOpenNow === false ? "Kapali" : ""}
                   </span>
                   {todayHours.openTime && todayHours.closeTime && (
                     <span className="text-white/35">{todayHours.openTime} – {todayHours.closeTime === "00:00" ? "Gece yarısı" : todayHours.closeTime}</span>
@@ -495,7 +467,7 @@ export default function BusinessPage() {
                   </svg>
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50"
                     style={{background:'rgba(10,20,10,0.95)',border:'1px solid rgba(74,222,128,0.3)',color:'#4ade80',boxShadow:'0 4px 20px rgba(0,0,0,0.5)'}}>
-                    ✓ Doğrulanmış İşletme
+                    ✓ Dogrulanmis Isletme
                   </div>
                 </div>
               )}
@@ -513,7 +485,7 @@ export default function BusinessPage() {
                     {/* Tooltip */}
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50"
                       style={{background: 'rgba(15,20,15,0.95)', border: '1px solid rgba(74,222,128,0.3)', color: '#4ade80', boxShadow: '0 4px 20px rgba(0,0,0,0.5)'}}>
-                      ✓ Doğrulanmış İşletme
+                      ✓ Dogrulanmis Isletme
                       <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0" style={{borderLeft: '4px solid transparent', borderRight: '4px solid transparent', borderTop: '4px solid rgba(74,222,128,0.3)'}} />
                     </div>
                   </div>
@@ -600,7 +572,7 @@ export default function BusinessPage() {
             {([
               { key: 'yorumlar', label: `Yorumlar (${totalReviewCount})` },
               { key: 'bilgiler', label: 'Bilgiler' },
-              ...(allPhotos.length > 1 ? [{ key: 'fotoğraflar', label: `Foto (${allPhotos.length})` }] : []),
+              ...(allPhotos.length > 1 ? [{ key: 'fotograflar', label: `Foto (${allPhotos.length})` }] : []),
             ] as const).map(({ key, label }) => (
               <button key={key} onClick={() => setActiveTab(key as any)}
                 className={cn('flex-1 text-xs font-semibold py-2 rounded-lg transition-all', activeTab === key ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-white/40 hover:text-white/70')}>
@@ -626,9 +598,9 @@ export default function BusinessPage() {
               {externalReviews.length > 0 && platformReviews.length > 0 && (
                 <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
                   {[
-                    { key: 'tumu', label: `Tümü (${totalReviewCount})` },
+                    { key: 'tumu', label: `Tumu (${totalReviewCount})` },
                     { key: 'google', label: `Google (${externalReviews.length})` },
-                    { key: 'platform', label: `Tecrübelerim (${platformReviews.length})` },
+                    { key: 'platform', label: `Tecrubelerim (${platformReviews.length})` },
                   ].map(({ key, label }) => (
                     <button key={key} onClick={() => setReviewFilter(key as any)}
                       className={cn('flex-shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-xl transition-all', reviewFilter === key ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'bg-white/[0.04] text-white/40 border border-white/[0.06] hover:text-white/70')}>
@@ -639,7 +611,7 @@ export default function BusinessPage() {
               )}
               {visibleReviews.length > 0
                 ? visibleReviews.map((r: any) => r.source ? <ExternalReviewCard key={r.id} review={r} /> : <PlatformReviewCard key={r.id} review={r} />)
-                : <div className="text-center py-12 text-white/30"><MessageSquare size={32} className="mx-auto mb-3 opacity-20" /><p className="text-sm">Henüz yorum yok.</p><p className="mt-1 text-xs">İlk yorumu sen yaz!</p></div>
+                : <div className="text-center py-12 text-white/30"><MessageSquare size={32} className="mx-auto mb-3 opacity-20" /><p className="text-sm">Henuz yorum yok.</p><p className="mt-1 text-xs">Ilk yorumu sen yaz!</p></div>
               }
             </>
           )}
@@ -679,7 +651,7 @@ export default function BusinessPage() {
                 <div className="bg-surface-1 border border-white/[0.06] rounded-2xl p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-7 h-7 rounded-lg bg-purple-500/15 flex items-center justify-center"><Info size={13} className="text-purple-400" /></div>
-                    <h3 className="text-sm font-bold text-white">Hakkında</h3>
+                    <h3 className="text-sm font-bold text-white">Hakkinda</h3>
                   </div>
                   <p className="text-sm text-white/65 leading-relaxed">{business.description}</p>
                 </div>
@@ -696,12 +668,12 @@ export default function BusinessPage() {
               ))}
               <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-indigo-500/15 border border-indigo-500/25 text-indigo-400 text-sm font-semibold hover:bg-indigo-500/20 transition-colors">
-                <Navigation size={15} />Google Maps'te Aç
+                <Navigation size={15} />Google Maps'te Ac
               </a>
             </div>
           )}
 
-          {activeTab === 'fotoğraflar' && allPhotos.length > 0 && (
+          {activeTab === 'fotograflar' && allPhotos.length > 0 && (
             <div>
               <button onClick={() => openGallery(0)} className="w-full mb-2 rounded-2xl overflow-hidden relative group">
                 <img src={allPhotos[0]} alt="" className="w-full h-52 object-cover group-hover:scale-105 transition-transform duration-300" />

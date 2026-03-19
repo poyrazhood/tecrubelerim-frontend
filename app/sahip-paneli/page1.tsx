@@ -27,360 +27,161 @@ function normalizeRating(raw: number) {
 function SubscriptionTab({ business }: { business: any }) {
   const [sub, setSub] = React.useState<any>(null)
   const [loading, setLoading] = React.useState(true)
-  const [billing, setBilling] = React.useState<'monthly' | 'yearly'>('yearly')
-  const [sending, setSending] = React.useState<string | null>(null)
+  const [requestSent, setRequestSent] = React.useState<string|null>(null)
+  const [sending, setSending] = React.useState<string|null>(null)
   const [phone, setPhone] = React.useState('')
-  const [showPhoneFor, setShowPhoneFor] = React.useState<string | null>(null)
-  const [successPlan, setSuccessPlan] = React.useState<string | null>(null)
-  const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '')
+  const [showPhoneFor, setShowPhoneFor] = React.useState<string|null>(null)
+  const [successPlan, setSuccessPlan] = React.useState<string|null>(null)
+  const API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '')
 
-  type PlanKey = 'FREE' | 'PROFESSIONAL' | 'PREMIUM' | 'ENTERPRISE'
-
-  const PLANS: {
-    key: PlanKey
-    label: string
-    badge?: string
-    monthlyPrice: number | null
-    yearlyPrice: number | null
-    color: string
-    border: string
-    glow: string
-    btnClass: string
-    textColor: string
-    features: { text: string; included: boolean }[]
-  }[] = [
-    {
-      key: 'FREE',
-      label: 'Ücretsiz',
-      monthlyPrice: null,
-      yearlyPrice: null,
-      color: 'bg-white/[0.03]',
-      border: 'border-white/[0.08]',
-      glow: '',
-      btnClass: 'bg-white/[0.06] text-white/40 border-white/[0.08] cursor-default',
-      textColor: 'text-white/50',
-      features: [
-        { text: 'İşletme profili', included: true },
-        { text: 'Temel istatistikler', included: true },
-        { text: 'Yorum görüntüleme', included: true },
-        { text: 'Gelişmiş analitik', included: false },
-        { text: 'Doğrulanmış rozet', included: false },
-        { text: 'Arama önceliği', included: false },
-      ],
-    },
-    {
-      key: 'PROFESSIONAL',
-      label: 'Profesyonel',
-      monthlyPrice: 149,
-      yearlyPrice: 99,
-      color: 'bg-blue-500/[0.05]',
-      border: 'border-blue-500/25',
-      glow: 'shadow-blue-500/10',
-      btnClass: 'bg-blue-500 hover:bg-blue-400 text-white border-transparent',
-      textColor: 'text-blue-400',
-      features: [
-        { text: 'İşletme profili', included: true },
-        { text: 'Temel istatistikler', included: true },
-        { text: 'Yorum görüntüleme', included: true },
-        { text: 'Gelişmiş analitik', included: true },
-        { text: 'Doğrulanmış rozet', included: true },
-        { text: 'Hızlı yorum yanıtlama', included: true },
-        { text: 'Arama önceliği', included: false },
-        { text: 'Rakip reklamları kaldırma', included: false },
-      ],
-    },
-    {
-      key: 'PREMIUM',
-      label: 'Premium',
-      badge: 'Popüler',
-      monthlyPrice: 349,
-      yearlyPrice: 229,
-      color: 'bg-amber-500/[0.06]',
-      border: 'border-amber-500/30',
-      glow: 'shadow-amber-500/10',
-      btnClass: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white border-transparent',
-      textColor: 'text-amber-400',
-      features: [
-        { text: 'Profesyonel paketteki her şey', included: true },
-        { text: 'Arama önceliği', included: true },
-        { text: 'Rakip reklamları kaldırma', included: true },
-        { text: 'Öne çıkan listeleme', included: true },
-        { text: 'Aylık performans raporu', included: true },
-        { text: 'Kurumsal API erişimi', included: false },
-      ],
-    },
-    {
-      key: 'ENTERPRISE',
-      label: 'Kurumsal',
-      monthlyPrice: 1199,
-      yearlyPrice: 799,
-      color: 'bg-purple-500/[0.05]',
-      border: 'border-purple-500/25',
-      glow: 'shadow-purple-500/10',
-      btnClass: 'bg-purple-500 hover:bg-purple-400 text-white border-transparent',
-      textColor: 'text-purple-400',
-      features: [
-        { text: 'Premium paketteki her şey', included: true },
-        { text: 'Kurumsal API erişimi', included: true },
-        { text: 'White-label widget', included: true },
-        { text: 'Özel hesap yöneticisi', included: true },
-        { text: 'SLA garantisi', included: true },
-        { text: 'Sınırsız şube desteği', included: true },
-      ],
-    },
-  ]
+  const PLAN_FEATURES: Record<string, string[]> = {
+    FREE:         [],
+    PROFESSIONAL: ['Gelismis Analitik', 'Dogrulanmis Rozet', 'Hizli Yorum Yanitlama'],
+    PREMIUM:      ['Gelismis Analitik', 'Dogrulanmis Rozet', 'Hizli Yorum Yanitlama', 'Arama Onceligi', 'Rakip Reklamlari Kaldirma', 'One Cikan Listeleme'],
+    ENTERPRISE:   ['Tum Premium Ozellikler', 'Kurumsal API Erisimi', 'White-label Widget', 'Ozel Destek'],
+  }
+  const PLAN_PRICES: Record<string, string> = { FREE: 'Ucretsiz', PROFESSIONAL: '99â‚º/ay', PREMIUM: '299â‚º/ay', ENTERPRISE: '999â‚º/ay' }
+  const PLAN_COLORS: Record<string, string> = {
+    FREE: 'border-white/10 bg-white/[0.02]',
+    PROFESSIONAL: 'border-blue-500/20 bg-blue-500/[0.04]',
+    PREMIUM: 'border-amber-500/20 bg-amber-500/[0.04]',
+    ENTERPRISE: 'border-purple-500/20 bg-purple-500/[0.04]',
+  }
+  const PLAN_TEXT: Record<string, string> = {
+    FREE: 'text-white/40', PROFESSIONAL: 'text-blue-400', PREMIUM: 'text-amber-400', ENTERPRISE: 'text-purple-400'
+  }
+  const PLAN_BTN: Record<string, string> = {
+    PROFESSIONAL: 'bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-blue-500/30',
+    PREMIUM: 'bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500/30',
+    ENTERPRISE: 'bg-purple-500/20 text-purple-400 border-purple-500/30 hover:bg-purple-500/30',
+  }
 
   React.useEffect(() => {
     const token = localStorage.getItem('auth_token')
-    fetch(`${API_BASE}/api/subscriptions/business/${business.id}`, {
-      headers: { Authorization: 'Bearer ' + token },
+    fetch(`${API}/api/subscriptions/business/${business.id}`, {
+      headers: { Authorization: 'Bearer ' + token }
     })
       .then(r => r.json())
       .then(d => { setSub(d); setLoading(false) })
       .catch(() => setLoading(false))
   }, [business.id])
 
-  const handleRequest = async (planKey: string) => {
-    if (!phone.trim()) { setShowPhoneFor(planKey); return }
-    setSending(planKey)
+  const handleRequest = async (plan: string) => {
+    if (!phone.trim()) { setShowPhoneFor(plan); return }
+    setSending(plan)
     const token = localStorage.getItem('auth_token')
-    const planLabel = `${planKey}_${billing.toUpperCase()}`
-    const res = await fetch(`${API_BASE}/api/subscriptions/request`, {
+    const res = await fetch(`${API}/api/subscriptions/request`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify({ businessId: business.id, planWanted: planLabel, phone }),
+      body: JSON.stringify({ businessId: business.id, planWanted: plan, phone })
     })
     const d = await res.json()
     setSending(null)
-    if (res.ok) { setSuccessPlan(planKey); setShowPhoneFor(null); setPhone('') }
+    if (res.ok) { setSuccessPlan(plan); setShowPhoneFor(null); setPhone('') }
     else if (d.error) { alert(d.error) }
   }
 
-  const currentPlan: PlanKey = (sub?.plan as PlanKey) || 'FREE'
+  const currentPlan = sub?.plan || 'FREE'
   const endsAt = sub?.endsAt ? new Date(sub.endsAt).toLocaleDateString('tr-TR') : null
-  const yearlySaving = Math.round(((149 - 99) / 149) * 100)
 
-  if (loading) return (
-    <div className="flex items-center justify-center py-16">
-      <svg className="animate-spin w-6 h-6 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="12" cy="12" r="10" /><path d="M12 2a10 10 0 0 1 10 10" />
-      </svg>
-    </div>
-  )
+  if (loading) return <div className="text-white/30 text-sm text-center py-8">Yukleniyor...</div>
 
   return (
-    <div className="pb-8">
-      {/* Başarı Modal */}
+    <div className="space-y-4">
+      {/* Basari Animasyonu */}
       {successPlan && (
-        <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
-          onClick={() => setSuccessPlan(null)}
-        >
-          <div className="bg-[#0f0f17] border border-emerald-500/20 rounded-3xl p-8 max-w-sm w-full text-center space-y-4">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSuccessPlan(null)}>
+          <div className="bg-[#12121a] border border-emerald-500/20 rounded-3xl p-8 max-w-sm w-full text-center space-y-4 animate-[fadeInScale_0.3s_ease-out]">
             <div className="w-16 h-16 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-emerald-400">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
-            <div className="font-black text-xl text-white">Talebiniz Alındı!</div>
+            <div className="font-black text-xl text-white">Talebiniz Alindi!</div>
             <div className="text-sm text-white/50 leading-relaxed">
-              <span className="text-emerald-400 font-bold">
-                {PLANS.find(p => p.key === successPlan)?.label}
-              </span>{' '}
-              paketi için talebiniz iletildi.
+              <span className="text-emerald-400 font-bold">{successPlan}</span> paketi icin talebiniz iletildi.
               <br /><br />
-              Ekibimiz en kısa sürede sizi{' '}
-              <span className="text-white/70 font-semibold">telefon</span> ile arayacak.
+              Ekibimiz en kisa surede sizi <span className="text-white/70 font-semibold">telefon</span> ile arayarak bilgi verecektir.
             </div>
-            <div className="text-xs text-white/25">Kapatmak için tıklayın</div>
+            <div className="text-xs text-white/25">Kapatmak icin tiklayin</div>
           </div>
         </div>
       )}
 
-      {/* Başlık */}
-      <div className="px-4 pt-4 pb-6 text-center">
-        <div className="text-lg font-black text-white mb-1">Paketinizi Seçin</div>
-        <div className="text-xs text-white/40">İşletmenizi öne çıkarın, müşterilerinize ulaşın</div>
-
-        {/* Mevcut plan badge */}
-        {currentPlan !== 'FREE' && (
-          <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span className="text-xs text-emerald-400 font-bold">
-              Aktif: {PLANS.find(p => p.key === currentPlan)?.label}
-              {endsAt && ` — ${endsAt} tarihine kadar`}
-            </span>
+      {/* Mevcut Plan */}
+      <div className={`rounded-2xl border p-4 ${PLAN_COLORS[currentPlan]}`}>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className={`text-lg font-black ${PLAN_TEXT[currentPlan]}`}>{currentPlan}</div>
+            <div className="text-xs text-white/40 mt-0.5">{PLAN_PRICES[currentPlan]}</div>
           </div>
-        )}
-
-        {/* Aylık / Yıllık Toggle */}
-        <div className="mt-4 inline-flex items-center bg-white/[0.05] border border-white/[0.08] rounded-2xl p-1 gap-1">
-          <button
-            onClick={() => setBilling('monthly')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              billing === 'monthly'
-                ? 'bg-white/[0.1] text-white'
-                : 'text-white/40 hover:text-white/60'
-            }`}
-          >
-            Aylık
-          </button>
-          <button
-            onClick={() => setBilling('yearly')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-              billing === 'yearly'
-                ? 'bg-white/[0.1] text-white'
-                : 'text-white/40 hover:text-white/60'
-            }`}
-          >
-            Yıllık
-            <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black">
-              %{yearlySaving} indirim
-            </span>
-          </button>
-        </div>
-      </div>
-
-      {/* Plan Kartları */}
-      <div className="px-4 space-y-3">
-        {PLANS.map(plan => {
-          const isCurrent = plan.key === currentPlan
-          const price = billing === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice
-          const showPhone = showPhoneFor === plan.key
-
-          return (
-            <div
-              key={plan.key}
-              className={`relative rounded-2xl border p-4 transition-all ${plan.color} ${plan.border} ${
-                isCurrent ? 'ring-1 ring-emerald-500/30' : ''
-              } ${plan.glow ? `shadow-lg ${plan.glow}` : ''}`}
-            >
-              {/* Popüler badge */}
-              {plan.badge && (
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
-                  <div className="px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-black shadow-lg">
-                    ⭐ {plan.badge}
-                  </div>
-                </div>
-              )}
-
-              {/* Mevcut plan rozeti */}
-              {isCurrent && (
-                <div className="absolute -top-2.5 right-3">
-                  <div className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold">
-                    Aktif Plan
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <div className={`font-black text-base ${plan.textColor}`}>{plan.label}</div>
-                  {price !== null ? (
-                    <div className="flex items-baseline gap-1.5 mt-0.5">
-                      <span className="text-2xl font-black text-white">{price.toLocaleString('tr-TR')}₺</span>
-                      <span className="text-xs text-white/40">/ay</span>
-                      {billing === 'yearly' && plan.monthlyPrice && (
-                        <span className="text-xs text-white/25 line-through">{plan.monthlyPrice}₺</span>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-2xl font-black text-white/50 mt-0.5">Ücretsiz</div>
-                  )}
-                  {billing === 'yearly' && price !== null && (
-                    <div className="text-[10px] text-white/30 mt-0.5">
-                      Yıllık {(price * 12).toLocaleString('tr-TR')}₺ faturalanır
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Özellikler */}
-              <div className="space-y-1.5 mb-4">
-                {plan.features.map(f => (
-                  <div key={f.text} className={`flex items-center gap-2 text-xs ${f.included ? 'text-white/60' : 'text-white/20'}`}>
-                    {f.included ? (
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" className={`shrink-0 ${plan.textColor}`}>
-                        <circle cx="12" cy="12" r="10" fill="currentColor" fillOpacity="0.15" />
-                        <polyline points="8 12 11 15 16 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    ) : (
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" className="shrink-0 text-white/15">
-                        <circle cx="12" cy="12" r="10" fill="currentColor" fillOpacity="0.08" />
-                        <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                      </svg>
-                    )}
-                    {f.text}
-                  </div>
-                ))}
-              </div>
-
-              {/* CTA */}
-              {plan.key === 'FREE' ? (
-                <div className={`w-full py-2.5 rounded-xl text-xs font-bold text-center border ${plan.btnClass}`}>
-                  {isCurrent ? 'Mevcut Planınız' : 'Ücretsiz Başla'}
-                </div>
-              ) : isCurrent ? (
-                <div className="w-full py-2.5 rounded-xl text-xs font-bold text-center bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-                  ✓ Aktif Plan
-                </div>
-              ) : showPhone ? (
-                <div className="space-y-2">
-                  <input
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    placeholder="0555 123 45 67"
-                    className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-indigo-500/40"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleRequest(plan.key)}
-                      disabled={sending === plan.key || !phone.trim()}
-                      className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${plan.btnClass} disabled:opacity-40`}
-                    >
-                      {sending === plan.key ? (
-                        <>
-                          <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="12" cy="12" r="10" /><path d="M12 2a10 10 0 0 1 10 10" />
-                          </svg>
-                          Gönderiliyor...
-                        </>
-                      ) : 'Talebi Gönder'}
-                    </button>
-                    <button
-                      onClick={() => { setShowPhoneFor(null); setPhone('') }}
-                      className="px-3 py-2.5 rounded-xl bg-white/[0.05] text-white/40 text-xs hover:bg-white/[0.08] transition-all"
-                    >
-                      İptal
-                    </button>
-                  </div>
-                  <div className="text-[10px] text-white/25 text-center">
-                    Ekibimiz sizi en kısa sürede arayacak
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowPhoneFor(plan.key)}
-                  className={`w-full py-2.5 rounded-xl text-xs font-bold border transition-all active:scale-[0.98] ${plan.btnClass}`}
-                >
-                  {billing === 'yearly'
-                    ? `Yıllık Başla — ${plan.yearlyPrice?.toLocaleString('tr-TR')}₺/ay`
-                    : `Aylık Başla — ${plan.monthlyPrice?.toLocaleString('tr-TR')}₺/ay`}
-                </button>
-              )}
+          {endsAt && currentPlan !== 'FREE' && (
+            <div className="text-right">
+              <div className="text-[11px] text-white/30">Bitis tarihi</div>
+              <div className="text-xs text-white/50 font-bold">{endsAt}</div>
             </div>
-          )
-        })}
+          )}
+        </div>
+        {PLAN_FEATURES[currentPlan].length > 0 ? (
+          <div className="space-y-1.5">
+            {PLAN_FEATURES[currentPlan].map((f: string) => (
+              <div key={f} className="flex items-center gap-2 text-xs text-white/50">
+                <div className="w-1 h-1 rounded-full bg-current shrink-0" />
+                {f}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-xs text-white/30">Temel ozellikler aktif</div>
+        )}
       </div>
 
-      {/* Alt not */}
-      <div className="px-4 mt-4 text-center text-[11px] text-white/20 leading-relaxed">
-        Tüm paketler 14 gün iade garantisi ile sunulmaktadır.<br />
-        Sözleşme yok, istediğiniz zaman iptal edebilirsiniz.
-      </div>
+      {/* Diger Planlar */}
+      <div className="text-xs text-white/30 font-bold uppercase tracking-wider px-1">Planlari Karsilastir</div>
+      {['PROFESSIONAL','PREMIUM','ENTERPRISE'].filter(p => p !== currentPlan).map(plan => (
+        <div key={plan} className={`rounded-2xl border p-4 ${PLAN_COLORS[plan]} transition-all`}>
+          <div className="flex items-center justify-between mb-2">
+            <div className={`font-black text-sm ${PLAN_TEXT[plan]}`}>{plan}</div>
+            <div className={`text-sm font-bold ${PLAN_TEXT[plan]}`}>{PLAN_PRICES[plan]}</div>
+          </div>
+          <div className="space-y-1 mb-4">
+            {PLAN_FEATURES[plan].map((f: string) => (
+              <div key={f} className="flex items-center gap-2 text-xs text-white/40">
+                <div className="w-1 h-1 rounded-full bg-current shrink-0" />
+                {f}
+              </div>
+            ))}
+          </div>
+          {showPhoneFor === plan ? (
+            <div className="space-y-2">
+              <input value={phone} onChange={e => setPhone(e.target.value)}
+                placeholder="Telefon numaraniz (ornek: 0555 123 45 67)"
+                className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-indigo-500/40" />
+              <div className="flex gap-2">
+                <button onClick={() => handleRequest(plan)} disabled={sending === plan || !phone.trim()}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${PLAN_BTN[plan]} disabled:opacity-40`}>
+                  {sending === plan ? (
+                    <><svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 2a10 10 0 0 1 10 10" /></svg>Gonderiliyor...</>
+                  ) : 'Talep Gonder'}
+                </button>
+                <button onClick={() => { setShowPhoneFor(null); setPhone('') }}
+                  className="px-3 py-2.5 rounded-xl bg-white/[0.05] text-white/40 text-xs hover:bg-white/[0.08] transition-all">
+                  Iptal
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => setShowPhoneFor(plan)}
+              className={`w-full py-2.5 rounded-xl text-xs font-bold border transition-all ${PLAN_BTN[plan]}`}>
+              Bu Pakete Gec â€” Beni Arayin
+            </button>
+          )}
+        </div>
+      ))}
     </div>
   )
 }
+
 
 function AnalyticsTab({ business }: { business: any }) {
   const [data, setData] = useState<any>(null)
@@ -444,11 +245,11 @@ function AnalyticsTab({ business }: { business: any }) {
       y += 8
     })
     doc.setFontSize(13)
-    doc.text('Kategori Karşılaştırması', 20, y + 10)
+    doc.text('Kategori Karsilastirmasi', 20, y + 10)
     doc.setFontSize(10)
     y += 20
     data?.competitors?.forEach((c: any, i: number) => {
-      doc.text(`${i+1}. ${c.name}${c.isSelf ? ' (siz)' : ''} — Puan: ${c.averageRating?.toFixed(1)}, Yorum: ${(c.totalReviews ?? 0) + (c._count?.externalReviews ?? 0)}${c.totalReviews}`, 25, y)
+      doc.text(`${i+1}. ${c.name}${c.isSelf ? ' (siz)' : ''} â€” Puan: ${c.averageRating?.toFixed(1)}, Yorum: ${(c.totalReviews ?? 0) + (c._count?.externalReviews ?? 0)}${c.totalReviews}`, 25, y)
       y += 8
     })
     doc.save(`${business.name}-rapor.pdf`)
@@ -482,13 +283,13 @@ function AnalyticsTab({ business }: { business: any }) {
             <div className={`w-8 h-8 rounded-xl bg-${color}-500/15 flex items-center justify-center mb-2`}>
               <Icon size={15} className={`text-${color}-400`} />
             </div>
-            <div className="text-lg font-bold text-white">{value ?? '—'}</div>
+            <div className="text-lg font-bold text-white">{value ?? 'â€”'}</div>
             <div className="text-[11px] text-white/40 mt-0.5">{label}</div>
           </div>
         ))}
       </div>
 
-      {/* Trend grafigi — toggle */}
+      {/* Trend grafigi â€” toggle */}
       {data.monthlyTrend?.length > 0 && (
         <div className="p-4 rounded-2xl bg-surface-1 border border-white/[0.07]">
           <div className="flex items-center justify-between mb-3">
@@ -575,7 +376,7 @@ function AnalyticsTab({ business }: { business: any }) {
                 <div className="w-2 h-2 rounded-full bg-amber-500/70 flex-shrink-0" />
                 <div>
                   <div className="text-sm font-bold text-white">{notr}%</div>
-                  <div className="text-[10px] text-white/30">Nötr</div>
+                  <div className="text-[10px] text-white/30">NÃ¶tr</div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -588,7 +389,7 @@ function AnalyticsTab({ business }: { business: any }) {
             </div>
             {data.sentiment.topKeywords?.length > 0 && (
               <div className="pt-3 border-t border-white/[0.05]">
-                <div className="text-[10px] font-semibold text-white/40 mb-2 uppercase tracking-wider">Öne Çıkan Kelimeler</div>
+                <div className="text-[10px] font-semibold text-white/40 mb-2 uppercase tracking-wider">Ã–ne Ã‡Ä±kan Kelimeler</div>
                 <div className="flex flex-wrap gap-1.5">
                   {data.sentiment.topKeywords.map((k: any) => (
                     <span key={k.word} className="text-[10px] px-2.5 py-1 rounded-full bg-white/[0.05] text-white/60 border border-white/[0.08] hover:bg-white/[0.08] transition-all">
@@ -605,7 +406,7 @@ function AnalyticsTab({ business }: { business: any }) {
       {/* Rakip karsilastirma */}
       {data.competitors?.length > 1 && (
         <div className="p-4 rounded-2xl bg-surface-1 border border-white/[0.07]">
-          <div className="text-xs font-bold text-white/70 mb-3">Kategori Karşılaştırması</div>
+          <div className="text-xs font-bold text-white/70 mb-3">Kategori Karsilastirmasi</div>
           <div className="space-y-2.5">
             {data.competitors.map((c: any, i: number) => (
               <div key={i} className={`flex items-center gap-3 p-2.5 rounded-xl ${c.isSelf ? 'bg-indigo-500/10 border border-indigo-500/20' : 'bg-white/[0.03] hover:bg-white/[0.06] cursor-pointer'} transition-all`}
@@ -613,7 +414,7 @@ function AnalyticsTab({ business }: { business: any }) {
                 <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[10px] text-white/50 font-bold flex-shrink-0">{i + 1}</div>
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-semibold text-white truncate">{c.name} {c.isSelf && <span className="text-indigo-400 text-[10px]">(siz)</span>}</div>
-                  <div className="text-[10px] text-white/40">{c.totalReviews} yorum · {c.totalViews} goruntulenme</div>
+                  <div className="text-[10px] text-white/40">{c.totalReviews} yorum Â· {c.totalViews} goruntulenme</div>
                 </div>
                 <div className="text-sm font-bold text-amber-400">{c.averageRating?.toFixed(1)}</div>
               </div>
@@ -622,10 +423,10 @@ function AnalyticsTab({ business }: { business: any }) {
         </div>
       )}
 
-      {/* Hızlı Yorum Yanıtla */}
+      {/* Hizli yorum yanitla */}
       {recentReviews.length > 0 && (
         <div className="p-4 rounded-2xl bg-surface-1 border border-white/[0.07]">
-          <div className="text-xs font-bold text-white/70 mb-3">Son Yorumlar — Hızlı Yanıt</div>
+          <div className="text-xs font-bold text-white/70 mb-3">Son Yorumlar â€” Hizli Yanit</div>
           <div className="space-y-3">
             {recentReviews.map((review: any) => (
               <div key={review.id} className="border-b border-white/[0.05] pb-3 last:border-0 last:pb-0">
@@ -659,10 +460,10 @@ function AnalyticsTab({ business }: { business: any }) {
                     <div className="flex gap-2">
                       <button onClick={() => saveReply(review.id)} disabled={replySaving || !replyText.trim()}
                         className="flex-1 py-1.5 rounded-lg bg-indigo-500 text-white text-[11px] font-bold disabled:opacity-40 hover:bg-indigo-600 transition-all">
-                        {replySaving ? 'Gönderiliyor...' : 'Gönder'}
+                        {replySaving ? 'Gonderiliyor...' : 'Gonder'}
                       </button>
                       <button onClick={() => setReplyingTo(null)} className="px-3 py-1.5 rounded-lg bg-white/[0.06] text-white/50 text-[11px] hover:bg-white/[0.1] transition-all">
-                        İptal
+                        Iptal
                       </button>
                     </div>
                   </div>
@@ -716,7 +517,7 @@ function AutoServiceManualForm({ businessId }: { businessId: string }) {
 
   return (
     <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/[0.07]">
-      <div className="text-xs font-bold text-white/70 mb-3">Yetkinlik Bilgilerini Güncelle</div>
+      <div className="text-xs font-bold text-white/70 mb-3">Yetkinlik Bilgilerini Guncelle</div>
       <div className="grid grid-cols-2 gap-2 mb-3">
         {[
           { key: 'ustaSicili', label: 'Deneyim (Yil)', placeholder: '12' },
@@ -809,7 +610,7 @@ function ReviewsTab({ business }: { business: any }) {
   if (reviews.length === 0) return (
     <div className="text-center py-12">
       <MessageSquare size={32} className="mx-auto mb-3 text-white/20" />
-      <div className="text-white/40 text-sm">Henüz yorum yok</div>
+      <div className="text-white/40 text-sm">HenÃ¼z yorum yok</div>
     </div>
   )
 
@@ -835,7 +636,7 @@ function ReviewsTab({ business }: { business: any }) {
 
           {r.ownerReply && replyingTo !== r.id && (
             <div className="bg-indigo-500/[0.07] border border-indigo-500/20 rounded-xl p-3 mb-2">
-              <div className="text-[10px] font-bold text-indigo-400 mb-1">İşletme Yanıtı</div>
+              <div className="text-[10px] font-bold text-indigo-400 mb-1">Ä°ÅŸletme YanÄ±tÄ±</div>
               <p className="text-xs text-white/60 leading-relaxed">{r.ownerReply}</p>
             </div>
           )}
@@ -843,23 +644,23 @@ function ReviewsTab({ business }: { business: any }) {
           {replyingTo === r.id ? (
             <div>
               <textarea value={replyText} onChange={e => setReplyText(e.target.value)} rows={3}
-                placeholder="Müşterinize yanıt yazın..."
+                placeholder="MÃ¼ÅŸterinize yanÄ±t yazÄ±n..."
                 className="w-full bg-surface-1 border border-indigo-500/30 rounded-xl px-3 py-2 text-sm text-white outline-none resize-none focus:border-indigo-500/60 placeholder-white/20 mb-2" />
               <div className="flex gap-2">
-                <button onClick={() => getAIDraft(r.id)} disabled={!!aiLoading} className="px-3 py-1.5 rounded-lg bg-violet-500/15 text-violet-400 border border-violet-500/20 text-xs font-bold disabled:opacity-40 hover:bg-violet-500/25 transition-all flex items-center gap-1">{aiLoading === r.id ? <Loader2 size={11} className="animate-spin" /> : <span>✨</span>} {aiDraftCount[r.id] ? `Yanıtı Değiştir (${3 - (aiDraftCount[r.id] || 0)} hak)` : 'Asistanla Yanıtla'}</button>
+                <button onClick={() => getAIDraft(r.id)} disabled={!!aiLoading} className="px-3 py-1.5 rounded-lg bg-violet-500/15 text-violet-400 border border-violet-500/20 text-xs font-bold disabled:opacity-40 hover:bg-violet-500/25 transition-all flex items-center gap-1">{aiLoading === r.id ? <Loader2 size={11} className="animate-spin" /> : <span>âœ¨</span>} {aiDraftCount[r.id] ? `YanÄ±tÄ± DeÄŸiÅŸtir (${3 - (aiDraftCount[r.id] || 0)} hak)` : 'Asistanla YanÄ±tla'}</button>
                 <button onClick={() => saveReply(r.id)} disabled={replySaving || !replyText.trim()}
                   className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-indigo-500 text-white text-xs font-bold disabled:opacity-50">
-                  {replySaving ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />} Yanıtla
+                  {replySaving ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />} YanÄ±tla
                 </button>
                 <button onClick={() => { setReplyingTo(null); setReplyText('') }}
-                  className="px-4 py-1.5 rounded-lg bg-white/[0.05] text-white/40 text-xs">İptal</button>
+                  className="px-4 py-1.5 rounded-lg bg-white/[0.05] text-white/40 text-xs">Ä°ptal</button>
               </div>
             </div>
           ) : (
             <button onClick={() => { setReplyingTo(r.id); setReplyText(r.ownerReply || '') }}
               className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
               <MessageSquare size={11} />
-              {r.ownerReply ? 'Yanıtı Düzenle' : 'Yanıtla'}
+              {r.ownerReply ? 'YanÄ±tÄ± DÃ¼zenle' : 'YanÄ±tla'}
             </button>
           )}
         </div>
@@ -901,19 +702,19 @@ export default function SahipPaneliPage() {
     const d = await r.json()
     const results = Array.isArray(d) ? d : Array.isArray(d.data) ? d.data : Array.isArray(d.businesses) ? d.businesses : []
     setClaimResults(results)
-    if (results.length === 0) setClaimMsg('Sonuç bulunamadı.')
+    if (results.length === 0) setClaimMsg('SonuÃ§ bulunamadÄ±.')
     setClaimSearching(false)
   }
 
   const handleClaim = async (b: any) => {
     const token = getToken()
-    if (!token) { setClaimMsg('Sahiplik talebi için giriş yapmanız gerekiyor.'); return }
+    if (!token) { setClaimMsg('Sahiplik talebi iÃ§in giriÅŸ yapmanÄ±z gerekiyor.'); return }
     setClaiming(b.id); setClaimMsg(null)
     const res = await fetch(`${API}/api/businesses/${b.id}/claim`, {
       method: 'POST', headers: { Authorization: `Bearer ${token}` }
     })
     const d = await res.json()
-    setClaimMsg(res.ok ? '✓ Talebiniz alındı, inceleme sonrası bildirim alacaksınız.' : d.error || 'Hata oluştu.')
+    setClaimMsg(res.ok ? 'âœ“ Talebiniz alÄ±ndÄ±, inceleme sonrasÄ± bildirim alacaksÄ±nÄ±z.' : d.error || 'Hata oluÅŸtu.')
     setClaiming(null)
     if (res.ok) setClaimResults([])
   }
@@ -931,8 +732,8 @@ export default function SahipPaneliPage() {
     if (res.ok) {
       setSelected(d.business)
       setMyBusinesses(prev => prev.map(x => x.id === d.business.id ? d.business : x))
-      setSaveMsg('✓ Kaydedildi!'); setEditing(false)
-    } else { setSaveMsg(d.error || 'Kaydetme başarısız.') }
+      setSaveMsg('âœ“ Kaydedildi!'); setEditing(false)
+    } else { setSaveMsg(d.error || 'Kaydetme baÅŸarÄ±sÄ±z.') }
     setSaving(false)
     setTimeout(() => setSaveMsg(null), 3000)
   }
@@ -955,7 +756,7 @@ export default function SahipPaneliPage() {
 
   const getCover = (b: any) => b.coverPhoto || b.photos?.[0]?.url || (b.attributes?.photos?.[0]) || null
 
-  // ── Seçili işletme yönetim ekranı ──
+  // â”€â”€ SeÃ§ili iÅŸletme yÃ¶netim ekranÄ± â”€â”€
   if (selected) {
     const cover = getCover(selected)
     const rating = normalizeRating(selected.averageRating ?? 0)
@@ -979,7 +780,7 @@ export default function SahipPaneliPage() {
             <label className="absolute top-4 right-4 cursor-pointer">
               <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/40 backdrop-blur-sm border border-white/15 text-xs text-white font-medium">
-                {photoUploading ? <Loader2 size={11} className="animate-spin" /> : <Camera size={11} />} Fotoğraf
+                {photoUploading ? <Loader2 size={11} className="animate-spin" /> : <Camera size={11} />} FotoÄŸraf
               </div>
             </label>
             <div className="absolute bottom-4 left-4 right-4">
@@ -991,7 +792,7 @@ export default function SahipPaneliPage() {
                   selected.claimStatus === 'PENDING' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
                   'bg-white/[0.07] text-white/40 border-white/10'
                 )}>
-                  {selected.claimStatus === 'CLAIMED' ? '✓ Doğrulandı' : selected.claimStatus === 'PENDING' ? 'â³ İnceleniyor' : 'Doğrulanmamış'}
+                  {selected.claimStatus === 'CLAIMED' ? 'âœ“ DoÄŸrulandÄ±' : selected.claimStatus === 'PENDING' ? 'â³ Ä°nceleniyor' : 'DoÄŸrulanmamÄ±ÅŸ'}
                 </span>
               </div>
             </div>
@@ -999,7 +800,7 @@ export default function SahipPaneliPage() {
 
           {/* Tabs */}
           <div className="flex border-b border-white/[0.07] px-4 mt-2">
-            {([['overview','Genel Bakış'],['edit','Bilgileri Düzenle'],['reviews','Yorumlar'],['analytics','Analitik']] as const).map(([key, label]) => (
+            {([['overview','Genel Bakis'],['edit','Bilgileri Duzenle'],['reviews','Yorumlar'],['analytics','Analitik'],['subscription','Paketim']] as const).map(([key, label]) => (
               <button key={key} onClick={() => setActiveTab(key)}
                 className={cn('py-3 px-4 text-xs font-bold border-b-2 transition-colors',
                   activeTab === key ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-white/40 hover:text-white/60'
@@ -1016,9 +817,9 @@ export default function SahipPaneliPage() {
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { icon: Star, label: 'Puan', value: rating > 0 ? rating.toFixed(1) : '—', color: 'text-amber-400' },
+                    { icon: Star, label: 'Puan', value: rating > 0 ? rating.toFixed(1) : 'â€”', color: 'text-amber-400' },
                     { icon: MessageSquare, label: 'Yorum', value: selected.totalReviews ?? 0, color: 'text-indigo-400' },
-                    { icon: Eye, label: 'Görüntülenme', value: selected.totalViews ?? 0, color: 'text-purple-400' },
+                    { icon: Eye, label: 'GÃ¶rÃ¼ntÃ¼lenme', value: selected.totalViews ?? 0, color: 'text-purple-400' },
                   ].map(({ icon: Icon, label, value, color }) => (
                     <div key={label} className="bg-surface-1 border border-white/[0.07] rounded-2xl p-3 text-center">
                       <Icon size={18} className={cn('mx-auto mb-1', color)} />
@@ -1032,7 +833,7 @@ export default function SahipPaneliPage() {
                 {rating > 0 && (
                   <div className="bg-surface-1 border border-white/[0.07] rounded-2xl p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-bold text-white">Puan Dağılımı</span>
+                      <span className="text-sm font-bold text-white">Puan DaÄŸÄ±lÄ±mÄ±</span>
                       <div className="flex items-center gap-1">
                         {[1,2,3,4,5].map(s => <Star key={s} size={12} className={s <= Math.round(rating) ? 'text-amber-400 fill-amber-400' : 'text-white/15'} />)}
                       </div>
@@ -1048,21 +849,13 @@ export default function SahipPaneliPage() {
                   <button onClick={() => setActiveTab('edit')}
                     className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-surface-1 border border-white/[0.07] hover:border-indigo-500/30 transition-all">
                     <div className="w-9 h-9 rounded-xl bg-indigo-500/15 flex items-center justify-center"><Edit3 size={15} className="text-indigo-400" /></div>
-                    <div className="flex-1 text-left"><div className="text-sm font-bold text-white">İşletme Bilgilerini Düzenle</div><div className="text-xs text-white/35">Adres, telefon, açıklama</div></div>
+                    <div className="flex-1 text-left"><div className="text-sm font-bold text-white">Ä°ÅŸletme Bilgilerini DÃ¼zenle</div><div className="text-xs text-white/35">Adres, telefon, aÃ§Ä±klama</div></div>
                     <ChevronRight size={14} className="text-white/20" />
                   </button>
-                  <Link href="/sahip-paneli/abonelik"
-                    className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/[0.08] to-orange-500/[0.05] border border-amber-500/20 hover:border-amber-500/40 transition-all">
-                    <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-400"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    </div>
-                    <div className="flex-1 text-left"><div className="text-sm font-bold text-amber-400">Aboneliği Yükselt</div><div className="text-xs text-white/35">Daha fazla özellik için planınızı yükseltin</div></div>
-                    <ChevronRight size={14} className="text-amber-400/50" />
-                  </Link>
                   <Link href={`/isletme/${selected.slug}`}
                     className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-surface-1 border border-white/[0.07] hover:border-indigo-500/30 transition-all">
                     <div className="w-9 h-9 rounded-xl bg-purple-500/15 flex items-center justify-center"><Eye size={15} className="text-purple-400" /></div>
-                    <div className="flex-1 text-left"><div className="text-sm font-bold text-white">İşletme Sayfasını Görüntüle</div><div className="text-xs text-white/35">Müşterilerin gördüğü sayfa</div></div>
+                    <div className="flex-1 text-left"><div className="text-sm font-bold text-white">Ä°ÅŸletme SayfasÄ±nÄ± GÃ¶rÃ¼ntÃ¼le</div><div className="text-xs text-white/35">MÃ¼ÅŸterilerin gÃ¶rdÃ¼ÄŸÃ¼ sayfa</div></div>
                     <ChevronRight size={14} className="text-white/20" />
                   </Link>
                 </div>
@@ -1078,39 +871,39 @@ export default function SahipPaneliPage() {
             {/* Edit Tab */}
             {activeTab === 'edit' && (
               <div>
-                {saveMsg && <div className={cn('text-xs mb-3 font-medium p-2.5 rounded-xl', saveMsg.startsWith('✓') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400')}>{saveMsg}</div>}
+                {saveMsg && <div className={cn('text-xs mb-3 font-medium p-2.5 rounded-xl', saveMsg.startsWith('âœ“') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400')}>{saveMsg}</div>}
                 {!editing ? (
                   <div className="space-y-3">
                     {[
-                      { key: 'name', label: 'İşletme Adı' },
+                      { key: 'name', label: 'Ä°ÅŸletme AdÄ±' },
                       { key: 'phoneNumber', label: 'Telefon' },
                       { key: 'email', label: 'E-posta' },
                       { key: 'website', label: 'Website' },
                       { key: 'address', label: 'Adres' },
                       { key: 'city', label: 'Åehir' },
-                      { key: 'district', label: 'İlçe' },
-                      { key: 'description', label: 'Açıklama' },
+                      { key: 'district', label: 'Ä°lÃ§e' },
+                      { key: 'description', label: 'AÃ§Ä±klama' },
                     ].map(({ key, label }) => (
                       <div key={key} className="bg-surface-1 border border-white/[0.07] rounded-2xl px-4 py-3">
                         <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1">{label}</div>
-                        <div className="text-sm text-white/70">{(selected as any)[key] || <span className="text-white/20 italic">Belirtilmemiş</span>}</div>
+                        <div className="text-sm text-white/70">{(selected as any)[key] || <span className="text-white/20 italic">BelirtilmemiÅŸ</span>}</div>
                       </div>
                     ))}
                     <button onClick={() => { setEditing(true); setForm({ name: selected.name, address: selected.address, city: selected.city, district: selected.district, description: selected.description, phoneNumber: selected.phoneNumber, email: selected.email, website: selected.website }) }}
                       className="w-full py-3 rounded-2xl bg-indigo-500 text-white text-sm font-bold hover:bg-indigo-600 transition-colors flex items-center justify-center gap-2">
-                      <Edit3 size={14} /> Düzenle
+                      <Edit3 size={14} /> DÃ¼zenle
                     </button>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {[
-                      { key: 'name', label: 'İşletme Adı', type: 'input' },
+                      { key: 'name', label: 'Ä°ÅŸletme AdÄ±', type: 'input' },
                       { key: 'phoneNumber', label: 'Telefon', type: 'input' },
                       { key: 'email', label: 'E-posta', type: 'input' },
                       { key: 'website', label: 'Website', type: 'input' },
                       { key: 'address', label: 'Adres', type: 'input' },
                       { key: 'city', label: 'Åehir', type: 'input' },
-                      { key: 'district', label: 'İlçe', type: 'input' },
+                      { key: 'district', label: 'Ä°lÃ§e', type: 'input' },
                     ].map(({ key, label }) => (
                       <div key={key}>
                         <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1">{label}</div>
@@ -1119,7 +912,7 @@ export default function SahipPaneliPage() {
                       </div>
                     ))}
                     <div>
-                      <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1">Açıklama</div>
+                      <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1">AÃ§Ä±klama</div>
                       <textarea value={form.description || ''} onChange={e => setForm({ ...form, description: e.target.value })} rows={4}
                         className="w-full bg-surface-2 border border-indigo-500/30 rounded-xl px-3 py-2.5 text-sm text-white outline-none resize-none focus:border-indigo-500/60" />
                     </div>
@@ -1128,7 +921,7 @@ export default function SahipPaneliPage() {
                         className="flex-1 py-3 rounded-2xl bg-indigo-500 text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2">
                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Kaydet
                       </button>
-                      <button onClick={() => setEditing(false)} className="px-5 py-3 rounded-2xl bg-white/[0.05] text-white/50 text-sm font-medium">İptal</button>
+                      <button onClick={() => setEditing(false)} className="px-5 py-3 rounded-2xl bg-white/[0.05] text-white/50 text-sm font-medium">Ä°ptal</button>
                     </div>
                   </div>
                 )}
@@ -1152,18 +945,18 @@ export default function SahipPaneliPage() {
     )
   }
 
-  // ── Ana liste / sahiplen ekranı ──
+  // â”€â”€ Ana liste / sahiplen ekranÄ± â”€â”€
   return (
     <AppLayout>
       <div className="max-w-lg mx-auto px-4 py-6">
         <h1 className="text-2xl font-black text-white mb-1">Sahip Paneli</h1>
-        <p className="text-sm text-white/40 mb-6">İşletmenizi yönetin veya sahiplik talep edin</p>
+        <p className="text-sm text-white/40 mb-6">Ä°ÅŸletmenizi yÃ¶netin veya sahiplik talep edin</p>
 
         {loading ? (
           <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-white/30" /></div>
         ) : myBusinesses.length > 0 ? (
           <div className="mb-8">
-            <div className="text-xs font-bold text-white/40 uppercase tracking-wider mb-3">İşletmelerim</div>
+            <div className="text-xs font-bold text-white/40 uppercase tracking-wider mb-3">Ä°ÅŸletmelerim</div>
             {myBusinesses.map(b => {
               const cover = getCover(b)
               const rating = normalizeRating(b.averageRating ?? 0)
@@ -1190,7 +983,7 @@ export default function SahipPaneliPage() {
                       b.claimStatus === 'CLAIMED' ? 'bg-emerald-500/15 text-emerald-400' :
                       b.claimStatus === 'PENDING' ? 'bg-amber-500/15 text-amber-400' : 'bg-white/[0.05] text-white/30'
                     )}>
-                      {b.claimStatus === 'CLAIMED' ? 'Doğrulandı' : b.claimStatus === 'PENDING' ? 'Bekliyor' : 'Taslak'}
+                      {b.claimStatus === 'CLAIMED' ? 'DoÄŸrulandÄ±' : b.claimStatus === 'PENDING' ? 'Bekliyor' : 'Taslak'}
                     </span>
                     <ChevronRight size={14} className="text-white/20" />
                   </div>
@@ -1204,13 +997,13 @@ export default function SahipPaneliPage() {
         <div className="bg-surface-1 border border-white/[0.07] rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <Building2 size={16} className="text-indigo-400" />
-            <span className="text-sm font-bold text-white">İşletmenizi Sahiplenin</span>
+            <span className="text-sm font-bold text-white">Ä°ÅŸletmenizi Sahiplenin</span>
           </div>
-          <p className="text-xs text-white/40 mb-4">Listede işletmenizi arayın ve sahiplik talep edin.</p>
+          <p className="text-xs text-white/40 mb-4">Listede iÅŸletmenizi arayÄ±n ve sahiplik talep edin.</p>
           <div className="flex gap-2 mb-3">
             <input value={claimQuery} onChange={e => setClaimQuery(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && searchClaim()}
-              placeholder="İşletme adı..."
+              placeholder="Ä°ÅŸletme adÄ±..."
               className="flex-1 bg-surface-2 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-white/20 outline-none focus:border-indigo-500/40" />
             <button onClick={searchClaim} disabled={claimSearching}
               className="px-4 py-2 rounded-xl bg-indigo-500 text-white text-sm font-bold hover:bg-indigo-600 transition-colors disabled:opacity-50">
@@ -1218,7 +1011,7 @@ export default function SahipPaneliPage() {
             </button>
           </div>
           {claimMsg && (
-            <div className={cn('text-xs font-medium mb-3 p-2.5 rounded-xl', claimMsg.startsWith('✓') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400')}>
+            <div className={cn('text-xs font-medium mb-3 p-2.5 rounded-xl', claimMsg.startsWith('âœ“') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400')}>
               {claimMsg}
             </div>
           )}
@@ -1238,7 +1031,7 @@ export default function SahipPaneliPage() {
                     <div className="text-sm font-bold text-white truncate">{b.name}</div>
                     <div className="flex items-center gap-1 text-xs text-white/35 mt-0.5">
                       <MapPin size={9} /><span>{b.district ? `${b.district}, ${b.city}` : b.city}</span>
-                      {b.category && <><span className="text-white/15">·</span><span>{b.category.name}</span></>}
+                      {b.category && <><span className="text-white/15">Â·</span><span>{b.category.name}</span></>}
                     </div>
                     {rating > 0 && (
                       <div className="flex items-center gap-1 mt-1">
@@ -1251,7 +1044,7 @@ export default function SahipPaneliPage() {
                   </div>
                   <div className="flex-shrink-0">
                     {b.claimStatus === 'CLAIMED' ? (
-                      <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white/[0.05] text-white/25 border border-white/[0.06]">Sahiplenilmiş</span>
+                      <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white/[0.05] text-white/25 border border-white/[0.06]">SahiplenilmiÅŸ</span>
                     ) : b.claimStatus === 'PENDING' ? (
                       <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
                         <Clock size={9} /> Bekliyor

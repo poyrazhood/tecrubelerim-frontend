@@ -76,7 +76,7 @@ function KesfetPageInner() {
     const cityParam = searchParams.get('city') || (typeof window !== 'undefined' ? localStorage.getItem('userCity') : '')
     if (cityParam) setSelectedCity(cityParam)
     if (catSlug) {
-      fetch(`${API}/categories`).then(r=>r.json()).then(d => {
+      fetch(`${API}/api/categories`).then(r=>r.json()).then(d => {
         const all = (d.data ?? []).flatMap((c: any) => [c, ...(c.children ?? [])])
         const found = all.find((c: any) => c.slug === catSlug)
         if (found) setSelectedCategory({ id: found.id, name: found.name, slug: found.slug, icon: found.icon ?? null })
