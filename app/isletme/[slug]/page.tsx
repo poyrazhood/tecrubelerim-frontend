@@ -8,7 +8,7 @@ import {
   MapPin, Phone, Globe, ChevronLeft, Star, ThumbsUp, Share2,
   Flag, ExternalLink, Bookmark, BookmarkCheck, Navigation,
   Clock, ChevronRight, X, ZoomIn, Camera, Info,
-  MessageSquare, CheckCircle, AlertCircle, ChevronDown, Building2
+  MessageSquare, CheckCircle, AlertCircle, ChevronDown, Building2, HelpCircle
 } from 'lucide-react'
 import { cn , getTrustColor } from '@/lib/utils'
 import YetkinlikRadari from '@/components/business/YetkinlikRadari'
@@ -228,6 +228,46 @@ function ExternalReviewCard({ review }: { review: any }) {
   )
 }
 
+
+function QACard({ qa, index }: { qa: any; index: number }) {
+  const [open, setOpen] = useState(false)
+  const colors = [
+    'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
+    'text-purple-400 bg-purple-500/10 border-purple-500/20',
+    'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+    'text-amber-400 bg-amber-500/10 border-amber-500/20',
+    'text-sky-400 bg-sky-500/10 border-sky-500/20',
+  ]
+  const colorClass = colors[index % colors.length]
+  return (
+    <div className={`rounded-2xl border overflow-hidden transition-all ${open ? 'bg-white/[0.04] border-white/[0.10]' : 'bg-surface-1 border-white/[0.06]'}`}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left"
+      >
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 border text-[10px] font-black ${colorClass}`}>
+            {index + 1}
+          </div>
+          <span className="text-sm font-semibold text-white leading-snug">{qa.question}</span>
+        </div>
+        <ChevronDown size={15} className={`text-white/30 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="px-4 pb-4">
+          <div className="pt-2 border-t border-white/[0.05]">
+            <p className="text-sm text-white/70 leading-relaxed">{qa.answer}</p>
+            <div className="flex items-center gap-1.5 mt-2.5">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400/70 border border-indigo-500/15">AI</span>
+              {qa.model && <span className="text-[10px] text-white/20">{qa.model}</span>}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ShareSheet({ name, onClose }: { name: string; onClose: () => void }) {
   const url = typeof window !== 'undefined' ? window.location.href : ''
   const [copied, setCopied] = useState(false)
@@ -266,7 +306,7 @@ export default function BusinessPage() {
   const [business, setBusiness] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
-  const [activeTab, setActiveTab] = useState<'yorumlar' | 'bilgiler' | 'fotoğraflar'>('yorumlar')
+  const [activeTab, setActiveTab] = useState<'yorumlar' | 'sorular' | 'bilgiler' | 'fotoğraflar'>('yorumlar')
   const [activePhoto, setActivePhoto] = useState(0)
   const [reviewFilter, setReviewFilter] = useState<'tumu' | 'platform' | 'google'>('tumu')
   const [galleryOpen, setGalleryOpen] = useState(false)
@@ -599,6 +639,7 @@ export default function BusinessPage() {
           <div className="flex gap-1 bg-surface-2 p-1 rounded-xl border border-white/[0.06] mb-5">
             {([
               { key: 'yorumlar', label: `Yorumlar (${totalReviewCount})` },
+              { key: 'sorular', label: `Sorular${(business.businessQA ?? []).length > 0 ? ` (${(business.businessQA ?? []).length})` : ''}` },
               { key: 'bilgiler', label: 'Bilgiler' },
               ...(allPhotos.length > 1 ? [{ key: 'fotoğraflar', label: `Foto (${allPhotos.length})` }] : []),
             ] as const).map(({ key, label }) => (
@@ -642,6 +683,23 @@ export default function BusinessPage() {
                 : <div className="text-center py-12 text-white/30"><MessageSquare size={32} className="mx-auto mb-3 opacity-20" /><p className="text-sm">Henüz yorum yok.</p><p className="mt-1 text-xs">İlk yorumu sen yaz!</p></div>
               }
             </>
+          )}
+
+
+          {activeTab === 'sorular' && (
+            <div className="space-y-2">
+              {(business.businessQA ?? []).length === 0 ? (
+                <div className="text-center py-12 text-white/30">
+                  <HelpCircle size={32} className="mx-auto mb-3 opacity-20" />
+                  <p className="text-sm">Henüz soru-cevap üretilmedi.</p>
+                  <p className="mt-1 text-xs">AI pipeline çalıştıktan sonra burada görünecek.</p>
+                </div>
+              ) : (
+                (business.businessQA ?? []).map((qa: any, i: number) => (
+                  <QACard key={qa.id ?? i} qa={qa} index={i} />
+                ))
+              )}
+            </div>
           )}
 
           {activeTab === 'bilgiler' && (
