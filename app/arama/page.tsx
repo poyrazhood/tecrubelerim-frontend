@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import {
   Search, X, Sparkles, SlidersHorizontal, MapPin,
@@ -139,6 +139,7 @@ export default function AramaPage() {
 
   const [categories, setCategories] = useState<ApiCategory[]>([])
   const [businesses, setBusinesses] = useState<ApiBusiness[]>([])
+  const [isAiSearch, setIsAiSearch] = useState(false)
   const [reviews, setReviews] = useState<ApiExternalReview[]>([])
   const [users, setUsers] = useState<ApiUser[]>([])
   const [loading, setLoading] = useState(false)
@@ -202,6 +203,7 @@ export default function AramaPage() {
       if (bizRes.status === 'fulfilled') {
         const d = bizRes.value
         setBusinesses(Array.isArray(d) ? d : (d.businesses || d.data || d.results || []))
+        setIsAiSearch(d.isAiSearch === true)
       }
       if (revRes.status === 'fulfilled') {
         const d = revRes.value
@@ -254,6 +256,7 @@ export default function AramaPage() {
     setBusinesses([])
     setReviews([])
     setUsers([])
+    setIsAiSearch(false)
     inputRef.current?.focus()
   }
 
@@ -319,10 +322,12 @@ export default function AramaPage() {
 
           {submitted && (
             <div className="flex items-center gap-2 mt-2.5">
-              <div className="flex items-center gap-1.5 text-[11px] text-indigo-400/80 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-2.5 py-1">
-                <Sparkles size={10} />
-                <span>Semantik arama aktif</span>
-              </div>
+              {isAiSearch && (
+                <div className="flex items-center gap-1.5 text-[11px] text-indigo-400/80 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-2.5 py-1">
+                  <Sparkles size={10} />
+                  <span>AI Arama</span>
+                </div>
+              )}
               {!loading && (
                 <span className="text-xs text-white/30">{totalResults} sonuç</span>
               )}
@@ -492,7 +497,7 @@ export default function AramaPage() {
             {/* Results content */}
             <div className="px-4 pt-4">
               {loading ? (
-                <SearchSkeleton />
+                <SearchSkeleton isAiSearch={isAiSearch} query={query} />
               ) : (
                 <>
                   {/* Businesses */}
@@ -593,7 +598,62 @@ export default function AramaPage() {
   )
 }
 
-function SearchSkeleton() {
+function SearchSkeleton({ isAiSearch, query }: { isAiSearch: boolean; query: string }) {
+  const [step, setStep] = React.useState(0)
+  const aiSteps = [
+    { icon: '🧠', text: 'Sorgu analiz ediliyor...' },
+    { icon: '✨', text: 'Anlam vektörü oluşturuluyor...' },
+    { icon: '🔍', text: 'Benzer işletmeler aranıyor...' },
+    { icon: '📊', text: 'Sonuçlar sıralanıyor...' },
+  ]
+
+  React.useEffect(() => {
+    if (!isAiSearch) return
+    const interval = setInterval(() => {
+      setStep(s => (s + 1) % aiSteps.length)
+    }, 1400)
+    return () => clearInterval(interval)
+  }, [isAiSearch])
+
+  if (isAiSearch) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        {/* Animated orb */}
+        <div className="relative mb-8">
+          <div className="w-20 h-20 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+            <div className="w-14 h-14 rounded-full bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center animate-pulse">
+              <div className="w-8 h-8 rounded-full bg-indigo-500/30 border border-indigo-500/50 flex items-center justify-center">
+                <span className="text-lg">{aiSteps[step].icon}</span>
+              </div>
+            </div>
+          </div>
+          {/* Orbiting dot */}
+          <div className="absolute inset-0 animate-spin" style={{animationDuration:'3s'}}>
+            <div className="w-2.5 h-2.5 rounded-full bg-indigo-400 absolute -top-1 left-1/2 -translate-x-1/2 shadow-lg shadow-indigo-500/50" />
+          </div>
+        </div>
+
+        {/* Step text */}
+        <div className="h-6 mb-2">
+          <p className="text-sm font-medium text-indigo-400 transition-all duration-500">
+            {aiSteps[step].text}
+          </p>
+        </div>
+        <p className="text-xs text-white/30 mb-8">
+          "{query}" için AI arama yapılıyor
+        </p>
+
+        {/* Skeleton cards */}
+        <div className="w-full space-y-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-24 rounded-2xl bg-indigo-500/[0.04] border border-indigo-500/[0.08] animate-pulse"
+              style={{animationDelay: `${i * 150}ms`}} />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-3">
       {[1, 2, 3].map(i => (

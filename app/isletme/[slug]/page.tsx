@@ -8,7 +8,7 @@ import {
   MapPin, Phone, Globe, ChevronLeft, Star, ThumbsUp, Share2,
   Flag, ExternalLink, Bookmark, BookmarkCheck, Navigation,
   Clock, ChevronRight, X, ZoomIn, Camera, Info,
-  MessageSquare, CheckCircle, AlertCircle, ChevronDown, Building2, HelpCircle
+  MessageSquare, CheckCircle, AlertCircle, ChevronDown, Building2, HelpCircle, Layers
 } from 'lucide-react'
 import { cn , getTrustColor } from '@/lib/utils'
 import YetkinlikRadari from '@/components/business/YetkinlikRadari'
@@ -268,6 +268,93 @@ function QACard({ qa, index }: { qa: any; index: number }) {
   )
 }
 
+// ─── Benzer İşletmeler Bileşeni ───────────────────────────────────────────────
+function SimilarBusinesses({ businessId }: { businessId: string }) {
+  const [similar, setSimilar] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!businessId) return
+    setLoading(true)
+    fetch(`${API_BASE}/api/businesses/${businessId}/similar?limit=6`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.similar) setSimilar(d.similar) })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [businessId])
+
+  if (loading) return (
+    <div className="space-y-3">
+      {[1,2,3,4].map(i => (
+        <div key={i} className="flex gap-3 p-3 rounded-2xl bg-white/[0.03] animate-pulse">
+          <div className="w-14 h-14 rounded-xl bg-white/[0.06] flex-shrink-0" />
+          <div className="flex-1 space-y-2 py-1">
+            <div className="h-3 bg-white/[0.06] rounded w-3/4" />
+            <div className="h-2.5 bg-white/[0.04] rounded w-1/2" />
+            <div className="h-2.5 bg-white/[0.04] rounded w-1/3" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+
+  if (similar.length === 0) return (
+    <div className="text-center py-10 text-white/30">
+      <Layers size={28} className="mx-auto mb-3 opacity-20" />
+      <p className="text-sm">Benzer işletme bulunamadı.</p>
+      <p className="text-xs mt-1 opacity-60">Daha fazla işletme eklendikçe öneriler çıkacak.</p>
+    </div>
+  )
+
+  return (
+    <div className="space-y-2">
+      {similar.map((biz) => {
+        const avgR = biz.averageRating > 0
+          ? (biz.averageRating <= 5 ? biz.averageRating : biz.averageRating / (biz.averageRating > 500 ? 1000 : biz.averageRating > 50 ? 100 : 10)).toFixed(1)
+          : null
+        return (
+          <Link key={biz.id} href={`/isletme/${biz.slug}`}>
+            <div className="flex gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.05] hover:border-white/[0.10] transition-all group cursor-pointer">
+              {/* Kapak fotoğrafı */}
+              <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-white/[0.05]">
+                {biz.coverPhoto
+                  ? <img src={biz.coverPhoto} alt={biz.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.target as HTMLImageElement).style.display='none' }} />
+                  : <div className="w-full h-full flex items-center justify-center text-white/20"><Building2 size={20} /></div>
+                }
+              </div>
+              {/* Bilgiler */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white leading-snug truncate group-hover:text-indigo-300 transition-colors">{biz.name}</p>
+                <div className="flex items-center gap-1 mt-0.5 text-[11px] text-white/40">
+                  <MapPin size={9} className="flex-shrink-0" />
+                  <span className="truncate">{[biz.district, biz.city].filter(Boolean).join(', ')}</span>
+                </div>
+                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                  {avgR && (
+                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                      <Star size={9} className="text-amber-400 fill-amber-400" />
+                      <span className="text-[10px] font-bold text-amber-400">{avgR}</span>
+                    </div>
+                  )}
+                  {biz.totalReviews > 0 && (
+                    <span className="text-[10px] text-white/30">{biz.totalReviews} yorum</span>
+                  )}
+                  {biz.similarity !== null && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400/70 border border-indigo-500/15">
+                      %{biz.similarity} benzer
+                    </span>
+                  )}
+                </div>
+              </div>
+              <ChevronRight size={14} className="text-white/20 group-hover:text-white/50 flex-shrink-0 self-center transition-colors" />
+            </div>
+          </Link>
+        )
+      })}
+    </div>
+  )
+}
+
 function ShareSheet({ name, onClose }: { name: string; onClose: () => void }) {
   const url = typeof window !== 'undefined' ? window.location.href : ''
   const [copied, setCopied] = useState(false)
@@ -306,7 +393,7 @@ export default function BusinessPage() {
   const [business, setBusiness] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
-  const [activeTab, setActiveTab] = useState<'yorumlar' | 'sorular' | 'bilgiler' | 'fotoğraflar'>('yorumlar')
+  const [activeTab, setActiveTab] = useState<'yorumlar' | 'sorular' | 'bilgiler' | 'fotoğraflar' | 'benzer'>('yorumlar')
   const [activePhoto, setActivePhoto] = useState(0)
   const [reviewFilter, setReviewFilter] = useState<'tumu' | 'platform' | 'google'>('tumu')
   const [galleryOpen, setGalleryOpen] = useState(false)
@@ -433,7 +520,26 @@ export default function BusinessPage() {
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(business.name + ' ' + (business.address ?? ''))}`
 
   return (
-    <AppLayout>
+    <AppLayout
+      rightPanel={
+        <div className="space-y-4">
+          {/* Benzer İşletmeler - sağ panel başlığı */}
+          <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Layers size={14} className="text-indigo-400" />
+              <span className="font-bold text-sm text-white">Benzer İşletmeler</span>
+            </div>
+            <SimilarBusinesses businessId={business?.id} />
+          </div>
+          {/* Alt bilgi */}
+          <div className="px-1">
+            <p className="text-[10px] text-white/20 leading-relaxed">
+              Tecrübelerim Beta · <a href="/sozlesme/privacy_policy" className="hover:text-white/40 transition-colors">Gizlilik</a> · <a href="/sozlesme/help" className="hover:text-white/40 transition-colors">Yardım</a>
+            </p>
+          </div>
+        </div>
+      }
+    >
       {galleryOpen && <PhotoGallery photos={allPhotos} initialIndex={galleryIndex} onClose={() => setGalleryOpen(false)} />}
       {shareOpen && <ShareSheet name={business.name} onClose={() => setShareOpen(false)} />}
 
@@ -642,9 +748,10 @@ export default function BusinessPage() {
               { key: 'sorular', label: `Sorular${(business.businessQA ?? []).length > 0 ? ` (${(business.businessQA ?? []).length})` : ''}` },
               { key: 'bilgiler', label: 'Bilgiler' },
               ...(allPhotos.length > 1 ? [{ key: 'fotoğraflar', label: `Foto (${allPhotos.length})` }] : []),
+              { key: 'benzer', label: 'Benzer' },
             ] as const).map(({ key, label }) => (
               <button key={key} onClick={() => setActiveTab(key as any)}
-                className={cn('flex-1 text-xs font-semibold py-2 rounded-lg transition-all', activeTab === key ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-white/40 hover:text-white/70')}>
+                className={cn('flex-1 text-xs font-semibold py-2 rounded-lg transition-all', key === 'benzer' ? 'lg:hidden' : '', activeTab === key ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-white/40 hover:text-white/70')}>
                 {label}
               </button>
             ))}
@@ -782,6 +889,13 @@ export default function BusinessPage() {
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Benzer tab — sadece mobilde görünür, desktop'ta sağ panelde */}
+          {activeTab === 'benzer' && (
+            <div className="lg:hidden">
+              <SimilarBusinesses businessId={business.id} />
             </div>
           )}
         </div>

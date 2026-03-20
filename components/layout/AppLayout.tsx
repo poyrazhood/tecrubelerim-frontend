@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -265,9 +265,10 @@ function RightPanel() {
 }
 
 // ─── Ana Layout ───────────────────────────────────────────────────────────────
-export function AppLayout({ children, hideBottomNav }: {
+export function AppLayout({ children, hideBottomNav, rightPanel }: {
   children: React.ReactNode
   hideBottomNav?: boolean
+  rightPanel?: React.ReactNode   // ← YENİ: özel sağ panel
 }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -285,7 +286,6 @@ export function AppLayout({ children, hideBottomNav }: {
         const businesses = d.businesses || d || []
         if (businesses.length > 0) {
           setHasBusiness(true)
-          // Yanitlanmamis yorum sayisi
           const total = businesses.reduce((acc: number, b: any) => acc + (b.totalReviews || 0), 0)
           setUnreadReplies(total > 0 ? 1 : 0)
         }
@@ -303,7 +303,6 @@ export function AppLayout({ children, hideBottomNav }: {
     setClientMounted(true)
       const savedTheme = localStorage.getItem('app_theme') || 'indigo'
       document.documentElement.setAttribute('data-theme', savedTheme)
-    // rAF ile DOM'un tamamen yüklenmesini bekle
     const raf = requestAnimationFrame(() => {
       const el = document.getElementById('main-scroll')
       const handleScroll = () => {
@@ -312,7 +311,6 @@ export function AppLayout({ children, hideBottomNav }: {
       }
       el?.addEventListener('scroll', handleScroll, { passive: true })
       window.addEventListener('scroll', handleScroll, { passive: true })
-      // cleanup için ref'e sakla
       ;(window as any).__feedScrollCleanup = () => {
         el?.removeEventListener('scroll', handleScroll)
         window.removeEventListener('scroll', handleScroll)
@@ -358,13 +356,13 @@ export function AppLayout({ children, hideBottomNav }: {
                   <form onSubmit={(e) => { e.preventDefault(); if(headerSearchVal.trim()){ router.push(`/arama?q=${encodeURIComponent(headerSearchVal.trim())}`); setSearchFocused(false); setHeaderSearchVal("") }}} className="flex items-center gap-1.5 flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-1 h-8 px-3 rounded-xl bg-white/[0.08] border border-indigo-500/40">
                       <Search size={12} className="text-indigo-400 flex-shrink-0" />
-                      <input ref={searchInputRef} value={headerSearchVal} onChange={e => setHeaderSearchVal(e.target.value)} placeholder="Ara\u2026" className="bg-transparent outline-none text-white placeholder-white/30 w-full text-xs" autoFocus />
+                      <input ref={searchInputRef} value={headerSearchVal} onChange={e => setHeaderSearchVal(e.target.value)} placeholder="Ara…" className="bg-transparent outline-none text-white placeholder-white/30 w-full text-xs" autoFocus />
                     </div>
-                    <button type="button" onClick={() => { setSearchFocused(false); setHeaderSearchVal("") }} className="text-white/40 hover:text-white/70 text-xs px-1 flex-shrink-0">\u2715</button>
+                    <button type="button" onClick={() => { setSearchFocused(false); setHeaderSearchVal("") }} className="text-white/40 hover:text-white/70 text-xs px-1 flex-shrink-0">✕</button>
                   </form>
                 ) : (
                   <button onClick={() => { setSearchFocused(true); setTimeout(() => searchInputRef.current?.focus(), 50) }} className="flex items-center gap-2 flex-1 h-8 px-3 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white/35 text-xs hover:bg-white/[0.09] transition-all min-w-0">
-                    <Search size={12} className="flex-shrink-0" /><span className="truncate">Ara\u2026</span>
+                    <Search size={12} className="flex-shrink-0" /><span className="truncate">Ara…</span>
                   </button>
                 )
               ) : (
@@ -393,7 +391,6 @@ export function AppLayout({ children, hideBottomNav }: {
             <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 bg-surface/90 backdrop-blur-xl border-t border-white/[0.06] px-2 py-2">
               <div className="flex items-center justify-around">
                 {NAV_ITEMS.slice(0, 5).map(({ href, icon: Icon, label }) => {
-                  // Karşılaştır aktif durumu
                   if (href === '/karsilastir/ara') {
                     const active = pathname?.startsWith('/karsilastir')
                     return (
@@ -406,7 +403,6 @@ export function AppLayout({ children, hideBottomNav }: {
                       </Link>
                     )
                   }
-                  // Kesfet slotunu isletmem ile degistir
                   if (href === '/kesfet' && hasBusiness) {
                     const active = pathname === '/sahip-paneli'
                     return (
@@ -513,7 +509,6 @@ export function AppLayout({ children, hideBottomNav }: {
 
           {/* User card + tema toggle */}
           <div className="mt-4 space-y-2">
-            {/* Tema toggle */}
             <button
               onClick={toggle}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-white/50 hover:text-white hover:bg-white/[0.05] font-semibold text-sm"
@@ -559,12 +554,11 @@ export function AppLayout({ children, hideBottomNav }: {
           <div className={hideBottomNav ? '' : 'pb-8'}>{children}</div>
         </main>
 
-        {/* Sağ sidebar */}
+        {/* Sağ sidebar — rightPanel prop varsa onu göster, yoksa varsayılan */}
         <aside className="sticky top-0 h-screen px-4 py-6 space-y-4 overflow-y-auto">
-          <RightPanel />
+          {rightPanel ?? <RightPanel />}
         </aside>
       </div>
     </div>
   )
 }
-
