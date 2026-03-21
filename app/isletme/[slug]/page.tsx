@@ -15,6 +15,13 @@ import YetkinlikRadari from '@/components/business/YetkinlikRadari'
 import Link from 'next/link'
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '')
+const proxyImg = (url: string | null | undefined) => {
+  if (!url) return null
+  if (url.includes('googleusercontent.com') || url.includes('googleapis.com')) {
+    return `${API_BASE}/api/image-proxy?url=${encodeURIComponent(url)}`
+  }
+  return url
+}
 const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
 
 function normalizeRating(raw: number): number {
@@ -318,7 +325,7 @@ function SimilarBusinesses({ businessId }: { businessId: string }) {
               {/* Kapak fotoğrafı */}
               <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-white/[0.05]">
                 {biz.coverPhoto
-                  ? <img src={biz.coverPhoto} alt={biz.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.target as HTMLImageElement).style.display='none' }} />
+                  ? <img src={proxyImg(biz.coverPhoto) || ''} alt={biz.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.target as HTMLImageElement).style.display='none' }} />
                   : <div className="w-full h-full flex items-center justify-center text-white/20"><Building2 size={20} /></div>
                 }
               </div>
