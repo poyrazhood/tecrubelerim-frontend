@@ -3,7 +3,6 @@ import './globals.css'
 import { PWAInstallBanner, IOSInstallGuide } from '@/components/ui/PWAInstallBanner'
 import { AuthProvider } from '@/lib/AuthContext'
 import { ThemeInit } from '@/components/layout/ThemeInit'
-import { GoogleAnalytics } from '@next/third-parties/google'
 
 export const metadata: Metadata = {
   title: {
@@ -76,7 +75,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <PWAInstallBanner />
           <IOSInstallGuide />
         </AuthProvider>
-        <GoogleAnalytics gaId="G-GLRYHM9261" />
       </body>
     </html>
   )
