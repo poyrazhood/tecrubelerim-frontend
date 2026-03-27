@@ -57,6 +57,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="tr">
       <head>
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9447462843033614"
+          crossOrigin="anonymous"
+        />
         <link rel="preconnect" href="https://api.tecrubelerim.com" />
         <link rel="dns-prefetch" href="https://api.tecrubelerim.com" />
         <link rel="preconnect" href="https://lh3.googleusercontent.com" crossOrigin="anonymous" />
