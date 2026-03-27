@@ -749,7 +749,7 @@ export default function BusinessPage() {
               <Star size={15} className="fill-white" /> Yorum Yaz
             </Link>
           </div>
-          <div className="flex gap-1 bg-surface-2 p-1 rounded-xl border border-white/[0.06] mb-5">
+          <div className="flex gap-1 bg-surface-2 p-1 rounded-xl border border-white/[0.06] mb-5 overflow-x-auto scrollbar-none">
             {([
               { key: 'yorumlar', label: `Yorumlar (${totalReviewCount})` },
               { key: 'sorular', label: `Sorular${(business.businessQA ?? []).length > 0 ? ` (${(business.businessQA ?? []).length})` : ''}` },
@@ -758,7 +758,7 @@ export default function BusinessPage() {
               { key: 'benzer', label: 'Benzer' },
             ] as const).map(({ key, label }) => (
               <button key={key} onClick={() => setActiveTab(key as any)}
-                className={cn('flex-1 text-xs font-semibold py-2 rounded-lg transition-all', key === 'benzer' ? 'lg:hidden' : '', activeTab === key ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-white/40 hover:text-white/70')}>
+                className={cn('flex-shrink-0 text-xs font-semibold px-3 py-2 rounded-lg transition-all', key === 'benzer' ? 'lg:hidden' : '', activeTab === key ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-white/40 hover:text-white/70')}>
                 {label}
               </button>
             ))}
