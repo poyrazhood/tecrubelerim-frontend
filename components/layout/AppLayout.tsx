@@ -1,563 +1,570 @@
 'use client'
-
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { Home, Search, PlusCircle, Bell, User, Award, LogOut, MapPin, Sparkles, Sun, Moon, Building2, Star, ShoppingBag, Gift, Zap , ArrowLeftRight } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { useAuth } from '@/lib/AuthContext'
-import { useEffect, useState, useRef } from 'react'
+import {
+  Eye, EyeOff, ArrowRight, Star, X, Check,
+  Camera, AtSign, Mail, Lock, User, Gift,
+  Loader2, AlertCircle, CheckCircle2
+} from 'lucide-react'
 
-const NAV_ITEMS = [
-  { href: '/',                icon: Home,           label: 'Ana Sayfa' },
-  { href: '/kesfet',          icon: Search,         label: 'Keşfet' },
-  { href: '/yorum-yaz',       icon: PlusCircle,     label: 'Yorum Yaz' },
-  { href: '/karsilastir/ara', icon: ArrowLeftRight, label: 'Karşılaştır' },
-  { href: '/profil',          icon: User,           label: 'Profil' },
-  { href: '/muhtarlar',       icon: Award,          label: 'Muhtarlar' },
-  { href: '/isletme-ekle',    icon: Building2,      label: 'İşletme Ekle' },
+/* ─── Tip tanımları ─── */
+type AuthMode = 'login' | 'register'
+type AvatarOption = { id: string; emoji: string; bg: string }
+
+/* ─── Sabit avatar seçenekleri ─── */
+const AVATAR_OPTIONS: AvatarOption[] = [
+  { id: 'a1', emoji: '🦊', bg: '#f97316' },
+  { id: 'a2', emoji: '🐺', bg: '#6366f1' },
+  { id: 'a3', emoji: '🦁', bg: '#eab308' },
+  { id: 'a4', emoji: '🐻', bg: '#8b5cf6' },
+  { id: 'a5', emoji: '🐼', bg: '#64748b' },
+  { id: 'a6', emoji: '🦋', bg: '#ec4899' },
+  { id: 'a7', emoji: '🦅', bg: '#0ea5e9' },
+  { id: 'a8', emoji: '🐉', bg: '#22c55e' },
 ]
 
-const RANK_COLORS: Record<number, string> = {
-  1: 'from-amber-400 to-yellow-600 text-black',
-  2: 'from-slate-300 to-slate-400 text-black',
-  3: 'from-amber-700 to-amber-800 text-white',
-}
-
-// ─── Tema Hook ────────────────────────────────────────────────────────────────
-function useTheme() {
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
-
+/* ─── Parçacık animasyonu (canvas) ─── */
+function ParticleCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
-    const saved = localStorage.getItem('theme') as 'dark' | 'light' | null
-    const initial = saved || 'dark'
-    setTheme(initial)
-    document.documentElement.classList.toggle('dark', initial === 'dark')
-  }, [])
-
-  const toggle = () => {
-    const next = theme === 'dark' ? 'light' : 'dark'
-    setTheme(next)
-    localStorage.setItem('theme', next)
-    document.documentElement.classList.toggle('dark', next === 'dark')
-  }
-
-  return { theme, toggle }
-}
-
-// ─── Tema Toggle Butonu ───────────────────────────────────────────────────────
-function ThemeToggle({ className }: { className?: string }) {
-  const { theme, toggle } = useTheme()
-
-  return (
-    <button
-      onClick={toggle}
-      className={cn(
-        'relative w-8 h-8 rounded-full flex items-center justify-center transition-all',
-        'bg-white/[0.05] border border-white/[0.08] hover:bg-white/10',
-        'text-white/50 hover:text-white/80',
-        className
-      )}
-      title={theme === 'dark' ? 'Açık moda geç' : 'Koyu moda geç'}
-    >
-      {theme === 'dark'
-        ? <Sun size={14} className="text-amber-400" />
-        : <Moon size={14} className="text-indigo-400" />
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')!
+    let animId: number
+    const W = canvas.width = window.innerWidth
+    const H = canvas.height = window.innerHeight
+    const particles = Array.from({ length: 60 }, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.5 + 0.3,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      alpha: Math.random() * 0.4 + 0.1,
+    }))
+    function draw() {
+      ctx.clearRect(0, 0, W, H)
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy
+        if (p.x < 0) p.x = W; if (p.x > W) p.x = 0
+        if (p.y < 0) p.y = H; if (p.y > H) p.y = 0
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(129,140,248,${p.alpha})`
+        ctx.fill()
+      })
+      // Bağlantı çizgileri
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x
+          const dy = particles[i].y - particles[j].y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          if (dist < 100) {
+            ctx.beginPath()
+            ctx.strokeStyle = `rgba(99,102,241,${0.12 * (1 - dist / 100)})`
+            ctx.lineWidth = 0.5
+            ctx.moveTo(particles[i].x, particles[i].y)
+            ctx.lineTo(particles[j].x, particles[j].y)
+            ctx.stroke()
+          }
+        }
       }
-    </button>
+      animId = requestAnimationFrame(draw)
+    }
+    draw()
+    return () => cancelAnimationFrame(animId)
+  }, [])
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 pointer-events-none"
+      style={{ zIndex: 0 }}
+    />
   )
 }
 
-// ─── Kullanıcı Avatar ─────────────────────────────────────────────────────────
-function UserAvatar({ name, username, avatarUrl, size = 'sm' }: {
-  name?: string; username?: string; avatarUrl?: string | null; size?: 'sm' | 'md'
+/* ─── Input sarmalayıcı ─── */
+function Field({
+  icon: Icon, label, type, value, onChange, placeholder, required = true,
+  rightSlot, hint, hintColor
+}: {
+  icon: any; label: string; type: string; value: string
+  onChange: (v: string) => void; placeholder: string; required?: boolean
+  rightSlot?: React.ReactNode; hint?: string; hintColor?: string
 }) {
-  const initials = ((name || username || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2))
-  const dim = size === 'md' ? 'w-9 h-9 text-xs' : 'w-8 h-8 text-[10px]'
-
-  const safeAvatarUrl = avatarUrl?.startsWith('http') ? avatarUrl : avatarUrl ? `https://api.tecrubelerim.com${avatarUrl}` : null
-  if (safeAvatarUrl) {
-    return (
-      <img
-        src={safeAvatarUrl}
-        alt={name || username}
-        className={cn(dim, 'rounded-full object-cover border border-white/10 flex-shrink-0')}
-      />
-    )
-  }
+  const [focused, setFocused] = useState(false)
   return (
-    <div className={cn(dim, 'rounded-full flex items-center justify-center font-bold text-white flex-shrink-0')} style={{background:'var(--primary)'}}>
-      {initials}
+    <div>
+      <label className="block text-[11px] font-semibold uppercase tracking-widest mb-1.5"
+        style={{ color: focused ? '#818cf8' : 'rgba(255,255,255,0.4)' }}>
+        {label}
+      </label>
+      <div className="relative flex items-center rounded-xl transition-all duration-200"
+        style={{
+          background: focused ? 'rgba(99,102,241,0.07)' : 'rgba(255,255,255,0.05)',
+          border: `1px solid ${focused ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.09)'}`,
+          boxShadow: focused ? '0 0 0 3px rgba(99,102,241,0.08)' : 'none',
+        }}>
+        <Icon size={14} className="absolute left-3.5 flex-shrink-0"
+          style={{ color: focused ? '#818cf8' : 'rgba(255,255,255,0.25)' }} />
+        <input
+          type={type} value={value} required={required}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          className="w-full pl-9 pr-4 py-3 bg-transparent text-sm text-white placeholder-white/20 outline-none"
+          style={{ paddingRight: rightSlot ? '2.5rem' : undefined }}
+        />
+        {rightSlot && (
+          <div className="absolute right-3">{rightSlot}</div>
+        )}
+      </div>
+      {hint && (
+        <p className="text-[11px] mt-1.5 flex items-center gap-1" style={{ color: hintColor }}>
+          {hint}
+        </p>
+      )}
     </div>
   )
 }
 
-// ─── Sağ Panel ────────────────────────────────────────────────────────────────
-const API_HOST = (process.env.NEXT_PUBLIC_API_URL || 'https://api.tecrubelerim.com').replace(/\/api\/?$/, '')
-
-function RightPanel() {
-  const [topUsers, setTopUsers] = useState<any[]>([])
-  const [featuredBiz, setFeaturedBiz] = useState<any>(null)
-
-  useEffect(() => {
-    // Top kullanıcılar
-    fetch(`${API_HOST}/api/users?sort=trustScore&limit=5`)
-      .then(r => r.json())
-      .then(d => setTopUsers(Array.isArray(d) ? d : (d.users || d.data || [])))
-      .catch(() => {})
-
-    // Öne çıkan işletme
-    fetch(`${API_HOST}/api/businesses?sort=rating&limit=1`)
-      .then(r => r.json())
-      .then(d => {
-        const list = Array.isArray(d) ? d : (d.data || [])
-        if (list[0]) setFeaturedBiz(list[0])
-      })
-      .catch(() => {})
-  }, [])
-
-  return (
-    <>
-      {/* 1. Öne Çıkan İşletmeler */}
-      {featuredBiz && (
-        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles size={14} className="text-indigo-400" />
-            <span className="font-bold text-sm text-white">Öne Çıkan İşletmeler</span>
-          </div>
-          <Link href={`/isletme/${featuredBiz.slug}`}>
-            <div className="group cursor-pointer">
-              {(featuredBiz.attributes?.coverPhoto || featuredBiz.attributes?.photos?.[0]) && (
-                <div className="relative rounded-xl overflow-hidden mb-3 h-32">
-                  <img
-                    src={featuredBiz.attributes.coverPhoto || featuredBiz.attributes.photos[0]}
-                    alt={featuredBiz.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                </div>
-              )}
-              <div className="font-bold text-sm text-white mb-1 group-hover:text-indigo-300 transition-colors">
-                {featuredBiz.name}
-              </div>
-              <div className="flex items-center gap-1 text-xs text-white/40">
-                <MapPin size={10} />
-                <span>{featuredBiz.district || featuredBiz.city}</span>
-                {featuredBiz.category && (
-                  <>
-                    <span className="text-white/20">·</span>
-                    <span>{featuredBiz.category.name}</span>
-                  </>
-                )}
-              </div>
-            </div>
-          </Link>
-        </div>
-      )}
-
-      {/* 2. Tecrübe Ustaları */}
-      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Award size={15} className="text-amber-400" />
-            <span className="font-bold text-sm text-white">Tecrübe Ustaları</span>
-          </div>
-          <Link href="/muhtarlar" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-medium">
-            Tümü →
-          </Link>
-        </div>
-
-        {topUsers.length === 0 ? (
-          <div className="space-y-2">
-            {[1,2,3].map(i => (
-              <div key={i} className="flex items-center gap-3 p-2.5">
-                <div className="w-8 h-8 rounded-full bg-white/[0.06] animate-pulse flex-shrink-0" />
-                <div className="flex-1 space-y-1.5">
-                  <div className="h-2.5 bg-white/[0.06] rounded animate-pulse w-3/4" />
-                  <div className="h-2 bg-white/[0.04] rounded animate-pulse w-1/2" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {topUsers.map((u, i) => (
-              <Link href={`/kullanici/${u.username}`} key={u.id}>
-                <div className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/[0.04] transition-all cursor-pointer">
-                  <div className={cn(
-                    'w-7 h-7 rounded-full flex items-center justify-center text-xs font-black bg-gradient-to-br flex-shrink-0',
-                    RANK_COLORS[(i + 1) as 1 | 2 | 3] || 'bg-white/10 text-white/50'
-                  )}>
-                    {i + 1}
-                  </div>
-                  {u.avatarUrl ? (
-                    <img src={u.avatarUrl} alt={u.fullName || u.username} className="w-8 h-8 rounded-full object-cover border border-amber-500/20 flex-shrink-0" />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-indigo-500/30 flex items-center justify-center text-xs font-bold text-indigo-300 border border-amber-500/20 flex-shrink-0">
-                      {(u.fullName || u.username || 'U').slice(0, 2).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-xs text-white truncate">{u.fullName || u.username}</div>
-                    <div className="text-[10px] text-white/40 truncate">@{u.username}</div>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <div className="font-bold text-xs text-emerald-400">{(u.trustScore || 0)}</div>
-                    <div className="text-[9px] text-white/30">puan</div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* 3. Tecrübe Pazarı */}
-      <div className="rounded-2xl border border-indigo-500/20 bg-gradient-to-br from-indigo-950/40 to-purple-950/30 p-4 relative overflow-hidden">
-        {/* Arka plan dekorasyon */}
-        <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-16 h-16 bg-purple-500/10 rounded-full blur-xl pointer-events-none" />
-
-        <div className="relative">
-          <div className="flex items-center gap-2 mb-1">
-            <ShoppingBag size={14} className="text-indigo-400" />
-            <span className="font-bold text-sm text-white">Tecrübe Pazarı</span>
-            <span className="ml-auto text-[9px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded-full border border-indigo-500/20 font-medium">Yakında</span>
-          </div>
-          <p className="text-[11px] text-white/40 mb-4">Yorumlarınla puan kazan, ödüllere harca</p>
-
-          {/* Özellik önizleme */}
-          <div className="space-y-2.5 mb-4">
-            <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.04]">
-              <div className="w-7 h-7 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                <Zap size={12} className="text-amber-400" />
-              </div>
-              <div>
-                <div className="text-xs font-medium text-white">Yorum Yaz → Puan Kazan</div>
-                <div className="text-[10px] text-white/30">Her detaylı yorum +20 TP</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.04]">
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                <Gift size={12} className="text-emerald-400" />
-              </div>
-              <div>
-                <div className="text-xs font-medium text-white">Puanını Harca</div>
-                <div className="text-[10px] text-white/30">Rozetler, özel ayrıcalıklar</div>
-              </div>
-            </div>
-          </div>
-
-          <Link href="/tecrube-pazari">
-            <button className="w-full py-2 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/30 transition-all">
-              Pazarı Keşfet →
-            </button>
-          </Link>
-        </div>
-      </div>
-
-
-      <div className="px-1">
-        <p className="text-[10px] text-white/60 leading-relaxed">Tecrübelerim Beta · <a href="/sozlesme/privacy_policy" className="hover:text-white/80 transition-colors">Gizlilik</a> · <a href="/sozlesme/terms_of_service" className="hover:text-white/80 transition-colors">Kullanım Koşulları</a> · <a href="/sozlesme/help" className="hover:text-white/80 transition-colors">Yardım</a> · <a href="/iletisim" className="hover:text-white/80 transition-colors">İletişim</a></p>
-        <p className="text-[10px] text-white/40 mt-1">© 2026 Tecrübelerim</p>
-      </div>
-    </>
-  )
+/* ─── Ana bileşen ─── */
+interface AuthModalProps {
+  initialMode?: AuthMode
+  onClose?: () => void
+  isPage?: boolean  // true ise tam sayfa, false ise modal overlay
 }
 
-// ─── Ana Layout ───────────────────────────────────────────────────────────────
-export function AppLayout({ children, hideBottomNav, rightPanel }: {
-  children: React.ReactNode
-  hideBottomNav?: boolean
-  rightPanel?: React.ReactNode   // ← YENİ: özel sağ panel
-}) {
-  const pathname = usePathname()
+export default function AuthModal({ initialMode = 'login', onClose, isPage = false }: AuthModalProps) {
   const router = useRouter()
-  const { user, logout } = useAuth()
-  const [hasBusiness, setHasBusiness] = useState(false)
-  const [unreadReplies, setUnreadReplies] = useState(0)
+  const [mode, setMode] = useState<AuthMode>(initialMode)
+  const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  /* Giriş formu */
+  const [loginForm, setLoginForm] = useState({ email: '', password: '', remember: false })
+
+  /* Kayıt formu */
+  const [regForm, setRegForm] = useState({
+    fullName: '', email: '', username: '', password: '', referral: ''
+  })
+  const [selectedAvatar, setSelectedAvatar] = useState<AvatarOption>(AVATAR_OPTIONS[0])
+  const [uploadedAvatar, setUploadedAvatar] = useState<string | null>(null)
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  /* Username kontrolü */
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'taken' | 'available'>('idle')
+  const usernameTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    if (!user) return
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
-    if (!token) return
-    fetch(`${API_HOST}/api/users/me/businesses`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.json())
-      .then(d => {
-        const businesses = d.businesses || d || []
-        if (businesses.length > 0) {
-          setHasBusiness(true)
-          const total = businesses.reduce((acc: number, b: any) => acc + (b.totalReviews || 0), 0)
-          setUnreadReplies(total > 0 ? 1 : 0)
-        }
-      })
-      .catch(() => {})
-  }, [user])
-  const [scrolled, setScrolled] = useState(false)
-  const [searchFocused, setSearchFocused] = useState(false)
-  const [headerSearchVal, setHeaderSearchVal] = useState('')
-  const [clientMounted, setClientMounted] = useState(false)
-  const searchInputRef = useRef<HTMLInputElement>(null)
-  const { theme, toggle } = useTheme()
-
-  useEffect(() => {
-    setClientMounted(true)
-      const savedTheme = localStorage.getItem('app_theme') || 'indigo'
-      document.documentElement.setAttribute('data-theme', savedTheme)
-    const raf = requestAnimationFrame(() => {
-      const el = document.getElementById('main-scroll')
-      const handleScroll = () => {
-        const scrollY = el ? el.scrollTop : window.scrollY
-        if (scrollY > 30) setScrolled(true)
-      }
-      el?.addEventListener('scroll', handleScroll, { passive: true })
-      window.addEventListener('scroll', handleScroll, { passive: true })
-      ;(window as any).__feedScrollCleanup = () => {
-        el?.removeEventListener('scroll', handleScroll)
-        window.removeEventListener('scroll', handleScroll)
-      }
-    })
-    return () => {
-      cancelAnimationFrame(raf)
-      ;(window as any).__feedScrollCleanup?.()
+    if (!regForm.username || regForm.username.length < 3) {
+      setUsernameStatus('idle')
+      return
     }
-  }, [])
+    setUsernameStatus('checking')
+    if (usernameTimer.current) clearTimeout(usernameTimer.current)
+    usernameTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/auth/check-username?username=${regForm.username}`
+        )
+        const data = await res.json()
+        setUsernameStatus(data.available ? 'available' : 'taken')
+      } catch {
+        setUsernameStatus('idle')
+      }
+    }, 600)
+  }, [regForm.username])
 
-  const handleLogout = () => {
-    logout()
-    router.push('/giris')
+  /* Avatar yükleme */
+  function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => setUploadedAvatar(ev.target?.result as string)
+    reader.readAsDataURL(file)
+    setShowAvatarPicker(false)
   }
 
-  const pageTitle: Record<string, string> = {
-    '/':            'Ana Sayfa',
-    '/kesfet':      'Keşfet',
-    '/muhtarlar':   'Mahalle Muhtarları',
-    '/profil':      'Profil',
-    '/yorum-yaz':   'Yorum Yaz',
-    '/bildirimler': 'Bildirimler',
+  /* Şifre gücü */
+  const pwStrength = (() => {
+    const p = mode === 'login' ? loginForm.password : regForm.password
+    if (!p) return 0
+    let s = 0
+    if (p.length >= 8) s++
+    if (/[A-Z]/.test(p)) s++
+    if (/[0-9]/.test(p)) s++
+    if (/[^A-Za-z0-9]/.test(p)) s++
+    return s
+  })()
+  const strengthColors = ['', '#ef4444', '#f97316', '#eab308', '#22c55e']
+  const strengthLabels = ['', 'Zayıf', 'Orta', 'İyi', 'Güçlü']
+
+  /* Form submit */
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (mode === 'register' && usernameStatus === 'taken') return
+    setLoading(true); setError('')
+    try {
+      const endpoint = mode === 'login' ? '/auth/login' : '/auth/register'
+      const body = mode === 'login'
+        ? { identifier: loginForm.email, password: loginForm.password }
+        : { ...regForm, avatarEmoji: uploadedAvatar ? null : selectedAvatar.emoji, avatarUrl: uploadedAvatar }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message || data.error || 'Bir hata oluştu')
+      const token = data.token || data.accessToken
+      if (token) {
+        localStorage.setItem('auth_token', token)
+        localStorage.setItem('user', JSON.stringify(data.user))
+        localStorage.setItem('auth_token', token)
+      }
+      if (onClose) onClose()
+      else window.location.href = '/'
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
-  const title = pageTitle[pathname] ?? 'Tecrübelerim'
-  const displayName = user?.fullName || user?.username || '...'
-  const username = user ? `@${user.username}` : ''
 
-  return (
-    <div className="min-h-screen bg-surface">
+  const usernameHint = usernameStatus === 'checking' ? '...'
+    : usernameStatus === 'available' ? `@${regForm.username} müsait ✓`
+    : usernameStatus === 'taken' ? `@${regForm.username} kullanımda`
+    : ''
+  const usernameHintColor = usernameStatus === 'available' ? '#22c55e'
+    : usernameStatus === 'taken' ? '#ef4444'
+    : 'rgba(255,255,255,0.3)'
 
-      {/* ══════ MOBILE ══════ */}
-      <div className="lg:hidden flex justify-center">
-        <div className="w-full max-w-[480px] h-screen relative border-x border-white/[0.04] flex flex-col">
+  /* ── UI ── */
+  const inner = (
+    <div
+      className="relative w-full max-w-[440px] rounded-2xl overflow-hidden"
+      style={{
+        background: 'rgba(14,14,20,0.97)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        boxShadow: '0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(99,102,241,0.08)',
+      }}
+      onClick={e => e.stopPropagation()}
+    >
+      {/* Üst ışıma şeridi */}
+      <div className="h-px w-full"
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.6), transparent)' }} />
 
-          <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-white/[0.06] px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-md flex-shrink-0" style={{background:'var(--primary)'}}>
-                <Star size={14} className="text-white fill-white" />
-              </div>
-              {clientMounted && scrolled ? (
-                searchFocused ? (
-                  <form onSubmit={(e) => { e.preventDefault(); if(headerSearchVal.trim()){ router.push(`/arama?q=${encodeURIComponent(headerSearchVal.trim())}`); setSearchFocused(false); setHeaderSearchVal("") }}} className="flex items-center gap-1.5 flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-1 h-8 px-3 rounded-xl bg-white/[0.08] border border-indigo-500/40">
-                      <Search size={12} className="text-indigo-400 flex-shrink-0" />
-                      <input ref={searchInputRef} value={headerSearchVal} onChange={e => setHeaderSearchVal(e.target.value)} placeholder="Ara…" className="bg-transparent outline-none text-white placeholder-white/30 w-full text-xs" autoFocus />
-                    </div>
-                    <button type="button" onClick={() => { setSearchFocused(false); setHeaderSearchVal("") }} className="text-white/40 hover:text-white/70 text-xs px-1 flex-shrink-0">✕</button>
-                  </form>
-                ) : (
-                  <button onClick={() => { setSearchFocused(true); setTimeout(() => searchInputRef.current?.focus(), 50) }} className="flex items-center gap-2 flex-1 h-8 px-3 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white/35 text-xs hover:bg-white/[0.09] transition-all min-w-0">
-                    <Search size={12} className="flex-shrink-0" /><span className="truncate">Ara…</span>
+      {/* Kapatma */}
+      {onClose && (
+        <button onClick={onClose}
+          className="absolute top-4 right-4 w-7 h-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/[0.07] transition-all z-10">
+          <X size={15} />
+        </button>
+      )}
+
+      <div className="p-8">
+        {/* Logo + başlık */}
+        <div className="flex items-center gap-3 mb-7">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
+            <Star size={17} className="text-white fill-white" />
+          </div>
+          <div>
+            <h1 className="text-base font-bold text-white leading-none mb-0.5">
+              {mode === 'login' ? 'Tekrar hoş geldiniz' : 'Hesap oluştur'}
+            </h1>
+            <p className="text-[11px] text-white/35">
+              {mode === 'login' ? 'Tecrübelerim\'e giriş yapın' : 'Ücretsiz, birkaç dakika sürer'}
+            </p>
+          </div>
+        </div>
+
+        {/* Tab geçişi */}
+        <div className="flex rounded-xl mb-6 p-1"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          {(['login', 'register'] as AuthMode[]).map(m => (
+            <button key={m} onClick={() => { setMode(m); setError('') }}
+              className="flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-200"
+              style={{
+                background: mode === m ? 'rgba(99,102,241,0.25)' : 'transparent',
+                color: mode === m ? '#a5b4fc' : 'rgba(255,255,255,0.35)',
+                border: mode === m ? '1px solid rgba(99,102,241,0.3)' : '1px solid transparent',
+              }}>
+              {m === 'login' ? 'Giriş Yap' : 'Kayıt Ol'}
+            </button>
+          ))}
+        </div>
+
+        {/* Hata */}
+        {error && (
+          <div className="mb-5 px-4 py-3 rounded-xl flex items-center gap-2.5 text-sm"
+            style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
+            <AlertCircle size={14} className="text-red-400 flex-shrink-0" />
+            <span className="text-red-400 text-xs">{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* ─── GİRİŞ FORMU ─── */}
+          {mode === 'login' && (
+            <>
+              <Field icon={Mail} label="E-posta" type="email" placeholder="ornek@email.com"
+                value={loginForm.email} onChange={v => setLoginForm(p => ({ ...p, email: v }))} />
+              <Field icon={Lock} label="Şifre" type={showPassword ? 'text' : 'password'}
+                placeholder="Şifreniz" value={loginForm.password}
+                onChange={v => setLoginForm(p => ({ ...p, password: v }))}
+                rightSlot={
+                  <button type="button" onClick={() => setShowPassword(!showPassword)}
+                    className="text-white/30 hover:text-white/60 transition-colors">
+                    {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
-                )
-              ) : (
-                <div className="flex items-center gap-1.5">
-                  <span className="font-black text-base tracking-tight text-white">Tecrübelerim</span>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider" style={{background:'var(--primary-bg)',color:'var(--primary)',border:'1px solid var(--primary-border)'}}>Beta</span>
+                }
+              />
+              {/* Şifre gücü çubuğu */}
+              {loginForm.password && (
+                <div className="flex gap-1.5 -mt-1">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="h-0.5 flex-1 rounded-full transition-all duration-300"
+                      style={{ background: i <= pwStrength ? strengthColors[pwStrength] : 'rgba(255,255,255,0.06)' }} />
+                  ))}
                 </div>
               )}
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-              <ThemeToggle />
-              <Link href="/bildirimler">
-                <button aria-label="Bildirimler" className="relative w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all">
-                  <Bell size={15} />
-                </button>
-              </Link>
-              <Link href="/profil">
-                <UserAvatar name={user?.fullName} username={user?.username} avatarUrl={user?.avatarUrl} size="sm" />
-              </Link>
-            </div>
-          </header>
-
-          <main id="main-scroll" className={`flex-1 min-h-0 overflow-y-auto ${hideBottomNav ? 'pb-0' : 'pb-24'}`}>{children}</main>
-
-          {!hideBottomNav && (
-            <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 bg-surface/90 backdrop-blur-xl border-t border-white/[0.06] px-2 py-2">
-              <div className="flex items-center justify-around">
-                {NAV_ITEMS.slice(0, 5).map(({ href, icon: Icon, label }) => {
-                  if (href === '/karsilastir/ara') {
-                    const active = pathname?.startsWith('/karsilastir')
-                    return (
-                      <Link key="karsilastir" href="/karsilastir/ara" className={cn(
-                        'flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all',
-                        active ? 'text-emerald-400' : 'text-white/30 hover:text-white/60'
-                      )}>
-                        <ArrowLeftRight size={20} />
-                        <span className="text-[10px] font-medium">Karşılaştır</span>
-                      </Link>
-                    )
-                  }
-                  if (href === '/kesfet' && hasBusiness) {
-                    const active = pathname === '/sahip-paneli'
-                    return (
-                      <Link key="sahip-paneli" href="/sahip-paneli" className={cn(
-                        'flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all relative',
-                        active ? 'text-primary' : 'text-white/30 hover:text-white/60'
-                      )}>
-                        <div className="relative">
-                          <Building2 size={20} className={active ? 'fill-primary/20' : ''} />
-                          {unreadReplies > 0 && <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />}
-                        </div>
-                        <span className="text-[10px] font-medium">İşletmem</span>
-                      </Link>
-                    )
-                  }
-                  const active = pathname === href
-                  return (
-                    <Link key={href} href={href} className={cn(
-                      'flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all',
-                      active ? 'text-primary' : 'text-white/30 hover:text-white/60'
-                    )}>
-                      {href === '/yorum-yaz' ? (
-                        <div className="w-10 h-10 -mt-5 rounded-2xl flex items-center justify-center shadow-lg" style={{background:'var(--primary)'}}>
-                          <Icon size={20} className="text-white" />
-                        </div>
-                      ) : (
-                        <>
-                          <Icon size={20} className={active ? 'fill-primary/20' : ''} />
-                          <span className="text-[10px] font-medium">{label}</span>
-                        </>
-                      )}
-                    </Link>
-                  )
-                })}
-              </div>
-            </nav>
-          )}
-        </div>
-      </div>
-
-      {/* ══════ DESKTOP ══════ */}
-      <div className="hidden lg:grid min-h-screen" style={{ gridTemplateColumns: '260px 1fr 320px', maxWidth: 1240, margin: '0 auto' }}>
-
-        {/* Sol sidebar */}
-        <aside className="sticky top-0 h-screen flex flex-col px-3 py-6 border-r border-white/[0.06] overflow-y-auto">
-          <Link href="/" className="flex items-center gap-2.5 mb-8 px-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0" style={{background:'var(--primary)'}}>
-              <Star size={16} className="text-white fill-white" />
-            </div>
-            <span className="font-black text-lg tracking-tight text-white">Tecrübelerim</span>
-          </Link>
-
-          <nav className="flex flex-col gap-1 flex-1">
-            {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
-              const active = pathname === href
-              return (
-                <Link key={href} href={href} className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-semibold text-sm',
-                  active
-                  ? 'bg-primary-soft text-white border border-primary-soft'
-                    : 'text-white/50 hover:text-white hover:bg-white/[0.05]'
-                )}>
-                  {href === '/yorum-yaz' ? (
-                    <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background:'var(--primary)'}}>
-                      <Icon size={13} className="text-white" />
-                    </div>
-                  ) : (
-                    <Icon size={18} className={active ? 'text-primary' : 'text-white/40'} />
-                  )}
-                  {label}
+              <div className="flex items-center justify-between pt-1">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <div
+                    onClick={() => setLoginForm(p => ({ ...p, remember: !p.remember }))}
+                    className="w-4 h-4 rounded flex items-center justify-center transition-all cursor-pointer"
+                    style={{
+                      background: loginForm.remember ? 'rgba(99,102,241,0.8)' : 'rgba(255,255,255,0.06)',
+                      border: `1px solid ${loginForm.remember ? '#6366f1' : 'rgba(255,255,255,0.15)'}`,
+                    }}>
+                    {loginForm.remember && <Check size={10} className="text-white" />}
+                  </div>
+                  <span className="text-xs text-white/45 group-hover:text-white/65 transition-colors">Beni hatırla</span>
+                </label>
+                <Link href="/sifremi-unuttum" className="text-xs text-indigo-400/80 hover:text-indigo-300 transition-colors">
+                  Şifremi unuttum
                 </Link>
-              )
-            })}
-          </nav>
-
-          {/* Karşılaştır butonu */}
-          <Link href="/karsilastir/ara"
-            className={cn(
-              'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-semibold text-sm',
-              pathname?.startsWith('/karsilastir')
-                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
-                : 'text-white/50 hover:text-white hover:bg-white/[0.05]'
-            )}>
-            <ArrowLeftRight size={18} />
-            Karşılaştır
-          </Link>
-
-          {/* Isletmem butonu */}
-          {hasBusiness && (
-            <Link href="/sahip-paneli" className={cn(
-              'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-semibold text-sm mt-1 relative',
-              'border',
-              pathname === '/sahip-paneli'
-                ? 'bg-indigo-500/15 text-indigo-400 border-indigo-500/25'
-                : 'text-indigo-300/70 border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10 hover:text-indigo-300'
-            )}>
-              <div className="relative">
-                <Building2 size={18} />
-                {unreadReplies > 0 && <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />}
               </div>
-              İşletmem
-            </Link>
+            </>
           )}
 
-          {/* User card + tema toggle */}
-          <div className="mt-4 space-y-2">
-            <button
-              onClick={toggle}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-white/50 hover:text-white hover:bg-white/[0.05] font-semibold text-sm"
-            >
-              {theme === 'dark'
-                ? <><Sun size={18} className="text-amber-400" /> Açık Mod</>
-                : <><Moon size={18} className="text-indigo-400" /> Koyu Mod</>
-              }
-            </button>
-
-            <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center gap-3">
-              <Link href="/profil">
-                <UserAvatar name={user?.fullName} username={user?.username} avatarUrl={user?.avatarUrl} size="md" />
-              </Link>
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-sm text-white truncate">{displayName}</div>
-                <div className="text-xs text-white/40 truncate">{username}</div>
+          {/* ─── KAYIT FORMU ─── */}
+          {mode === 'register' && (
+            <>
+              {/* Avatar seçici */}
+              <div className="flex items-center gap-4">
+                <div className="relative flex-shrink-0">
+                  <button type="button" onClick={() => setShowAvatarPicker(!showAvatarPicker)}
+                    className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center text-2xl transition-transform hover:scale-105 active:scale-95"
+                    style={{
+                      background: uploadedAvatar ? 'transparent' : selectedAvatar.bg + '33',
+                      border: `2px solid ${selectedAvatar.bg}55`,
+                    }}>
+                    {uploadedAvatar
+                      ? <img src={uploadedAvatar} alt="avatar" className="w-full h-full object-cover" />
+                      : <span>{selectedAvatar.emoji}</span>
+                    }
+                  </button>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center"
+                    style={{ background: '#6366f1', border: '2px solid rgba(14,14,20,0.97)' }}>
+                    <Camera size={9} className="text-white" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-white/60 mb-2">Profil Görseli</p>
+                  {showAvatarPicker && (
+                    <div className="flex flex-wrap gap-2">
+                      {AVATAR_OPTIONS.map(av => (
+                        <button key={av.id} type="button"
+                          onClick={() => { setSelectedAvatar(av); setUploadedAvatar(null); setShowAvatarPicker(false) }}
+                          className="w-8 h-8 rounded-xl flex items-center justify-center text-base transition-all hover:scale-110"
+                          style={{
+                            background: av.bg + '33',
+                            border: `1.5px solid ${selectedAvatar.id === av.id ? av.bg : 'transparent'}`,
+                          }}>
+                          {av.emoji}
+                        </button>
+                      ))}
+                      <button type="button" onClick={() => fileRef.current?.click()}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:scale-110"
+                        style={{ background: 'rgba(255,255,255,0.07)', border: '1.5px dashed rgba(255,255,255,0.2)' }}>
+                        <Camera size={12} className="text-white/50" />
+                      </button>
+                    </div>
+                  )}
+                  {!showAvatarPicker && (
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => setShowAvatarPicker(true)}
+                        className="text-[11px] px-2.5 py-1 rounded-lg text-indigo-400 transition-all hover:bg-indigo-500/10"
+                        style={{ border: '1px solid rgba(99,102,241,0.25)' }}>
+                        Emoji seç
+                      </button>
+                      <button type="button" onClick={() => fileRef.current?.click()}
+                        className="text-[11px] px-2.5 py-1 rounded-lg text-white/40 transition-all hover:bg-white/[0.05]"
+                        style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
+                        Fotoğraf yükle
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
               </div>
-              <button
-                onClick={handleLogout}
-                className="text-white/30 hover:text-red-400 transition-colors p-1"
-                title="Çıkış Yap" aria-label="Çıkış Yap"
-              >
-                <LogOut size={14} />
-              </button>
-            </div>
-          </div>
-        </aside>
 
-        {/* Orta */}
-        <main className="flex flex-col border-r border-white/[0.06] min-w-0">
-          <div className="sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-white/[0.06] px-6 py-4 flex items-center justify-between">
-            <h1 className="font-black text-lg text-white">{title}</h1>
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              <Link href="/bildirimler">
-                <button aria-label="Bildirimler" className="w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all">
-                  <Bell size={15} />
-                </button>
-              </Link>
-            </div>
-          </div>
-          <div className={hideBottomNav ? '' : 'pb-8'}>{children}</div>
-        </main>
+              <Field icon={User} label="Ad Soyad" type="text" placeholder="Ahmet Yılmaz"
+                value={regForm.fullName} onChange={v => setRegForm(p => ({ ...p, fullName: v }))} />
 
-        {/* Sağ sidebar — rightPanel prop varsa onu göster, yoksa varsayılan */}
-        <aside className="sticky top-0 h-screen px-4 py-6 space-y-4 overflow-y-auto">
-          {rightPanel ?? <RightPanel />}
-        </aside>
+              <Field icon={AtSign} label="Kullanıcı Adı" type="text" placeholder="kullanici_adi"
+                value={regForm.username}
+                onChange={v => setRegForm(p => ({ ...p, username: v.toLowerCase().replace(/[^a-z0-9_]/g, '') }))}
+                hint={usernameHint} hintColor={usernameHintColor}
+                rightSlot={
+                  usernameStatus === 'checking' ? <Loader2 size={13} className="text-white/30 animate-spin" />
+                  : usernameStatus === 'available' ? <CheckCircle2 size={13} className="text-emerald-400" />
+                  : usernameStatus === 'taken' ? <AlertCircle size={13} className="text-red-400" />
+                  : null
+                }
+              />
+
+              <Field icon={Mail} label="E-posta" type="email" placeholder="ornek@email.com"
+                value={regForm.email} onChange={v => setRegForm(p => ({ ...p, email: v }))} />
+
+              <Field icon={Lock} label="Şifre" type={showPassword ? 'text' : 'password'}
+                placeholder="En az 8 karakter" value={regForm.password}
+                onChange={v => setRegForm(p => ({ ...p, password: v }))}
+                rightSlot={
+                  <button type="button" onClick={() => setShowPassword(!showPassword)}
+                    className="text-white/30 hover:text-white/60 transition-colors">
+                    {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                }
+              />
+              {regForm.password && (
+                <div className="-mt-1 space-y-1">
+                  <div className="flex gap-1.5">
+                    {[1,2,3,4].map(i => (
+                      <div key={i} className="h-0.5 flex-1 rounded-full transition-all duration-300"
+                        style={{ background: i <= pwStrength ? strengthColors[pwStrength] : 'rgba(255,255,255,0.06)' }} />
+                    ))}
+                  </div>
+                  <p className="text-[11px]" style={{ color: strengthColors[pwStrength] }}>
+                    {strengthLabels[pwStrength]}
+                  </p>
+                </div>
+              )}
+
+              {/* Referral kodu — opsiyonel */}
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-widest mb-1.5 text-white/30">
+                  Referans Kodu <span className="normal-case font-normal not-italic">(isteğe bağlı)</span>
+                </label>
+                <div className="relative">
+                  <Gift size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20" />
+                  <input type="text" value={regForm.referral}
+                    onChange={e => setRegForm(p => ({ ...p, referral: e.target.value.toUpperCase() }))}
+                    placeholder="ÖRNEK123"
+                    maxLength={12}
+                    className="w-full pl-9 pr-4 py-3 rounded-xl text-sm text-white placeholder-white/15 outline-none transition-all tracking-widest"
+                    style={{
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.07)',
+                      fontFamily: 'monospace',
+                    }}
+                    onFocus={e => { e.target.style.borderColor = 'rgba(99,102,241,0.4)'; e.target.style.background = 'rgba(99,102,241,0.05)' }}
+                    onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.07)'; e.target.style.background = 'rgba(255,255,255,0.03)' }}
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Submit butonu */}
+          <button type="submit" disabled={loading || (mode === 'register' && usernameStatus === 'taken')}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 active:scale-[0.98] mt-2"
+            style={{
+              background: loading || (mode === 'register' && usernameStatus === 'taken')
+                ? 'rgba(99,102,241,0.35)'
+                : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              boxShadow: loading ? 'none' : '0 8px 24px rgba(99,102,241,0.3)',
+            }}>
+            {loading
+              ? <><Loader2 size={15} className="animate-spin" /> {mode === 'login' ? 'Giriş yapılıyor...' : 'Hesap oluşturuluyor...'}</>
+              : <>{mode === 'login' ? 'Giriş Yap' : 'Hesap Oluştur'} <ArrowRight size={15} /></>
+            }
+          </button>
+
+          {/* Google */}
+          <button type="button"
+            className="w-full flex items-center justify-center gap-2.5 py-3 rounded-xl text-xs text-white/55 hover:text-white/80 transition-all"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.16)')}
+            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)')}>
+            <svg width="14" height="14" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Google ile devam et
+          </button>
+        </form>
+
+        {mode === 'register' && (
+          <p className="text-center text-[10px] text-white/20 mt-4 leading-relaxed">
+            Kayıt olarak{' '}
+            <Link href="/kullanim-kosullari" className="text-white/35 underline hover:text-white/50 transition-colors">
+              Kullanım Koşulları
+            </Link>
+            {' '}ve{' '}
+            <Link href="/gizlilik" className="text-white/35 underline hover:text-white/50 transition-colors">
+              Gizlilik Politikası
+            </Link>
+            'nı kabul etmiş olursunuz.
+          </p>
+        )}
+      </div>
+    </div>
+  )
+
+  /* Modal overlay modu */
+  if (!isPage) {
+    return (
+      <>
+        <ParticleCanvas />
+        <div
+          className="fixed inset-0 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(12px)', zIndex: 50 }}
+          onClick={onClose}
+        >
+          <div className="animate-in fade-in zoom-in-95 duration-200">
+            {inner}
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  /* Tam sayfa modu (eski giris/kayit sayfaları için) */
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative" style={{ background: '#0C0C0F' }}>
+      <ParticleCanvas />
+      <div className="relative z-10">{inner}</div>
+      <div className="relative z-10 mt-8 text-center">
+        <p className="text-[11px] text-white/30 leading-relaxed">
+          <a href="/sozlesme/privacy_policy" className="hover:text-white/60 transition-colors">Gizlilik</a>
+          {' · '}
+          <a href="/sozlesme/terms_of_service" className="hover:text-white/60 transition-colors">Kullanım Koşulları</a>
+          {' · '}
+          <a href="/sozlesme/help" className="hover:text-white/60 transition-colors">Yardım</a>
+          {' · '}
+          <a href="/iletisim" className="hover:text-white/60 transition-colors">İletişim</a>
+        </p>
+        <p className="text-[11px] text-white/15 mt-1">© 2026 Tecrübelerim</p>
       </div>
     </div>
   )
