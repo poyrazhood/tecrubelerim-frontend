@@ -277,10 +277,21 @@ export default function HomePage() {
         const d = await res.json()
         const items = d.externalReviews ?? d.reviews ?? d.data ?? []
         setExternalReviews(prev => p === 1 ? items : [...prev, ...items])
-        setTotalCount(d.pagination?.total ?? 0)
+        setTotalCount(d.pagination?.total ?? d.total ?? 0)
         setHasMore(items.length === 15)
         setPage(p + 1)
         setReviewsLoaded(true)
+      } else {
+        const res2 = await fetch(`${API}/reviews?limit=15&page=${p}&sort=createdAt`)
+        if (res2.ok) {
+          const d = await res2.json()
+          const items = d.reviews ?? d.data ?? []
+          setExternalReviews(prev => p === 1 ? items : [...prev, ...items])
+          setTotalCount(d.pagination?.total ?? d.total ?? 0)
+          setHasMore(items.length === 15)
+          setPage(p + 1)
+          setReviewsLoaded(true)
+        }
       }
     } catch {}
     finally {

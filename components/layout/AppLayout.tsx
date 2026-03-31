@@ -257,8 +257,8 @@ function RightPanel() {
 
 
       <div className="px-1">
-        <p className="text-[10px] text-white/20 leading-relaxed">Tecrübelerim Beta · <a href="/sozlesme/privacy_policy" className="hover:text-white/40 transition-colors">Gizlilik</a> · <a href="/sozlesme/terms_of_service" className="hover:text-white/40 transition-colors">Kullanım Koşulları</a> · <a href="/sozlesme/help" className="hover:text-white/40 transition-colors">Yardım</a> · <a href="/iletisim" className="hover:text-white/40 transition-colors">İletişim</a></p>
-        <p className="text-[10px] text-white/15 mt-1">© 2026 Tecrübelerim</p>
+        <p className="text-[10px] text-white/60 leading-relaxed">Tecrübelerim Beta · <a href="/sozlesme/privacy_policy" className="hover:text-white/80 transition-colors">Gizlilik</a> · <a href="/sozlesme/terms_of_service" className="hover:text-white/80 transition-colors">Kullanım Koşulları</a> · <a href="/sozlesme/help" className="hover:text-white/80 transition-colors">Yardım</a> · <a href="/iletisim" className="hover:text-white/80 transition-colors">İletişim</a></p>
+        <p className="text-[10px] text-white/40 mt-1">© 2026 Tecrübelerim</p>
       </div>
     </>
   )
@@ -388,7 +388,7 @@ export function AppLayout({ children, hideBottomNav, rightPanel }: {
           <main id="main-scroll" className={`flex-1 min-h-0 overflow-y-auto ${hideBottomNav ? 'pb-0' : 'pb-24'}`}>{children}</main>
 
           {!hideBottomNav && (
-            <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 bg-surface/90 backdrop-blur-xl border-t border-white/[0.06] px-2 py-2">
+            <nav className={`fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 bg-surface/90 backdrop-blur-xl border-t border-white/[0.06] px-2 py-2 transition-transform duration-300 ${scrolled ? 'translate-y-0' : 'translate-y-full'}`}>
               <div className="flex items-center justify-around">
                 {NAV_ITEMS.slice(0, 5).map(({ href, icon: Icon, label }) => {
                   if (href === '/karsilastir/ara') {
