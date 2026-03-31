@@ -307,7 +307,7 @@ export function AppLayout({ children, hideBottomNav, rightPanel }: {
       const el = document.getElementById('main-scroll')
       const handleScroll = () => {
         const scrollY = el ? el.scrollTop : window.scrollY
-        setScrolled(scrollY > 60)
+        if (scrollY > 30) setScrolled(true)
       }
       el?.addEventListener('scroll', handleScroll, { passive: true })
       window.addEventListener('scroll', handleScroll, { passive: true })
@@ -388,7 +388,7 @@ export function AppLayout({ children, hideBottomNav, rightPanel }: {
           <main id="main-scroll" className={`flex-1 min-h-0 overflow-y-auto ${hideBottomNav ? 'pb-0' : 'pb-24'}`}>{children}</main>
 
           {!hideBottomNav && (
-            <nav className={`fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 bg-surface/90 backdrop-blur-xl border-t border-white/[0.06] px-2 py-2 transition-transform duration-300 ${scrolled ? 'translate-y-0' : 'translate-y-full'}`}>
+            <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 bg-surface/90 backdrop-blur-xl border-t border-white/[0.06] px-2 py-2">
               <div className="flex items-center justify-around">
                 {NAV_ITEMS.slice(0, 5).map(({ href, icon: Icon, label }) => {
                   if (href === '/karsilastir/ara') {

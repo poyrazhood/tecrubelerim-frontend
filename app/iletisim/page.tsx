@@ -33,6 +33,11 @@ export default function IletisimPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.email || !form.message) return
+    if (form.message.length < 10) {
+      setStatus('error')
+      setErrorMsg('Mesajınız en az 10 karakter olmalıdır.')
+      return
+    }
 
     setStatus('loading')
     setErrorMsg('')
@@ -182,6 +187,9 @@ export default function IletisimPage() {
               onChange={e => update('message', e.target.value)}
               className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder-white/25 focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.06] transition-all resize-none"
             />
+            <div className={`text-right text-xs mt-1 ${form.message.length < 10 && form.message.length > 0 ? 'text-red-400' : 'text-white/25'}`}>
+              {form.message.length} / min 10 karakter
+            </div>
           </div>
 
           {/* Hata */}
@@ -195,7 +203,7 @@ export default function IletisimPage() {
           {/* Gönder */}
           <button
             type="submit"
-            disabled={status === 'loading' || !form.email || !form.message}
+            disabled={status === 'loading' || !form.email || !form.message || form.message.length < 10}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all
               bg-indigo-500/20 border border-indigo-500/30 text-indigo-300
               hover:bg-indigo-500/30 active:scale-[0.98]
