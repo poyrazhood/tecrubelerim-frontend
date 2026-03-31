@@ -472,6 +472,22 @@ export default function HomePage() {
         {/* Sentinel */}
         <div ref={sentinelRef} className="h-4" />
 
+        {/* Mobil footer linkler */}
+        {!hasMore && externalReviews.length > 0 && (
+          <div className="px-4 py-6 text-center border-t border-white/[0.06] mt-2">
+            <p className="text-[11px] text-white/30 leading-relaxed">
+              <a href="/sozlesme/privacy_policy" className="hover:text-white/60 transition-colors">Gizlilik</a>
+              {` · `}
+              <a href="/sozlesme/terms_of_service" className="hover:text-white/60 transition-colors">Kullanim Kosullari</a>
+              {` · `}
+              <a href="/sozlesme/help" className="hover:text-white/60 transition-colors">Yardim</a>
+              {` · `}
+              <a href="/iletisim" className="hover:text-white/60 transition-colors">Iletisim</a>
+            </p>
+            <p className="text-[11px] text-white/15 mt-1">© 2026 Tecrubelerim</p>
+          </div>
+        )}
+
       </div>
     </AppLayout>
   )
