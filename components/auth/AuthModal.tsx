@@ -551,9 +551,21 @@ export default function AuthModal({ initialMode = 'login', onClose, isPage = fal
 
   /* Tam sayfa modu (eski giris/kayit sayfaları için) */
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative" style={{ background: '#0C0C0F' }}>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative" style={{ background: '#0C0C0F' }}>
       <ParticleCanvas />
       <div className="relative z-10">{inner}</div>
+      <div className="relative z-10 mt-8 text-center">
+        <p className="text-[11px] text-white/30 leading-relaxed">
+          <a href="/sozlesme/privacy_policy" className="hover:text-white/60 transition-colors">Gizlilik</a>
+          {' · '}
+          <a href="/sozlesme/terms_of_service" className="hover:text-white/60 transition-colors">Kullanım Koşulları</a>
+          {' · '}
+          <a href="/sozlesme/help" className="hover:text-white/60 transition-colors">Yardım</a>
+          {' · '}
+          <a href="/iletisim" className="hover:text-white/60 transition-colors">İletişim</a>
+        </p>
+        <p className="text-[11px] text-white/15 mt-1">© 2026 Tecrübelerim</p>
+      </div>
     </div>
   )
 }
