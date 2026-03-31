@@ -257,7 +257,7 @@ function RightPanel() {
 
 
       <div className="px-1">
-        <p className="text-[10px] text-white/20 leading-relaxed">Tecrübelerim Beta · <a href="/sozlesme/privacy_policy" className="hover:text-white/40 transition-colors">Gizlilik</a> · <a href="/sozlesme/terms_of_service" className="hover:text-white/40 transition-colors">Kullanım Koşulları</a> · <a href="/sozlesme/help" className="hover:text-white/40 transition-colors">Yardım</a></p>
+        <p className="text-[10px] text-white/20 leading-relaxed">Tecrübelerim Beta · <a href="/sozlesme/privacy_policy" className="hover:text-white/40 transition-colors">Gizlilik</a> · <a href="/sozlesme/terms_of_service" className="hover:text-white/40 transition-colors">Kullanım Koşulları</a> · <a href="/sozlesme/help" className="hover:text-white/40 transition-colors">Yardım</a> · <a href="/iletisim" className="hover:text-white/40 transition-colors">İletişim</a></p>
         <p className="text-[10px] text-white/15 mt-1">© 2026 Tecrübelerim</p>
       </div>
     </>

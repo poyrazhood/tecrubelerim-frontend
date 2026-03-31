@@ -1,5 +1,110 @@
 'use client'
 import ReferralAdminPanel from '@/components/admin/ReferralAdminPanel'
+
+// ─── Support Tickets Tab ──────────────────────────────────────────────────────
+function SupportTicketsTab({ apiBase }: { apiBase: string }) {
+  const [tickets, setTickets] = React.useState<any[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [statusFilter, setStatusFilter] = React.useState('open')
+  const [updating, setUpdating] = React.useState<string | null>(null)
+
+  const STATUS_COLORS: Record<string, string> = {
+    open:        'text-amber-400 bg-amber-500/10 border-amber-500/20',
+    in_progress: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+    closed:      'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+  }
+  const STATUS_LABEL: Record<string, string> = {
+    open: 'Açık', in_progress: 'İşlemde', closed: 'Kapalı'
+  }
+  const CAT_LABEL: Record<string, string> = {
+    technical: 'Teknik sorun', suggestion: 'Öneri', other: 'Diğer'
+  }
+
+  const load = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`${apiBase}/api/admin/support/tickets?status=${statusFilter}`, { headers: getH() })
+      const d = await res.json()
+      setTickets(d.tickets || [])
+    } catch { setTickets([]) }
+    setLoading(false)
+  }
+
+  React.useEffect(() => { load() }, [statusFilter])
+
+  const updateStatus = async (id: string, status: string) => {
+    setUpdating(id)
+    try {
+      await fetch(`${apiBase}/api/admin/support/tickets/${id}`, {
+        method: 'PATCH', headers: getH(),
+        body: JSON.stringify({ status }),
+      })
+      load()
+    } catch(e) { console.error(e) }
+    setUpdating(null)
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-xl font-black">Destek Talepleri</h2>
+        <button onClick={load} className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center text-white/40 hover:text-white transition-colors">
+          <RefreshCw size={14} />
+        </button>
+      </div>
+
+      <div className="flex gap-2 mb-4">
+        {['open', 'in_progress', 'closed'].map(s => (
+          <button key={s} onClick={() => setStatusFilter(s)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${statusFilter === s ? STATUS_COLORS[s] : 'text-white/30 bg-white/[0.03] border-white/[0.06] hover:text-white'}`}>
+            {STATUS_LABEL[s]}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-white/30" /></div>
+      ) : tickets.length === 0 ? (
+        <div className="text-white/25 text-sm text-center py-12">Talep yok</div>
+      ) : (
+        <div className="space-y-3">
+          {tickets.map((t: any) => (
+            <div key={t.id} className="bg-[#111118] border border-white/[0.07] rounded-xl p-4 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="text-xs font-bold text-white">{t.email}</span>
+                    {t.phone && <span className="text-xs text-indigo-300">{t.phone}</span>}
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/[0.05] text-white/40 border border-white/[0.08]">{CAT_LABEL[t.category] ?? t.category}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${STATUS_COLORS[t.status]}`}>{STATUS_LABEL[t.status]}</span>
+                  </div>
+                  {t.subject && <div className="text-sm font-semibold text-white/80 mb-1">{t.subject}</div>}
+                  <p className="text-sm text-white/60 leading-relaxed">{t.message}</p>
+                  <div className="text-[10px] text-white/25 mt-2">{new Date(t.createdAt).toLocaleString('tr-TR')}</div>
+                </div>
+              </div>
+
+              {t.status !== 'closed' && (
+                <div className="flex gap-2 pt-1">
+                  {t.status === 'open' && (
+                    <button onClick={() => updateStatus(t.id, 'in_progress')} disabled={updating === t.id}
+                      className="flex-1 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 text-xs font-bold border border-blue-500/20 hover:bg-blue-500/20 disabled:opacity-40 transition-all">
+                      İşleme Al
+                    </button>
+                  )}
+                  <button onClick={() => updateStatus(t.id, 'closed')} disabled={updating === t.id}
+                    className="flex-1 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20 hover:bg-emerald-500/20 disabled:opacity-40 transition-all">
+                    Kapat ✓
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 import React, { useState, useEffect, useCallback } from 'react'
 import {
   Building2, Users, MessageSquare, CheckCircle, XCircle, Loader2,
@@ -961,6 +1066,7 @@ export default function AdminPage() {
     { key: 'theme',      label: 'Tema ve Renk',        icon: Settings },
     { key: 'market',     label: 'Tecrübe Pazarı',      icon: ShoppingBag },
     { key: 'referral',   label: 'Referral',             icon: Gift },
+    { key: 'support',    label: 'Destek Talepleri',     icon: MessageSquare },
   ] as const
 
   const totalPages = Math.ceil(total / 20)
@@ -1440,6 +1546,9 @@ export default function AdminPage() {
           )}
           {tab === 'referral' && (
             <ReferralAdminPanel />
+          )}
+          {tab === 'support' && (
+            <SupportTicketsTab apiBase={API} />
           )}
         </div>
       </div>

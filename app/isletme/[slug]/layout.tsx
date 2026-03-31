@@ -1,4 +1,4 @@
-﻿import type { Metadata } from 'next'
+import type { Metadata } from 'next'
 import Script from 'next/script'
 
 const CATEGORY_SCHEMA_MAP: Record<string, string> = {
@@ -23,6 +23,7 @@ const CATEGORY_SCHEMA_MAP: Record<string, string> = {
   'veteriner': 'VeterinaryCare',
   'eglence-kultur': 'EntertainmentBusiness',
 }
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 const SITE_URL = 'https://tecrubelerim.com'
 
@@ -31,15 +32,19 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   try {
     const res = await fetch(`${API_BASE}/businesses/${params.slug}`, { next: { revalidate: 3600 } })
-    if (!res.ok) return { title: 'İşletme Bulunamadı | Tecrübelerim' }
+    // FIX 1: "| Tecrübelerim" suffix kaldırıldı.
+    // Root layout'taki template: '%s | Tecrubelerim' zaten ekliyor.
+    // Eskisi: `${b.name} – ${location} | Tecrübelerim`
+    // Yenisi: `${b.name} – ${location}` → render: `${b.name} – ${location} | Tecrubelerim`
+    if (!res.ok) return { title: 'İşletme Bulunamadı' }
     const data = await res.json()
     const b = data.business ?? data
 
     const location = [b.district, b.city].filter(Boolean).join(', ')
-    const title = `${b.name} – ${location} | Tecrübelerim`
+    const title = `${b.name} Yorumları – ${location}`
     const description = b.description
       ? b.description.slice(0, 155)
-      : `${b.name} hakkında yorumlar, puanlar ve bilgiler. ${location} bölgesinde ${b.category?.name ?? 'işletme'}. Tecrübelerim'de güvenilir kullanıcı deneyimleri.`
+      : `${b.name} hakkında ${b.totalReviews > 0 ? `${b.totalReviews} yorum, ${(b.averageRating ?? 0).toFixed(1)}/5 puan. ` : ''}${location} bölgesinde ${b.category?.name ?? 'işletme'}. Tecrübelerim'de güvenilir kullanıcı deneyimleri.`
     const image = b.photos?.[0]?.url ?? `${SITE_URL}/og-default.png`
     const url = `${SITE_URL}/isletme/${params.slug}`
 
@@ -66,7 +71,7 @@ export async function generateMetadata(
       },
     }
   } catch {
-    return { title: 'Tecrübelerim – Güvenilir İşletme Yorumları' }
+    return { title: 'Güvenilir İşletme Yorumları' }
   }
 }
 
@@ -92,15 +97,15 @@ async function getBusinessForSchema(slug: string) {
   } catch { return null }
 }
 
-export default async function SlugLayout({ 
-  children, 
-  params 
-}: { 
+export default async function SlugLayout({
+  children,
+  params,
+}: {
   children: React.ReactNode
   params: { slug: string }
 }) {
   const b = await getBusinessForSchema(params.slug)
-  
+
   const jsonLd = b ? {
     '@context': 'https://schema.org',
     '@type': [CATEGORY_SCHEMA_MAP[b.category?.slug ?? ''] ?? 'LocalBusiness', 'LocalBusiness'].filter((v, i, a) => a.indexOf(v) === i),
@@ -121,7 +126,10 @@ export default async function SlugLayout({
       latitude: b.latitude,
       longitude: b.longitude,
     } : undefined,
-    aggregateRating: b.totalReviews > 0 ? {
+    // FIX 2: > 0 yerine >= 3
+    // Google'ın yıldız göstermesi için minimum 3 yorum gerekli.
+    // 1-2 yorumlu sayfalarda "1 yorum" göstermek CTR'yi düşürüyor.
+    aggregateRating: b.totalReviews >= 3 ? {
       '@type': 'AggregateRating',
       ratingValue: (b.averageRating ?? 0).toFixed(1),
       reviewCount: b.totalReviews,
@@ -156,12 +164,54 @@ export default async function SlugLayout({
     mainEntity: b._qa.map((q: any) => ({
       '@type': 'Question',
       name: q.question,
-      acceptedAnswer: { '@type': 'Answer', text: q.answer }
-    }))
+      acceptedAnswer: { '@type': 'Answer', text: q.answer },
+    })),
+  } : null
+
+  // FIX 3: BreadcrumbList schema eklendi.
+  // Google arama sonuçlarında URL'yi "tecrubelerim.com › İstanbul › Konaklama › Royal Escape"
+  // formatında gösterir — CTR'yi artırır.
+  const breadcrumbLd = b ? {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Tecrübelerim',
+        item: SITE_URL,
+      },
+      b.city && {
+        '@type': 'ListItem',
+        position: 2,
+        name: b.city,
+        item: `${SITE_URL}/${b.citySlug ?? b.city?.toLowerCase().replace(/\s+/g, '-')}`,
+      },
+      b.category?.name && {
+        '@type': 'ListItem',
+        position: 3,
+        name: b.category.name,
+        item: `${SITE_URL}/${b.citySlug ?? b.city?.toLowerCase().replace(/\s+/g, '-')}/${b.category.slug ?? ''}`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 4,
+        name: b.name,
+        item: `${SITE_URL}/isletme/${params.slug}`,
+      },
+    ].filter(Boolean),
   } : null
 
   return (
     <>
+      {breadcrumbLd && (
+        <Script
+          id="business-breadcrumbld"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+          strategy="beforeInteractive"
+        />
+      )}
       {faqLd && (
         <Script
           id="business-faqld"
