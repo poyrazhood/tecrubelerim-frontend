@@ -1,0 +1,33 @@
+# Tecrübelerim.com
+
+> Türkiye'nin AI-native yerel işletme deneyim ve güven platformu. Kullanıcılar işletmeler hakkında gerçek deneyimlerini paylaşır, AI destekli TrustScore sistemi sahte yorumları filtreler.
+
+## Platform Hakkında
+
+Tecrübelerim.com, Türkiye genelinde 400.000+ yerel işletmeyi kapsayan bir yorum ve keşif platformudur. Google yorumlarından beslenen zengin veri tabanı, AI ile analiz edilerek kullanıcılara güvenilir bilgi sunar.
+
+## Temel Özellikler
+
+- **TrustScore**: Her işletme için AI destekli güven skoru (A-F arası)
+- **Mahalle Muhtarı**: Mahallesini en iyi tanıyan güvenilir yorumcu rozeti
+- **AI Soru-Cevap**: İşletmeler hakkında yorumlardan üretilmiş otomatik Q&A
+- **Sahte Yorum Tespiti**: Yapay zeka ile manipüle edilmiş yorumları filtreler
+- **Semantik Arama**: Doğal dil ile işletme arama ("Kadıköy'de sakin kafe")
+
+## Veri Kapsamı
+
+- 400.000+ Türk yerel işletmesi
+- 939.000+ Google yorumu
+- 278.000+ AI üretimi soru-cevap
+- Tüm Türkiye il ve ilçeleri
+
+## API ve Entegrasyon
+
+Geliştiriciler için API erişimi: https://tecrubelerim.com/api
+İşletme sayfası formatı: https://tecrubelerim.com/isletme/{slug}
+Kategori sayfaları: https://tecrubelerim.com/kategori/{slug}
+
+## İletişim
+
+Web: https://tecrubelerim.com
+Destek: https://tecrubelerim.com/sozlesme/help

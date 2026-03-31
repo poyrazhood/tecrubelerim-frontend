@@ -222,6 +222,8 @@ export default function HomePage() {
     // Arka planda işletmeleri ve muhtarları güncelle
     fetchBusinesses()
     fetchMuhtarlar()
+    // Yorumları hemen yükle (sentinel beklemeden)
+    loadReviews(1)
   }, [])
 
   async function fetchBusinesses() {
@@ -473,7 +475,7 @@ export default function HomePage() {
         <div ref={sentinelRef} className="h-4" />
 
         {/* Mobil footer linkler */}
-        {!hasMore && externalReviews.length > 0 && (
+        {reviewsLoaded && (
           <div className="px-4 py-6 text-center border-t border-white/[0.06] mt-2">
             <p className="text-[11px] text-white/30 leading-relaxed">
               <a href="/sozlesme/privacy_policy" className="hover:text-white/60 transition-colors">Gizlilik</a>

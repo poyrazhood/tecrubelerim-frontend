@@ -269,15 +269,15 @@ export default function AuthModal({ initialMode = 'login', onClose, isPage = fal
       <div className="p-8">
         {/* Logo + başlık */}
         <div className="flex items-center gap-3 mb-7">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+          <a href="/"><div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
             style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
             <Star size={17} className="text-white fill-white" />
-          </div>
+          </div></a>
           <div>
             <h1 className="text-base font-bold text-white leading-none mb-0.5">
               {mode === 'login' ? 'Tekrar hoş geldiniz' : 'Hesap oluştur'}
             </h1>
-            <p className="text-[11px] text-white/35">
+            <p className="text-[11px] text-white/70">
               {mode === 'login' ? 'Tecrübelerim\'e giriş yapın' : 'Ücretsiz, birkaç dakika sürer'}
             </p>
           </div>
@@ -553,9 +553,10 @@ export default function AuthModal({ initialMode = 'login', onClose, isPage = fal
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 relative" style={{ background: '#0C0C0F' }}>
       <ParticleCanvas />
-      <div className="relative z-10">{inner}</div>
-      <div className="relative z-10 mt-8 text-center">
-        <p className="text-[11px] text-white/30 leading-relaxed">
+      <div className="relative z-10 w-full flex flex-col items-center">
+        <div>{inner}</div>
+        <div className="mt-8 text-center">
+        <p className="text-[11px] leading-relaxed" style={{color: "rgba(255,255,255,0.5)"}}>
           <a href="/sozlesme/privacy_policy" className="hover:text-white/60 transition-colors">Gizlilik</a>
           {' · '}
           <a href="/sozlesme/terms_of_service" className="hover:text-white/60 transition-colors">Kullanım Koşulları</a>
@@ -564,7 +565,8 @@ export default function AuthModal({ initialMode = 'login', onClose, isPage = fal
           {' · '}
           <a href="/iletisim" className="hover:text-white/60 transition-colors">İletişim</a>
         </p>
-        <p className="text-[11px] text-white/15 mt-1">© 2026 Tecrübelerim</p>
+        <p className="text-[11px] mt-1" style={{color: "rgba(255,255,255,0.35)"}}>© 2026 Tecrübelerim</p>
+        </div>
       </div>
     </div>
   )

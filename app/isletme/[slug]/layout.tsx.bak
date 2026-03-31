@@ -129,26 +129,13 @@ export default async function SlugLayout({
     // FIX 2: > 0 yerine >= 3
     // Google'ın yıldız göstermesi için minimum 3 yorum gerekli.
     // 1-2 yorumlu sayfalarda "1 yorum" göstermek CTR'yi düşürüyor.
-    aggregateRating: (() => {
-      const extReviews = b.externalReviews ?? []
-      const extRatings = extReviews.filter((r: any) => r.rating != null).map((r: any) => Number(r.rating))
-      const extCount = extRatings.length
-      const extAvg = extCount > 0 ? extRatings.reduce((a: number, b: number) => a + b, 0) / extCount : 0
-      const platCount = b.totalReviews ?? 0
-      const platAvg = b.averageRating ?? 0
-      const totalCount = platCount + extCount
-      if (totalCount < 1) return undefined
-      const combinedRating = totalCount > 0
-        ? ((platAvg * platCount + extAvg * extCount) / totalCount).toFixed(1)
-        : '0'
-      return {
-        '@type': 'AggregateRating',
-        ratingValue: combinedRating,
-        reviewCount: totalCount,
-        bestRating: '5',
-        worstRating: '1',
-      }
-    })(),
+    aggregateRating: b.totalReviews >= 3 ? {
+      '@type': 'AggregateRating',
+      ratingValue: (b.averageRating ?? 0).toFixed(1),
+      reviewCount: b.totalReviews,
+      bestRating: '5',
+      worstRating: '1',
+    } : undefined,
     image: b.photos?.[0]?.url ?? b.attributes?.coverPhoto ?? undefined,
     priceRange: b.priceRange ?? undefined,
     review: b._reviews?.slice(0, 3).map((r: any) => ({
