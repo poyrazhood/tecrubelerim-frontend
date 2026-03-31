@@ -952,7 +952,7 @@ export default function AdminPage() {
     })
   }
 
-  const [tab, setTab] = useState<'stats'|'reports'|'flagged'|'claims'|'businesses'|'users'|'reviews'|'settings'|'muhtar'|'subscriptions'|'pending'|'theme'|'market'|'referral'>('stats')
+  const [tab, setTab] = useState<'stats'|'reports'|'flagged'|'claims'|'businesses'|'users'|'reviews'|'settings'|'muhtar'|'subscriptions'|'pending'|'theme'|'market'|'referral'|'support'>('stats')
   const [stats, setStats] = useState<any>(null)
   const [modStats, setModStats] = useState<any>(null)
   const [pendingBizCount, setPendingBizCount] = React.useState(0)
