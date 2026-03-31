@@ -1,4 +1,4 @@
-'use client'
+ï»¿'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useAuth } from '@/lib/AuthContext'
@@ -477,14 +477,14 @@ export default function HomePage() {
           <div className="px-4 py-6 text-center border-t border-white/[0.06] mt-2">
             <p className="text-[11px] text-white/30 leading-relaxed">
               <a href="/sozlesme/privacy_policy" className="hover:text-white/60 transition-colors">Gizlilik</a>
-              {` · `}
+              {` ï¿½ `}
               <a href="/sozlesme/terms_of_service" className="hover:text-white/60 transition-colors">Kullanim Kosullari</a>
-              {` · `}
+              {` ï¿½ `}
               <a href="/sozlesme/help" className="hover:text-white/60 transition-colors">Yardim</a>
-              {` · `}
+              {` ï¿½ `}
               <a href="/iletisim" className="hover:text-white/60 transition-colors">Iletisim</a>
             </p>
-            <p className="text-[11px] text-white/15 mt-1">© 2026 Tecrubelerim</p>
+            <p className="text-[11px] text-white/15 mt-1">ï¿½ 2026 Tecrubelerim</p>
           </div>
         )}
 
